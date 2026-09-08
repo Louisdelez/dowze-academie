@@ -51,7 +51,7 @@ Téléchargez la [dernière release GitHub](https://github.com/Louisdelez/dowze-
 
 Le fichier `SHA256SUMS.txt` de la release permet de vérifier l’intégrité des téléchargements. Les avertissements de sécurité liés à l’absence de notarisation macOS ou de signature Windows sont détaillés dans les [limites connues](./docs/LIMITES.md).
 
-Les deux builds macOS peuvent aussi inclure une archive secondaire `.app.tar.gz` produite par l’outil de release Tauri. Pour une installation classique, utilisez le DMG correspondant à votre Mac.
+La release publie uniquement les deux DMG macOS comme formats d’installation Apple ; choisissez celui qui correspond à l’architecture de votre Mac.
 
 Sous Linux, rendez l’AppImage exécutable avec `chmod +x Dowze-Academie-*.AppImage`, puis lancez-la directement. Si FUSE n’est pas disponible sur votre distribution, utilisez le paquet `.deb` à la place.
 

@@ -77,7 +77,7 @@ Le workflow [`.github/workflows/desktop-release.yml`](../.github/workflows/deskt
 - `workflow_dispatch` construit les quatre cibles et conserve les bundles comme artefacts Actions sans créer de release ;
 - un tag `vX.Y.Z`, strictement égal à la version Tauri, construit les mêmes cibles dans une release brouillon.
 
-La release n’est rendue publique qu’après la réussite complète de la matrice, la présence des artefacts attendus et la génération de `SHA256SUMS.txt`. Les cibles 0.1.0 sont macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64. Linux produit volontairement AppImage et `.deb`, pas RPM, afin d’éviter le chemin de bundling RPM instable avec la version actuelle de Tauri CLI. L’action Tauri joint également une archive `.app.tar.gz` secondaire pour chaque build macOS ; le DMG reste le format d’installation recommandé.
+La release n’est rendue publique qu’après la réussite complète de la matrice, la présence des artefacts attendus et la génération de `SHA256SUMS.txt`. Les cibles 0.1.0 sont macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64. Linux produit volontairement AppImage et `.deb`, pas RPM, afin d’éviter le chemin de bundling RPM instable avec la version actuelle de Tauri CLI. Les builds macOS publient uniquement leur DMG respectif.
 
 Les applications macOS reçoivent une signature ad hoc (`-`) mais ne sont pas signées Developer ID ni notarisées. L’installateur Windows n’est pas signé. Il faut ajouter les certificats et secrets de CI appropriés avant de présenter ces artefacts comme une distribution vérifiée par les éditeurs des systèmes.
 
