@@ -31,7 +31,7 @@ try {
   const dialog = page.getByRole("dialog", { name: "Envoyer le planning" });
   await assertDialogConfinedToWorkspace(page, dialog, "La fenêtre d’export du planning");
   await dialog.getByText(
-    "Apple Calendar, Google Calendar ou fichier iCalendar universel",
+    "Calendrier de l’appareil, Google Calendar ou fichier iCalendar universel",
     { exact: true }
   ).waitFor();
 

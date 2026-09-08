@@ -78,7 +78,7 @@ async function sendMessage(content) {
   // Dans le navigateur de test, la requête native est volontairement refusée.
   // Un message non remis doit être retiré du transcript et restauré dans le brouillon.
   await page.getByText(
-    "Le Chat libre utilise le moteur sécurisé de l’application macOS.",
+    "Le Chat libre utilise le moteur sécurisé de l’application de bureau.",
     { exact: true }
   ).waitFor();
   assert.equal(await transcriptMessage.count(), 0);
@@ -106,7 +106,7 @@ try {
   await initialSettings.getByLabel("Modèle").fill("qwen3:8b");
 
   // Une clé en brouillon ne doit jamais suivre un changement de fournisseur
-  // ou d’origine compatible avant son enregistrement dans le trousseau.
+  // ou d’origine compatible avant son enregistrement dans le coffre sécurisé.
   await initialSettings.getByLabel("Fournisseur").selectOption("openai");
   await initialSettings.getByPlaceholder("Coller une nouvelle clé API").fill("sk-openai-brouillon-test");
   await initialSettings.getByLabel("Fournisseur").selectOption("mistral");

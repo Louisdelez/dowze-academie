@@ -64,6 +64,11 @@ export interface GoogleWebProfileRemovalResult {
   removedRecords: number;
 }
 
+export interface NativeCapabilities {
+  platform: "macos" | "windows" | "linux" | "other" | "browser";
+  googleWebProfileRemoval: boolean;
+}
+
 export interface CalendarTransferPayload {
   events: CalendarIcsEvent[];
   content: string;
@@ -111,7 +116,7 @@ export async function saveTextDocument(
   return invoke<string>("save_text_document", { content, destinationPath, kind });
 }
 
-export async function openCalendarInApple(payload: CalendarTransferPayload): Promise<string> {
+export async function openCalendarInSystem(payload: CalendarTransferPayload): Promise<string> {
   if (!isTauri()) {
     downloadCalendarIcs(payload.content, payload.filename);
     return payload.filename;
@@ -157,6 +162,13 @@ export async function openGoogleWebProfile(): Promise<GoogleWebProfileOpenTarget
   }
   await invoke("open_google_web_profile");
   return "integrated-window";
+}
+
+export async function getNativeCapabilities(): Promise<NativeCapabilities> {
+  if (!isTauri()) {
+    return { platform: "browser", googleWebProfileRemoval: false };
+  }
+  return invoke<NativeCapabilities>("native_capabilities");
 }
 
 export async function removeGoogleWebProfile(): Promise<GoogleWebProfileRemovalResult> {

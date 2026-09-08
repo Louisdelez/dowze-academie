@@ -39,6 +39,6 @@ Décrivez dans la pull request le comportement modifié, les commandes réelleme
 
 ## Compatibilité des données
 
-Les préfixes `etude.*`, certains services du Trousseau et l’identifiant de bundle historique sont conservés pour que les installations existantes retrouvent leurs données. Ne les renommez pas sans migration versionnée, testée et réversible.
+Les préfixes `etude.*`, certains identifiants du coffre sécurisé et l’identifiant de bundle historique sont conservés pour que les installations existantes retrouvent leurs données. Ne les renommez pas sans migration versionnée, testée et réversible.
 
 En contribuant, vous acceptez que votre travail soit distribué sous la [licence MIT](./LICENSE) du projet.

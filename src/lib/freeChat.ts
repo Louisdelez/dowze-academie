@@ -87,7 +87,7 @@ export async function sendFreeChatMessage(
   request: FreeChatRequest
 ): Promise<FreeChatReply> {
   if (!isTauri()) {
-    throw new Error("Le Chat libre utilise le moteur sécurisé de l’application macOS.");
+    throw new Error("Le Chat libre utilise le moteur sécurisé de l’application de bureau.");
   }
   return invoke<FreeChatReply>("send_free_chat_message", { request });
 }
@@ -103,7 +103,7 @@ export async function saveFreeChatApiKey(
   endpoint?: string
 ): Promise<void> {
   if (!isTauri()) {
-    throw new Error("Le trousseau sécurisé est disponible dans l’application macOS.");
+    throw new Error("Le coffre sécurisé est disponible dans l’application de bureau.");
   }
   await invoke("save_free_chat_api_key", { backend, apiKey, endpoint });
 }
@@ -118,7 +118,7 @@ export async function deleteFreeChatApiKey(
 
 export async function listOllamaModels(endpoint: string): Promise<string[]> {
   if (!isTauri()) {
-    throw new Error("La détection d’Ollama est disponible dans l’application macOS.");
+    throw new Error("La détection d’Ollama est disponible dans l’application de bureau.");
   }
   return invoke<string[]>("list_ollama_models", { endpoint });
 }

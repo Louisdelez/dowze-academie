@@ -975,7 +975,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           const modeCopy = lessonModeCopy(lesson.lessonMode);
           addToast({
             title: `${modeCopy.promptLabel} copiée`,
-            detail: `Tu peux la coller avec ⌘V si ${modeCopy.subjectLabel.toLocaleLowerCase("fr")} ne démarre pas automatiquement.`,
+            detail: `Tu peux la coller avec Ctrl/⌘V si ${modeCopy.subjectLabel.toLocaleLowerCase("fr")} ne démarre pas automatiquement.`,
             tone: "success"
           });
         }
@@ -1090,7 +1090,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       void copyLessonPrompt(null, false, forcedProvider, subject);
       addToast({
         title: `Contexte NotebookLM — ${subject.shortName}`,
-        detail: "Crée ou ouvre un notebook, ajoute tes sources, puis colle le contexte avec ⌘V.",
+        detail: "Crée ou ouvre un notebook, ajoute tes sources, puis colle le contexte avec Ctrl/⌘V.",
         tone: "success"
       });
     }
@@ -1188,7 +1188,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     if (isNotebookProvider(forcedProvider)) {
       addToast({
         title: `NotebookLM — ${lesson.title}`,
-        detail: "Crée ou ouvre le notebook de cette séance, ajoute les sources utiles, puis colle le contexte avec ⌘V.",
+        detail: "Crée ou ouvre le notebook de cette séance, ajoute les sources utiles, puis colle le contexte avec Ctrl/⌘V.",
         tone: "success"
       });
       scheduleAiAction(() => {
@@ -1213,7 +1213,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         await navigateAi(providerHome(forcedProvider)).catch(() => undefined);
         addToast({
           title: modeCopy.readyTitle,
-          detail: `L’insertion automatique a échoué (${String(error)}). Utilise ⌘V dans le panneau IA.`,
+          detail: `L’insertion automatique a échoué (${String(error)}). Utilise Ctrl/⌘V dans le panneau IA.`,
           tone: "warning"
         });
       });
@@ -1515,7 +1515,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     }, 250);
     addToast({
       title: "Conversation de correction ouverte",
-      detail: "Joins toutes les pages de ta copie scannée, colle la consigne avec ⌘V, puis envoie le tout à l’IA.",
+      detail: "Joins toutes les pages de ta copie scannée, colle la consigne avec Ctrl/⌘V, puis envoie le tout à l’IA.",
       tone: "success"
     });
   };

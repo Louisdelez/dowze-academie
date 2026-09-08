@@ -150,7 +150,7 @@ function saveRegistry(registry: StoredAccountRegistry): void {
   } catch {
     throw new LocalAuthError(
       "storage-unavailable",
-      "Impossible d’enregistrer le compte sur ce Mac. Libère de l’espace puis réessaie."
+      "Impossible d’enregistrer le compte sur cet appareil. Libère de l’espace puis réessaie."
     );
   }
 }
@@ -211,7 +211,7 @@ function setSession(accountId: string, rememberMe = false): void {
     throw new LocalAuthError(
       "storage-unavailable",
       rememberMe
-        ? "La session ne peut pas être mémorisée sur ce Mac."
+        ? "La session ne peut pas être mémorisée sur cet appareil."
         : "La session locale ne peut pas être ouverte."
     );
   }

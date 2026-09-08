@@ -75,10 +75,60 @@ static AUTH_POPUP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 type CommandResult<T> = Result<T, String>;
 
+#[cfg(not(target_os = "windows"))]
+fn replace_file_atomically(staging: &Path, destination: &Path) -> io::Result<()> {
+    fs::rename(staging, destination)
+}
+
+#[cfg(target_os = "windows")]
+fn replace_file_atomically(staging: &Path, destination: &Path) -> io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::{
+        MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
+    };
+
+    fn wide_path(path: &Path) -> io::Result<Vec<u16>> {
+        let mut wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        if wide.contains(&0) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "le chemin contient un caractère nul",
+            ));
+        }
+        wide.push(0);
+        Ok(wide)
+    }
+
+    let staging = wide_path(staging)?;
+    let destination = wide_path(destination)?;
+    // SAFETY: both buffers are NUL-terminated and remain alive for the call.
+    // The staging file is created beside the destination, so the move stays on
+    // one volume and provides Windows' replace-existing rename semantics.
+    let moved = unsafe {
+        MoveFileExW(
+            staging.as_ptr(),
+            destination.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+    if moved == 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 struct GoogleWebProfileRemovalResult {
     removed_records: usize,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct NativeCapabilities {
+    platform: &'static str,
+    google_web_profile_removal: bool,
 }
 
 #[derive(Default)]
@@ -1589,7 +1639,7 @@ fn write_calendar_ics_file(destination: &Path, content: &str) -> CommandResult<P
         file.write_all(content.as_bytes())
             .and_then(|_| file.sync_all())
             .map_err(|error| format!("Impossible d’enregistrer le calendrier: {error}"))?;
-        fs::rename(&staging, &destination)
+        replace_file_atomically(&staging, &destination)
             .map_err(|error| format!("Impossible de finaliser le calendrier: {error}"))?;
         Ok(())
     })();
@@ -1660,7 +1710,7 @@ fn write_text_document_file(
         file.write_all(content.as_bytes())
             .and_then(|_| file.sync_all())
             .map_err(|error| format!("Impossible d’enregistrer le document: {error}"))?;
-        fs::rename(&staging, &destination)
+        replace_file_atomically(&staging, &destination)
             .map_err(|error| format!("Impossible de finaliser le document: {error}"))?;
         Ok(())
     })();
@@ -2469,6 +2519,25 @@ fn open_google_web_profile(
 }
 
 #[tauri::command]
+fn native_capabilities(caller: Webview) -> CommandResult<NativeCapabilities> {
+    require_main_caller(&caller)?;
+
+    #[cfg(target_os = "macos")]
+    let platform = "macos";
+    #[cfg(target_os = "windows")]
+    let platform = "windows";
+    #[cfg(target_os = "linux")]
+    let platform = "linux";
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    let platform = "other";
+
+    Ok(NativeCapabilities {
+        platform,
+        google_web_profile_removal: cfg!(target_os = "macos"),
+    })
+}
+
+#[tauri::command]
 async fn remove_google_web_profile(
     caller: Webview,
     pending_state: State<'_, PendingLessonState>,
@@ -2831,7 +2900,7 @@ fn open_calendar_in_apple(
     let open_result = open::with_detached(&destination, "Calendar");
     #[cfg(not(target_os = "macos"))]
     let open_result = open::that_detached(&destination);
-    open_result.map_err(|error| format!("Impossible d’ouvrir le calendrier Apple: {error}"))?;
+    open_result.map_err(|error| format!("Impossible d’ouvrir le calendrier système: {error}"))?;
     Ok(destination.to_string_lossy().into_owned())
 }
 
@@ -3017,6 +3086,7 @@ pub fn run() {
             local_auth::register_local_account,
             local_auth::login_local_account,
             local_auth::logout_local_account,
+            native_capabilities,
             open_google_web_profile,
             remove_google_web_profile,
             sync_ai_panel,
@@ -3158,9 +3228,15 @@ mod tests {
                 .join("donnees.json")
         );
         assert_eq!(fs::read_to_string(&json_path).unwrap(), r#"{"version":4}"#);
+        write_text_document_file(&json_path, r#"{"version":5}"#, TextDocumentKind::Json)
+            .expect("replace an existing JSON export atomically");
+        assert_eq!(fs::read_to_string(&json_path).unwrap(), r#"{"version":5}"#);
         write_text_document_file(&markdown_path, "# Énergie\n", TextDocumentKind::Markdown)
             .unwrap();
         assert_eq!(fs::read_to_string(&markdown_path).unwrap(), "# Énergie\n");
+        write_text_document_file(&markdown_path, "# Physique\n", TextDocumentKind::Markdown)
+            .expect("replace an existing Markdown export atomically");
+        assert_eq!(fs::read_to_string(&markdown_path).unwrap(), "# Physique\n");
 
         assert!(write_text_document_file(
             &directory.path().join("invalide.json"),
@@ -4041,6 +4117,10 @@ mod tests {
                 .join("planning.ics")
         );
         assert_eq!(fs::read_to_string(&destination).unwrap(), content);
+        let updated_content = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n";
+        write_calendar_ics_file(&destination, updated_content)
+            .expect("replace an existing calendar atomically");
+        assert_eq!(fs::read_to_string(&destination).unwrap(), updated_content);
         assert!(write_calendar_ics_file(Path::new("planning.ics"), content).is_err());
         assert!(write_calendar_ics_file(&directory.path().join("planning.txt"), content).is_err());
 

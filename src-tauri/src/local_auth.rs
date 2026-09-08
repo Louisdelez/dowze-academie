@@ -126,7 +126,7 @@ impl KeychainRememberedCredentialsStore {
             REMEMBERED_CREDENTIALS_KEYCHAIN_SERVICE,
             REMEMBERED_CREDENTIALS_KEYCHAIN_ACCOUNT,
         )
-        .map_err(|error| format!("Impossible d’accéder au Trousseau macOS : {error}"))
+        .map_err(|error| format!("Impossible d’accéder au coffre sécurisé du système : {error}"))
     }
 }
 
@@ -136,14 +136,16 @@ impl RememberedCredentialsStore for KeychainRememberedCredentialsStore {
             Ok(secret) => Ok(Some(secret)),
             Err(KeyringError::NoEntry) => Ok(None),
             Err(error) => Err(format!(
-                "Impossible de lire la connexion mémorisée dans le Trousseau macOS : {error}"
+                "Impossible de lire la connexion mémorisée dans le coffre sécurisé du système : {error}"
             )),
         }
     }
 
     fn save_secret(&self, secret: &[u8]) -> AuthResult<()> {
         Self::entry()?.set_secret(secret).map_err(|error| {
-            format!("Impossible de mémoriser la connexion dans le Trousseau macOS : {error}")
+            format!(
+                "Impossible de mémoriser la connexion dans le coffre sécurisé du système : {error}"
+            )
         })
     }
 
@@ -151,7 +153,7 @@ impl RememberedCredentialsStore for KeychainRememberedCredentialsStore {
         match Self::entry()?.delete_credential() {
             Ok(()) | Err(KeyringError::NoEntry) => Ok(()),
             Err(error) => Err(format!(
-                "Impossible de supprimer la connexion mémorisée du Trousseau macOS : {error}"
+                "Impossible de supprimer la connexion mémorisée du coffre sécurisé du système : {error}"
             )),
         }
     }
@@ -445,7 +447,7 @@ fn write_accounts_file(app_data_dir: &Path, accounts_file: &LocalAccountsFile) -
             .and_then(|_| staging_file.sync_all())
             .map_err(|error| format!("Impossible d’enregistrer les comptes locaux : {error}"))?;
         drop(staging_file);
-        fs::rename(&staging_path, &destination)
+        super::replace_file_atomically(&staging_path, &destination)
             .map_err(|error| format!("Impossible de finaliser les comptes locaux : {error}"))?;
         #[cfg(unix)]
         {
@@ -1045,6 +1047,30 @@ mod tests {
         assert_eq!(
             login_account(directory.path(), "@@", "court").unwrap_err(),
             invalid_credentials
+        );
+
+        let second_password = "Une autre phrase secrète locale 2026";
+        let second = register_account(
+            directory.path(),
+            "Deuxième profil",
+            "deuxieme_2026",
+            second_password,
+        )
+        .expect("register a second account by replacing the registry atomically");
+        let updated = read_accounts_file(directory.path()).expect("reload both persisted accounts");
+        assert_eq!(updated.accounts.len(), 2);
+        assert!(updated
+            .accounts
+            .iter()
+            .any(|account| account.id == summary.id));
+        assert!(updated
+            .accounts
+            .iter()
+            .any(|account| account.id == second.id));
+        assert_eq!(
+            login_account(directory.path(), "deuxieme_2026", second_password)
+                .expect("login to the second account"),
+            second
         );
 
         #[cfg(unix)]

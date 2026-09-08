@@ -1,14 +1,14 @@
 # Guide d’utilisation
 
-Ce guide décrit Dowze Academie 0.1.0 sur macOS. Les données et comptes présentés ici sont locaux à l’application ; ils ne créent aucun compte sur le site d’un fournisseur tiers.
+Ce guide décrit Dowze Academie 0.1.0 sur macOS, Windows et Linux. Les données et comptes présentés ici sont locaux à l’application ; ils ne créent aucun compte sur le site d’un fournisseur tiers.
 
 ## 1. Créer un profil local
 
 Au premier lancement, choisissez **Créer ton compte**, puis renseignez un nom affiché, un identifiant et un mot de passe d’au moins 10 caractères. Chaque nouveau profil commence avec un cursus vierge et son propre espace de progression, de planning, de notes, de résultats et de documents.
 
-À la connexion, **Se souvenir de moi sur ce Mac** reste désactivé par défaut. Si vous l’activez dans l’application native, les identifiants de reconnexion sont confiés au Trousseau macOS et le mot de passe est de nouveau vérifié par Argon2id au prochain lancement. Une déconnexion explicite révoque cette reconnexion.
+À la connexion, **Se souvenir de moi sur cet appareil** reste désactivé par défaut. Si vous l’activez dans l’application native, les identifiants de reconnexion sont confiés au coffre sécurisé du système — Trousseau macOS, Gestionnaire d’identifiants Windows ou Secret Service Linux — et le mot de passe est de nouveau vérifié par Argon2id au prochain lancement. Une déconnexion explicite révoque cette reconnexion.
 
-Il n’existe ni récupération distante du mot de passe, ni synchronisation entre plusieurs Mac.
+Il n’existe ni récupération distante du mot de passe, ni synchronisation entre plusieurs appareils.
 
 ## 2. Naviguer dans le cursus
 
@@ -40,7 +40,7 @@ Ce comportement évite de lancer une session IA par erreur depuis le calendrier.
 
 ### Exporter vers un agenda
 
-Choisissez **Envoyer vers un agenda**, sélectionnez les catégories, puis Apple Calendrier, Google Agenda ou un fichier `.ics`.
+Choisissez **Envoyer vers un agenda**, sélectionnez les catégories, puis le calendrier de l’appareil, Google Agenda ou un fichier `.ics`.
 
 L’export est un instantané : une modification ultérieure dans Dowze Academie ne met pas à jour automatiquement les événements déjà importés. Utilisez de préférence un calendrier de destination séparé afin de pouvoir remplacer un ancien export proprement.
 
@@ -86,14 +86,14 @@ Les conversations du Chat libre sont enregistrées localement. Leur contenu est 
 
 ## 7. Gérer la session Google intégrée
 
-La rubrique **Réglages → Compte Google** ouvre une fenêtre utilisant le même profil WKWebView que les services intégrés. Chaque service garde toutefois sa propre session et peut redemander une confirmation.
+La rubrique **Réglages → Compte Google** ouvre une fenêtre utilisant le même profil de WebView que les services intégrés. Chaque service garde toutefois sa propre session et peut redemander une confirmation.
 
-**Retirer Google de Dowze Academie…** ferme les fenêtres distantes et supprime les données WebKit rattachées aux domaines Google et YouTube. Cette action ne supprime pas le compte Google en ligne et n’efface pas automatiquement les cookies propres aux domaines de ChatGPT, Claude ou Duolingo.
+Sur macOS, **Retirer Google de Dowze Academie…** ferme les fenêtres distantes et supprime les données WebKit rattachées aux domaines Google et YouTube. Cette suppression ciblée n’est pas encore disponible sous Windows ou Linux ; le bouton y est désactivé. Elle ne supprime jamais le compte Google en ligne et n’efface pas automatiquement les cookies propres aux domaines de ChatGPT, Claude ou Duolingo.
 
 Google peut refuser les navigateurs embarqués. Dans ce cas, utilisez le navigateur système ; ses cookies ne sont pas transférés dans l’application.
 
 ## 8. Exporter les données
 
-Dans **Réglages → Données locales**, l’export JSON contient les programmes, événements, tâches, notes, résultats et métadonnées. Il n’embarque pas le contenu binaire des PDF ni les secrets du Trousseau.
+Dans **Réglages → Données locales**, l’export JSON contient les programmes, événements, tâches, notes, résultats et métadonnées. Il n’embarque pas le contenu binaire des PDF ni les secrets du coffre sécurisé du système.
 
 L’import complet d’un export JSON n’est pas encore disponible. Conservez aussi vos documents originaux.

@@ -4,17 +4,20 @@ Cette liste décrit les limites de Dowze Academie 0.1.0. Elles font partie du p�
 
 ## Distribution
 
-- Le bundle macOS actuel est construit localement pour x86_64.
-- Il n’est ni signé avec un certificat Apple Developer ID, ni notarisé.
-- Une distribution large demandera des builds pour les architectures visées, une signature, une notarisation et un canal de mise à jour maîtrisé.
+- La release GitHub fournit des builds natifs pour macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64 ; elle ne couvre pas encore Windows ARM ni Linux ARM.
+- Les applications macOS utilisent une signature ad hoc, sans certificat Apple Developer ID ni notarisation. Gatekeeper peut demander une autorisation explicite.
+- L’installateur Windows n’est pas signé et Microsoft Defender SmartScreen peut afficher un avertissement. Les paquets Linux ne disposent pas d’une signature de dépôt.
+- Aucun mécanisme de mise à jour automatique n’est encore configuré.
+- La compilation CI prouve le packaging sur chaque système, pas tous les parcours réels avec un bureau, un trousseau déverrouillé et des comptes tiers. Les intégrations Windows et Linux demandent encore une validation manuelle approfondie.
+- Sous Linux, l’application bloque l’authentification si la session D-Bus ou le service Secret Service est absent, inaccessible ou verrouillé. Ce choix évite de contourner silencieusement la vérification et la révocation d’une connexion mémorisée.
 
 ## Comptes et données
 
-- Les comptes existent uniquement sur le Mac courant.
+- Les comptes existent uniquement sur l’appareil courant.
 - Il n’y a ni serveur, ni synchronisation cloud, ni récupération distante du mot de passe.
 - L’export JSON n’a pas encore de flux d’import versionné et atomique.
 - Le stockage actuel devra évoluer pour plusieurs années de notes et d’historiques, probablement vers SQLite et des fichiers séparés.
-- Les cookies WebView et les clés API sont partagés à l’échelle de l’application sur la session macOS, pas isolés par profil.
+- Les cookies WebView et les clés API sont partagés à l’échelle de l’application sur la session du système, pas isolés par profil.
 
 ## Calendrier
 
@@ -24,10 +27,11 @@ Cette liste décrit les limites de Dowze Academie 0.1.0. Elles font partie du p�
 
 ## Fournisseurs et OAuth
 
-- WKWebView utilise un profil distinct de Safari et Chrome.
+- La WebView native utilise un profil distinct du navigateur système : WKWebView sous macOS, WebView2 sous Windows et WebKitGTK sous Linux.
 - Un fournisseur, notamment Google, peut refuser un navigateur embarqué.
 - Dowze Academie ne modifie pas l’agent utilisateur, ne copie pas les cookies et ne contourne pas un refus OAuth.
 - La réutilisation réelle d’une session Google par chaque fournisseur et sa suppression WebKit doivent encore être vérifiées manuellement avec un vrai compte.
+- La suppression ciblée des données Google intégrées est disponible uniquement sur macOS ; elle est désactivée sous Windows et Linux afin de ne jamais effacer globalement des sessions qui ne sont pas dans la liste autorisée.
 - Les automatismes d’insertion ou de capture de lien dépendent de pages tierces qui peuvent évoluer.
 
 ## IA et évaluations

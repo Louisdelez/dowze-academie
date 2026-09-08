@@ -11,7 +11,11 @@ use std::{
 use tauri::Webview;
 
 const KEYCHAIN_SERVICE: &str = "com.etude.free-chat.api-key";
-const MAX_API_KEY_BYTES: usize = 8_192;
+// Windows Credential Manager stores password blobs as UTF-16 and caps them at
+// 2,560 bytes. Keeping the UTF-8 input at 1,024 bytes stays portable even when
+// every scalar needs two UTF-16 code units, while remaining well above normal
+// API-key sizes.
+const MAX_API_KEY_BYTES: usize = 1_024;
 const MAX_MODEL_BYTES: usize = 160;
 const MAX_MESSAGES: usize = 200;
 const MAX_MESSAGE_BYTES: usize = 200_000;
@@ -180,7 +184,20 @@ fn keychain_entry(backend: FreeChatBackend, endpoint: Option<&Url>) -> Result<En
     }
     let account = keychain_account(backend, endpoint)?;
     Entry::new(KEYCHAIN_SERVICE, &account)
-        .map_err(|error| format!("Impossible d'accéder au trousseau macOS: {error}"))
+        .map_err(|error| format!("Impossible d'accéder au coffre sécurisé du système: {error}"))
+}
+
+fn normalize_api_key(raw: &str) -> Result<String, String> {
+    let api_key = raw.trim();
+    if api_key.len() < 8 || api_key.len() > MAX_API_KEY_BYTES {
+        return Err(format!(
+            "La clé API doit contenir entre 8 et {MAX_API_KEY_BYTES} octets."
+        ));
+    }
+    if api_key.chars().any(char::is_control) {
+        return Err("La clé API contient un caractère interdit.".into());
+    }
+    Ok(api_key.to_owned())
 }
 
 fn read_api_key(backend: FreeChatBackend, endpoint: Option<&Url>) -> Result<String, String> {
@@ -191,7 +208,9 @@ fn read_api_key(backend: FreeChatBackend, endpoint: Option<&Url>) -> Result<Stri
                 "Aucune clé API n'est enregistrée pour {}.",
                 backend.account()
             ),
-            other => format!("Impossible de lire la clé dans le trousseau macOS: {other}"),
+            other => {
+                format!("Impossible de lire la clé dans le coffre sécurisé du système: {other}")
+            }
         })
 }
 
@@ -200,7 +219,7 @@ fn has_api_key(backend: FreeChatBackend, endpoint: Option<&Url>) -> Result<bool,
         Ok(value) => Ok(!value.trim().is_empty()),
         Err(KeyringError::NoEntry) => Ok(false),
         Err(error) => Err(format!(
-            "Impossible de consulter le trousseau macOS: {error}"
+            "Impossible de consulter le coffre sécurisé du système: {error}"
         )),
     }
 }
@@ -242,7 +261,7 @@ pub async fn free_chat_key_status(
         .collect()
     })
     .await
-    .map_err(|error| format!("La consultation du trousseau a échoué: {error}"))?
+    .map_err(|error| format!("La consultation du coffre sécurisé a échoué: {error}"))?
 }
 
 #[tauri::command]
@@ -257,13 +276,7 @@ pub async fn save_free_chat_api_key(
     if !backend.needs_api_key() {
         return Err("Ollama local n'utilise pas de clé API.".into());
     }
-    let api_key = api_key.trim().to_owned();
-    if api_key.len() < 8 || api_key.len() > MAX_API_KEY_BYTES {
-        return Err("La clé API doit contenir entre 8 et 8192 caractères.".into());
-    }
-    if api_key.chars().any(char::is_control) {
-        return Err("La clé API contient un caractère interdit.".into());
-    }
+    let api_key = normalize_api_key(&api_key)?;
     let compatible_endpoint = if backend == FreeChatBackend::Compatible {
         Some(remote_chat_endpoint(backend, endpoint.as_deref())?)
     } else {
@@ -273,11 +286,13 @@ pub async fn save_free_chat_api_key(
         keychain_entry(backend, compatible_endpoint.as_ref())?
             .set_password(&api_key)
             .map_err(|error| {
-                format!("Impossible d'enregistrer la clé dans le trousseau macOS: {error}")
+                format!(
+                    "Impossible d'enregistrer la clé dans le coffre sécurisé du système: {error}"
+                )
             })
     })
     .await
-    .map_err(|error| format!("L'enregistrement dans le trousseau a échoué: {error}"))?
+    .map_err(|error| format!("L'enregistrement dans le coffre sécurisé a échoué: {error}"))?
 }
 
 #[tauri::command]
@@ -301,12 +316,12 @@ pub async fn delete_free_chat_api_key(
             Ok(()) => Ok(true),
             Err(KeyringError::NoEntry) => Ok(false),
             Err(error) => Err(format!(
-                "Impossible de supprimer la clé du trousseau macOS: {error}"
+                "Impossible de supprimer la clé du coffre sécurisé du système: {error}"
             )),
         }
     })
     .await
-    .map_err(|error| format!("La suppression dans le trousseau a échoué: {error}"))?
+    .map_err(|error| format!("La suppression dans le coffre sécurisé a échoué: {error}"))?
 }
 
 fn validate_model(model: &str) -> Result<String, String> {
@@ -769,7 +784,7 @@ pub async fn send_free_chat_message(
             read_api_key(backend, key_endpoint.as_ref())
         })
         .await
-        .map_err(|error| format!("La lecture du trousseau a échoué: {error}"))??;
+        .map_err(|error| format!("La lecture du coffre sécurisé a échoué: {error}"))??;
         let mut builder = http.post(endpoint).bearer_auth(api_key);
         let body = if request.backend == FreeChatBackend::Openai {
             json!({
@@ -841,6 +856,16 @@ pub async fn list_ollama_models(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn api_keys_fit_every_native_secure_store() {
+        assert_eq!(normalize_api_key("  abcdefgh  ").unwrap(), "abcdefgh");
+        assert!(normalize_api_key("1234567").is_err());
+        assert!(normalize_api_key(&"a".repeat(MAX_API_KEY_BYTES)).is_ok());
+        assert!(normalize_api_key(&"a".repeat(MAX_API_KEY_BYTES + 1)).is_err());
+        assert!(normalize_api_key(&"é".repeat((MAX_API_KEY_BYTES / 2) + 1)).is_err());
+        assert!(normalize_api_key("clé-api\ninterdite").is_err());
+    }
 
     #[test]
     fn validates_models_and_message_limits() {

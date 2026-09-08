@@ -49,7 +49,7 @@ const BACKENDS: ReadonlyArray<{
   { value: "deepseek", label: "DeepSeek API", detail: "Clé personnelle" },
   { value: "kimi", label: "Kimi API", detail: "Moonshot AI" },
   { value: "compatible", label: "API compatible", detail: "Format OpenAI" },
-  { value: "ollama", label: "Ollama local", detail: "Sur ce Mac" }
+  { value: "ollama", label: "Ollama local", detail: "Sur cet appareil" }
 ];
 
 const DEFAULT_CONFIG: FreeChatConfig = {
@@ -263,7 +263,7 @@ export function FreeChatPanel({
 
   useEffect(() => {
     // Une clé collée ne doit jamais suivre silencieusement l'utilisateur vers
-    // un autre fournisseur avant son enregistrement dans le trousseau.
+    // un autre fournisseur avant son enregistrement dans le coffre sécurisé.
     setApiKey("");
   }, [backend]);
 
@@ -631,13 +631,13 @@ export function FreeChatPanel({
           <div className="free-chat-empty">
             <span><MessageSquare /></span>
             <h3>Une conversation vraiment libre</h3>
-            <p>Choisis une API ou un modèle Ollama local. Les conversations restent enregistrées sur ce Mac.</p>
+            <p>Choisis une API ou un modèle Ollama local. Les conversations restent enregistrées sur cet appareil.</p>
             {contextPrompt && contextKey && (
               <button onClick={startWithCourseContext}>
                 <Plus /> Utiliser le contexte du cours
               </button>
             )}
-            <small><ShieldCheck /> Les clés API restent dans le trousseau macOS.</small>
+            <small><ShieldCheck /> Les clés API restent dans le coffre sécurisé du système.</small>
           </div>
         ) : (
           activeConversation.messages.map((message) => message.role === "system" ? (
@@ -746,7 +746,7 @@ export function FreeChatPanel({
               </div>
             ) : (
               <div className="free-chat-key-card">
-                <span className={keyStatus[backend] ? "is-configured" : ""}><KeyRound /> {keyStatus[backend] ? "Clé enregistrée dans le trousseau" : "Aucune clé enregistrée"}</span>
+                <span className={keyStatus[backend] ? "is-configured" : ""}><KeyRound /> {keyStatus[backend] ? "Clé enregistrée dans le coffre sécurisé" : "Aucune clé enregistrée"}</span>
                 <input disabled={isSavingKey} type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder="Coller une nouvelle clé API" aria-label={`Nouvelle clé API ${backendLabel(backend)}`} autoComplete="off" />
                 <div><button onClick={() => void saveKey()} disabled={!apiKey.trim() || isSavingKey}>{isSavingKey ? <LoaderCircle /> : <ShieldCheck />} Enregistrer</button>{keyStatus[backend] && <button className="is-danger" onClick={() => void deleteKey()} disabled={isSavingKey}><Trash2 /> Retirer</button>}</div>
                 <small>La clé n’est jamais ajoutée aux conversations ni au stockage du navigateur.</small>

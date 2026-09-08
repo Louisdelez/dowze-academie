@@ -20,4 +20,4 @@ Les signalements sont examinés au mieux des disponibilités du mainteneur. Aucu
 
 ## Périmètre sensible
 
-Une attention particulière est portée à l’isolation des profils, au stockage Trousseau, aux commandes Tauri, aux fichiers PDF, aux URL distantes, au profil WKWebView et au routage du Chat libre. Les politiques ou indisponibilités des services tiers ne constituent pas en elles-mêmes une vulnérabilité de Dowze Academie.
+Une attention particulière est portée à l’isolation des profils, au coffre sécurisé du système, aux commandes Tauri, aux fichiers PDF, aux URL distantes, aux profils des WebViews natives et au routage du Chat libre. Les politiques ou indisponibilités des services tiers ne constituent pas en elles-mêmes une vulnérabilité de Dowze Academie.

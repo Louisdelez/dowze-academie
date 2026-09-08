@@ -23,11 +23,16 @@ import {
   Trash2,
   Wind
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AiProvider, AssessmentRecord, CalendarEvent, Conversation, Subject, SubjectNotesStore, TaskItem } from "../types";
 import type { StoredFreeChatConversation } from "../lib/freeChat";
 import type { LocalAccount } from "../lib/localAuth";
-import { openGoogleWebProfile, removeGoogleWebProfile, saveTextDocument } from "../lib/tauri";
+import {
+  getNativeCapabilities,
+  openGoogleWebProfile,
+  removeGoogleWebProfile,
+  saveTextDocument
+} from "../lib/tauri";
 import { Modal } from "./Modal";
 
 const PROVIDERS: Array<{ value: AiProvider; label: string }> = [
@@ -114,12 +119,27 @@ export function SettingsPage({
   const [openingGoogleProfile, setOpeningGoogleProfile] = useState(false);
   const [googleRemovalOpen, setGoogleRemovalOpen] = useState(false);
   const [removingGoogleProfile, setRemovingGoogleProfile] = useState(false);
+  const [googleRemovalSupported, setGoogleRemovalSupported] = useState(false);
   const [googleProfileFeedback, setGoogleProfileFeedback] = useState<{
     tone: "info" | "success" | "error";
     text: string;
   } | null>(null);
 
   const googleProfileBusy = openingGoogleProfile || removingGoogleProfile;
+
+  useEffect(() => {
+    let active = true;
+    void getNativeCapabilities()
+      .then((capabilities) => {
+        if (active) setGoogleRemovalSupported(capabilities.googleWebProfileRemoval);
+      })
+      .catch(() => {
+        if (active) setGoogleRemovalSupported(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleOpenGoogleProfile = async () => {
     if (googleProfileBusy) return;
@@ -144,7 +164,7 @@ export function SettingsPage({
   };
 
   const handleRemoveGoogleProfile = async () => {
-    if (googleProfileBusy) return;
+    if (googleProfileBusy || !googleRemovalSupported) return;
     setRemovingGoogleProfile(true);
     setGoogleProfileFeedback(null);
     try {
@@ -228,7 +248,7 @@ export function SettingsPage({
             <div><strong>{account.displayName}</strong><small>@{account.username} · données privées de ce profil</small></div>
             <button className="secondary-button" onClick={onLogout}><LogOut /> Se déconnecter</button>
           </div>
-          <p className="local-account-disclaimer"><ShieldCheck /> Ce compte reste sur ce Mac. Les sessions des sites ChatGPT, Claude ou Google appartiennent à leur WebView et ne sont pas des comptes Dowze Academie.</p>
+          <p className="local-account-disclaimer"><ShieldCheck /> Ce compte reste sur cet appareil. Les sessions des sites ChatGPT, Claude ou Google appartiennent à leur WebView et ne sont pas des comptes Dowze Academie.</p>
         </section>
 
         <section className="settings-section google-web-profile-section" aria-labelledby="google-web-profile-title">
@@ -236,7 +256,7 @@ export function SettingsPage({
             <span><Globe2 /></span>
             <div>
               <h2 id="google-web-profile-title">Compte Google</h2>
-              <p>Session du navigateur intégré sur ce Mac</p>
+              <p>Session du navigateur intégré sur cet appareil</p>
             </div>
           </div>
           <div className="google-web-profile-content">
@@ -262,7 +282,7 @@ export function SettingsPage({
                 type="button"
                 className="secondary-button danger-button google-web-profile-button"
                 onClick={() => setGoogleRemovalOpen(true)}
-                disabled={googleProfileBusy}
+                disabled={googleProfileBusy || !googleRemovalSupported}
                 aria-describedby="google-web-profile-removal-hint"
               >
                 <Trash2 /> Retirer Google de Dowze Academie…
@@ -272,7 +292,9 @@ export function SettingsPage({
           <div id="google-web-profile-details" className="google-web-profile-details">
             <p><ShieldCheck /> Dowze Academie ne lit ni votre adresse e-mail, ni votre mot de passe, ni vos cookies.</p>
             <p><Info /> Chaque service garde sa propre connexion et peut demander de confirmer le compte Google choisi.</p>
-            <p id="google-web-profile-removal-hint"><Trash2 /> Retirer efface uniquement les données Google conservées dans Dowze Academie, jamais le compte Google en ligne.</p>
+            <p id="google-web-profile-removal-hint"><Trash2 /> {googleRemovalSupported
+              ? "Retirer efface uniquement les données Google conservées dans Dowze Academie, jamais le compte Google en ligne."
+              : "La suppression ciblée des données Google intégrées est actuellement disponible sur macOS uniquement."}</p>
           </div>
           {googleProfileFeedback && (
             <p
@@ -333,7 +355,7 @@ export function SettingsPage({
             <span><strong>{assessments.length}</strong> évaluations</span>
           </div>
           <div className="setting-row">
-            <div><strong>Exporter les données JSON</strong><small>Exporte les programmes, liens, notes et métadonnées. Les fichiers PDF archivés restent sur ce Mac.</small></div>
+            <div><strong>Exporter les données JSON</strong><small>Exporte les programmes, liens, notes et métadonnées. Les fichiers PDF archivés restent sur cet appareil.</small></div>
             <button className="secondary-button" onClick={() => void exportData()}><Download /> Exporter</button>
           </div>
           {exportStatus && <p className="settings-inline-status" role="status">{exportStatus}</p>}
@@ -344,7 +366,7 @@ export function SettingsPage({
           <div className="security-columns">
             <p><Monitor /> Pour les services web, Dowze Academie affiche la page officielle sans lire vos messages, recherches ou carnets.</p>
             <p><ShieldCheck /> Le Chat libre conserve ses conversations localement et les envoie uniquement à l’API ou au modèle Ollama que vous choisissez.</p>
-            <p><ShieldCheck /> Les clés du Chat libre restent dans le trousseau macOS. Elles et les sessions web sont des réglages de cet appareil, partagés entre ses profils Dowze Academie.</p>
+            <p><ShieldCheck /> Les clés du Chat libre restent dans le coffre sécurisé du système. Elles et les sessions web sont des réglages de cet appareil, partagés entre ses profils Dowze Academie.</p>
             <p><Info /> Les liens, notes, appréciations et copies PDF que vous choisissez sont classés uniquement dans les données locales de Dowze Academie.</p>
           </div>
           <a href="https://tauri.app/security/" target="_blank" rel="noreferrer">En savoir plus sur la sécurité Tauri <ExternalLink /></a>
@@ -353,7 +375,7 @@ export function SettingsPage({
       {googleRemovalOpen && (
         <Modal
           title="Retirer Google de Dowze Academie ?"
-          subtitle="Suppression locale sur ce Mac"
+          subtitle="Suppression locale sur cet appareil"
           onClose={removingGoogleProfile ? () => undefined : () => setGoogleRemovalOpen(false)}
           size="sm"
         >
@@ -361,7 +383,7 @@ export function SettingsPage({
             <span><AlertTriangle /></span>
             <p>
               Cette action supprime de l’application les cookies, caches et données locales Google
-              pour tous les profils Dowze Academie de ce Mac. Google, Gemini, NotebookLM et YouTube seront
+              pour tous les profils Dowze Academie de cet appareil. Google, Gemini, NotebookLM et YouTube seront
               déconnectés. Votre compte Google en ligne ne sera pas supprimé. Les sessions propres
               de ChatGPT, Claude et Duolingo resteront enregistrées.
             </p>

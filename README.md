@@ -1,11 +1,11 @@
 # Dowze Academie
 
-Application macOS local-first qui réunit un cursus structuré, un calendrier académique, des notes Markdown, des évaluations papier et des assistants IA contextualisés.
+Application de bureau local-first pour macOS, Windows et Linux qui réunit un cursus structuré, un calendrier académique, des notes Markdown, des évaluations papier et des assistants IA contextualisés.
 
-**Créé par Louis Délez** · [dowze.academie.ch](https://dowze.academie.ch) · [Licence MIT](./LICENSE)
+**Créé par Louis Délez** · Domaine prévu : `dowze.academie.ch` · [Licence MIT](./LICENSE)
 
 > [!IMPORTANT]
-> Dowze Academie 0.1.0 est un projet personnel en développement. Ce n’est ni un établissement d’enseignement, ni un diplôme, ni une certification. Le bundle Intel x86_64 actuellement validé est destiné au test local sur macOS et n’est pas encore signé ni notarisé.
+> Dowze Academie 0.1.0 est un projet personnel en développement. Ce n’est ni un établissement d’enseignement, ni un diplôme, ni une certification. Les builds publics sont destinés au test : les applications macOS utilisent une signature ad hoc sans notarisation Apple et l’installateur Windows n’est pas signé.
 
 ## Pourquoi Dowze Academie
 
@@ -16,32 +16,53 @@ La version actuelle embarque l’Année 1 « Ingénierie de l’énergie & physi
 ## Points forts
 
 - **Cursus structuré** — matières, chapitres, cours atomiques, exercices distincts, progression et anglais aligné sur le CECRL.
-- **Planning académique** — vues année, mois, semaine et jour, événements personnels, tâches et export iCalendar vers Apple Calendrier ou Google Agenda.
+- **Planning académique** — vues année, mois, semaine et jour, événements personnels, tâches et export iCalendar vers le calendrier de l’appareil ou Google Agenda.
 - **Évaluations sur papier** — préparation de sujets et corrigés PDF, archivage local des copies, notes sur 20, coefficients et appréciations.
 - **Espace de notes** — éditeur Markdown visuel, onglets globaux, tags et association d’une même note à plusieurs matières.
 - **Assistants au choix** — pages officielles de plusieurs services dans une WebView native persistante, plus un Chat libre pour des API compatibles ou Ollama local.
-- **Profils locaux** — comptes protégés par Argon2id, espaces de travail séparés et reconnexion facultative via le Trousseau macOS.
+- **Profils locaux** — comptes protégés par Argon2id, espaces de travail séparés et reconnexion facultative via le coffre sécurisé du système.
 
 ## Confidentialité en bref
 
 « Local-first » ne signifie pas « entièrement hors ligne » :
 
-- les profils, cours, événements, tâches, notes, résultats et métadonnées restent sur le Mac ;
+- les profils, cours, événements, tâches, notes, résultats et métadonnées restent sur l’appareil ;
 - les mots de passe des comptes locaux ne sont pas conservés en clair ;
-- les clés du Chat libre et, avec consentement, les identifiants de reconnexion sont stockés dans le Trousseau macOS ;
+- les clés du Chat libre et, avec consentement, les identifiants de reconnexion sont stockés dans le Trousseau macOS, le Gestionnaire d’identifiants Windows ou un service Secret Service sous Linux ;
 - un message envoyé dans le Chat libre est transmis uniquement au fournisseur configuré, ou à Ollama sur `127.0.0.1` ;
 - les sites ouverts dans la WebView appliquent leurs propres politiques de compte, de cookies et de confidentialité.
 
 Les comptes Dowze Academie n’ont actuellement ni serveur, ni synchronisation cloud, ni récupération distante. Consultez la [documentation de confidentialité et de sécurité](./docs/CONFIDENTIALITE.md) avant d’utiliser un service tiers.
 
+Sous Linux, les comptes locaux et la reconnexion sécurisée nécessitent une session D-Bus avec un service compatible Secret Service accessible et déverrouillé, par exemple GNOME Keyring. L’application bloque l’authentification si elle ne peut pas vérifier ou révoquer un éventuel secret mémorisé.
+
 ## Installation
 
-### Prérequis
+### Installer une release
 
-- macOS ;
+Téléchargez la [dernière release GitHub](https://github.com/Louisdelez/dowze-academie/releases/latest), puis choisissez l’artefact adapté :
+
+| Système | Architecture | Artefact principal |
+| --- | --- | --- |
+| macOS | Apple Silicon | `Dowze-Academie-v0.1.0-macos-arm64.dmg` |
+| macOS | Intel | `Dowze-Academie-v0.1.0-macos-x64.dmg` |
+| Windows | x64 | `Dowze-Academie-v0.1.0-windows-x64-setup.exe` |
+| Linux | x64 | `Dowze-Academie-v0.1.0-linux-x64.AppImage` ou paquet `.deb` |
+
+Le fichier `SHA256SUMS.txt` de la release permet de vérifier l’intégrité des téléchargements. Les avertissements de sécurité liés à l’absence de notarisation macOS ou de signature Windows sont détaillés dans les [limites connues](./docs/LIMITES.md).
+
+Les deux builds macOS peuvent aussi inclure une archive secondaire `.app.tar.gz` produite par l’outil de release Tauri. Pour une installation classique, utilisez le DMG correspondant à votre Mac.
+
+Sous Linux, rendez l’AppImage exécutable avec `chmod +x Dowze-Academie-*.AppImage`, puis lancez-la directement. Si FUSE n’est pas disponible sur votre distribution, utilisez le paquet `.deb` à la place.
+
+### Construire depuis les sources
+
+#### Prérequis
+
+- macOS, Windows ou Linux et les [prérequis système Tauri 2](https://v2.tauri.app/start/prerequisites/) correspondants ;
 - Node.js `20.19+` ou `22.12+`, avec npm ;
 - Rust stable et Cargo ;
-- les outils de ligne de commande Xcode et les [prérequis Tauri](https://v2.tauri.app/start/prerequisites/).
+- sous macOS, les outils de ligne de commande Xcode.
 
 ```bash
 git clone https://github.com/Louisdelez/dowze-academie.git
@@ -56,7 +77,7 @@ Pour prévisualiser seulement l’interface dans un navigateur :
 npm run dev
 ```
 
-Cette prévisualisation ne reproduit pas les garanties natives : Trousseau macOS, Argon2id natif, gestion privée des PDF et WebViews intégrées y sont absents ou simulés.
+Cette prévisualisation ne reproduit pas les garanties natives : coffre sécurisé du système, Argon2id natif, gestion privée des PDF et WebViews intégrées y sont absents ou simulés.
 
 ## Vérification
 
@@ -75,14 +96,21 @@ npm audit --audit-level=low
 ## Construire l’application
 
 ```bash
-npm run tauri -- build
+# macOS
+npm run tauri -- build --bundles dmg
+
+# Windows
+npm run tauri -- build --bundles nsis
+
+# Linux
+npm run tauri -- build --bundles appimage,deb
 ```
 
-Les bundles sont produits sous `src-tauri/target/release/bundle/`. Pour une distribution générale, ils doivent encore être construits pour les architectures visées, signés avec un certificat Apple Developer ID et notarisés par Apple.
+Les bundles sont produits sous `src-tauri/target/release/bundle/`. Le workflow `Desktop release` construit nativement les deux architectures macOS, Windows x64 et Linux x64 ; un déclenchement manuel effectue un préflight sans release, tandis qu’un tag `vX.Y.Z` publie les artefacts après validation de toute la matrice.
 
 ## Limites principales
 
-- Le profil WKWebView est distinct de Safari et Chrome. Certains fournisseurs OAuth peuvent refuser un navigateur embarqué ; Dowze Academie ne contourne pas ce refus.
+- Le profil de la WebView intégrée est distinct du navigateur système. Certains fournisseurs OAuth peuvent refuser un navigateur embarqué ; Dowze Academie ne contourne pas ce refus.
 - L’export `.ics` est un instantané ponctuel, pas une synchronisation bidirectionnelle.
 - Les automatismes liés aux sites tiers peuvent évoluer avec leur interface ; la copie de consigne et l’association manuelle restent disponibles en secours.
 - L’application ne lit pas les réponses privées affichées par les services IA : l’archivage des PDF, de la note et de l’appréciation reste explicite.

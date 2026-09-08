@@ -11,7 +11,7 @@ Les changements notables de Dowze Academie sont consignés dans ce fichier. Le f
 - parcours séparés Cours, Exercices et évaluations papier ;
 - carnet de résultats et archivage local des PDF ;
 - éditeur Markdown visuel avec notes multi-matières ;
-- profils locaux Argon2id et reconnexion facultative par le Trousseau macOS ;
+- profils locaux Argon2id et reconnexion facultative par le coffre sécurisé natif de macOS, Windows ou Linux ;
 - services web intégrés, Chat libre et Ollama local ;
 - documentation publique et licence MIT.
 
@@ -19,3 +19,4 @@ Les changements notables de Dowze Academie sont consignés dans ce fichier. Le f
 
 - le produit anciennement présenté comme « Étude » porte désormais le nom public **Dowze Academie** ;
 - les anciens identifiants de stockage et de bundle restent conservés pour la compatibilité des données.
+- une release GitHub construit désormais macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64, avec sommes de contrôle SHA-256.

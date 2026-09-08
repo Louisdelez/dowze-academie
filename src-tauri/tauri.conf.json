@@ -35,13 +35,16 @@
     "active": true,
     "targets": "all",
     "publisher": "Louis Délez",
-    "homepage": "https://dowze.academie.ch",
+    "homepage": "https://github.com/Louisdelez/dowze-academie",
     "copyright": "Copyright © 2026 Louis Délez",
     "license": "MIT",
     "licenseFile": "../LICENSE",
     "category": "Education",
-    "shortDescription": "Cursus, planning, notes et apprentissage assisté par IA sur macOS.",
-    "longDescription": "Application macOS local-first pour organiser un cursus structuré, suivre sa progression et travailler avec plusieurs assistants IA contextuels.",
+    "shortDescription": "Cursus, planning, notes et apprentissage assisté par IA sur ordinateur.",
+    "longDescription": "Application de bureau local-first pour organiser un cursus structuré, suivre sa progression et travailler avec plusieurs assistants IA contextuels.",
+    "macOS": {
+      "signingIdentity": "-"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

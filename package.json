@@ -2,10 +2,10 @@
   "name": "dowze-academie",
   "private": true,
   "version": "0.1.0",
-  "description": "Application macOS local-first pour organiser cursus, planning, notes, évaluations et assistants IA contextuels.",
+  "description": "Application de bureau local-first pour organiser cursus, planning, notes, évaluations et assistants IA contextuels.",
   "author": "Louis Délez",
   "license": "MIT",
-  "homepage": "https://dowze.academie.ch",
+  "homepage": "https://github.com/Louisdelez/dowze-academie",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Louisdelez/dowze-academie.git"

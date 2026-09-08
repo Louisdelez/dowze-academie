@@ -18,10 +18,9 @@ try {
 
   const section = page.getByRole("region", { name: "Compte Google" });
   await section.waitFor();
-  await section.getByText("Session du navigateur intégré sur ce Mac", { exact: true }).waitFor();
+  await section.getByText("Session du navigateur intégré sur cet appareil", { exact: true }).waitFor();
   assert.equal(await section.getByText(/Dowze Academie ne lit ni votre adresse e-mail/).count(), 1);
   assert.equal(await section.getByText(/Chaque service garde sa propre connexion/).count(), 1);
-  assert.equal(await section.getByText(/jamais le compte Google en ligne/).count(), 1);
   assert.equal(await section.getByText(/Connecté à Google/).count(), 0);
 
   await page.evaluate(() => {
@@ -44,23 +43,11 @@ try {
   ).waitFor();
 
   const removeButton = section.getByRole("button", { name: "Retirer Google de Dowze Academie…" });
-  await removeButton.click();
-  let removalDialog = page.getByRole("dialog", { name: "Retirer Google de Dowze Academie ?" });
-  await assertDialogConfinedToWorkspace(page, removalDialog, "La confirmation de retrait Google");
-  await removalDialog.getByText(/Cette action supprime de l’application les cookies, caches et données locales Google/).waitFor();
-  await removalDialog.getByText(/pour tous les profils Dowze Academie de ce Mac/).waitFor();
-  await removalDialog.getByText(/Google, Gemini, NotebookLM et YouTube seront déconnectés/).waitFor();
-  await removalDialog.getByText(/Votre compte Google en ligne ne sera pas supprimé/).waitFor();
-  await removalDialog.getByText(/Les sessions propres de ChatGPT, Claude et Duolingo resteront enregistrées/).waitFor();
-  await removalDialog.getByRole("button", { name: "Annuler" }).click();
-  await removalDialog.waitFor({ state: "detached" });
-
-  await removeButton.click();
-  removalDialog = page.getByRole("dialog", { name: "Retirer Google de Dowze Academie ?" });
-  await removalDialog.getByRole("button", { name: "Retirer de l’application" }).click();
-  await page.getByRole("alert").filter({ hasText: "La suppression de la session Google est disponible dans l’application Dowze Academie sur macOS." }).waitFor();
-  assert.equal(await removalDialog.count(), 1);
-  await removalDialog.getByRole("button", { name: "Annuler" }).click();
+  await section.getByText(
+    "La suppression ciblée des données Google intégrées est actuellement disponible sur macOS uniquement.",
+    { exact: true }
+  ).waitFor();
+  assert.equal(await removeButton.isDisabled(), true);
 
   await page.evaluate(() => {
     window.__etudeTauriInvokeCalls = [];
@@ -68,6 +55,9 @@ try {
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args) => {
         window.__etudeTauriInvokeCalls.push([command, args]);
+        if (command === "native_capabilities") {
+          return { platform: "macos", googleWebProfileRemoval: true };
+        }
         if (command === "remove_google_web_profile") {
           if (window.__etudeGoogleRemovalOutcome === "failure") {
             throw new Error("Échec simulé après fermeture des fenêtres web.");
@@ -78,6 +68,24 @@ try {
       }
     };
   });
+  await page.getByLabel("Accueil", { exact: true }).click();
+  await page.getByLabel("Réglages", { exact: true }).click();
+  await section.getByText(
+    "Retirer efface uniquement les données Google conservées dans Dowze Academie, jamais le compte Google en ligne.",
+    { exact: true }
+  ).waitFor();
+  assert.equal(await removeButton.isEnabled(), true);
+
+  await removeButton.click();
+  let removalDialog = page.getByRole("dialog", { name: "Retirer Google de Dowze Academie ?" });
+  await assertDialogConfinedToWorkspace(page, removalDialog, "La confirmation de retrait Google");
+  await removalDialog.getByText(/Cette action supprime de l’application les cookies, caches et données locales Google/).waitFor();
+  await removalDialog.getByText(/pour tous les profils Dowze Academie de cet appareil/).waitFor();
+  await removalDialog.getByText(/Google, Gemini, NotebookLM et YouTube seront déconnectés/).waitFor();
+  await removalDialog.getByText(/Votre compte Google en ligne ne sera pas supprimé/).waitFor();
+  await removalDialog.getByText(/Les sessions propres de ChatGPT, Claude et Duolingo resteront enregistrées/).waitFor();
+  await removalDialog.getByRole("button", { name: "Annuler" }).click();
+  await removalDialog.waitFor({ state: "detached" });
 
   await removeButton.click();
   removalDialog = page.getByRole("dialog", { name: "Retirer Google de Dowze Academie ?" });

@@ -1,5 +1,5 @@
 import {
-  Apple,
+  CalendarDays,
   Download,
   ExternalLink,
   Info,
@@ -19,7 +19,7 @@ import {
 import { formatCalendarDate } from "../lib/date";
 import {
   isTauri,
-  openCalendarInApple,
+  openCalendarInSystem,
   openGoogleCalendarImport,
   saveCalendarIcs
 } from "../lib/tauri";
@@ -30,7 +30,7 @@ const CALENDAR_NAME = "Dowze Academie — Année 1";
 const CALENDAR_FILENAME = "Dowze-Academie-Planning-2026-2027.ics";
 const GOOGLE_ICS_MAX_BYTES = 1_000_000;
 
-type TransferAction = "apple" | "google" | "file";
+type TransferAction = "system" | "google" | "file";
 
 function calendarRange(events: CalendarEvent[]) {
   if (!events.length) return "Aucun événement sélectionné";
@@ -82,13 +82,13 @@ export function CalendarExportModal({
     setBusy(action);
     setFeedback(null);
     try {
-      if (action === "apple") {
-        await openCalendarInApple(payload);
+      if (action === "system") {
+        await openCalendarInSystem(payload);
         setFeedback({
           tone: "success",
           text: isTauri()
-            ? "Calendrier Apple ouvert. Choisis le calendrier iCloud ou Google dans lequel importer Dowze Academie."
-            : "Le fichier .ics a été téléchargé. Ouvre-le avec Calendrier sur ton Mac."
+            ? "Le fichier a été ouvert avec l’application de calendrier de cet appareil. Choisis le calendrier dans lequel importer Dowze Academie."
+            : "Le fichier .ics a été téléchargé. Ouvre-le avec ton application de calendrier."
         });
       } else if (action === "google") {
         if (googleFileTooLarge) {
@@ -119,7 +119,7 @@ export function CalendarExportModal({
   return (
     <Modal
       title="Envoyer le planning"
-      subtitle="Apple Calendar, Google Calendar ou fichier iCalendar universel"
+      subtitle="Calendrier de l’appareil, Google Calendar ou fichier iCalendar universel"
       onClose={busy ? () => undefined : onClose}
       size="lg"
     >
@@ -168,17 +168,17 @@ export function CalendarExportModal({
 
         <div className="calendar-export-providers">
           <article className="calendar-export-provider calendar-export-provider--apple">
-            <span className="calendar-export-provider-logo"><Apple /></span>
+            <span className="calendar-export-provider-logo"><CalendarDays /></span>
             <div>
-              <strong>Apple Calendar</strong>
-              <p>Ouvre le fichier directement dans Calendrier, puis choisis un calendrier iCloud, Google ou local.</p>
+              <strong>Calendrier de l’appareil</strong>
+              <p>Ouvre le fichier directement dans ton application de calendrier par défaut.</p>
             </div>
             <button
               className="primary-button"
               disabled={!selectedEvents.length || busy !== null}
-              onClick={() => void transfer("apple")}
+              onClick={() => void transfer("system")}
             >
-              {busy === "apple" ? <LoaderCircle className="is-spinning" /> : <Apple />}
+              {busy === "system" ? <LoaderCircle className="is-spinning" /> : <CalendarDays />}
               {isTauri() ? "Ouvrir dans Calendrier" : "Télécharger .ics"}
             </button>
           </article>

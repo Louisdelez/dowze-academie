@@ -8,7 +8,7 @@ flowchart LR
     R --> P[Stockage profil local]
     R -->|IPC validé| T[Noyau Tauri et Rust]
     T --> A[AppData et PDF privés]
-    T --> K[Trousseau macOS]
+    T --> K[Coffre sécurisé du système]
     T --> W[WebViews distantes sans permission Tauri]
     T --> C[API choisie ou Ollama local]
 ```
@@ -45,7 +45,7 @@ Les pages de fournisseurs sont chargées dans des WebViews séparées sans permi
 
 ### Persistance
 
-Les données fonctionnelles sont préfixées par profil. Le registre de comptes natif conserve des vérificateurs Argon2id et s’écrit de façon atomique. Les PDF archivés sont rangés par compte et par évaluation. Les clés API et la reconnexion facultative utilisent le Trousseau macOS.
+Les données fonctionnelles sont préfixées par profil. Le registre de comptes natif conserve des vérificateurs Argon2id et s’écrit de façon atomique. Les PDF archivés sont rangés par compte et par évaluation. Les clés API et la reconnexion facultative utilisent le backend natif de `keyring` : Trousseau macOS, Gestionnaire d’identifiants Windows ou Secret Service Linux persistant. Aucun backend mock n’est activé dans les builds pris en charge.
 
 Les identifiants historiques `etude.*`, `com.etude.*`, l’UID iCalendar et le bundle ID `com.etude.desktop` restent volontairement présents après le renommage. Ils assurent la continuité des profils, secrets et événements déjà créés ; ce ne sont pas les noms publics actuels du produit.
 
@@ -55,4 +55,10 @@ Le frontend ne contacte pas directement les API distantes. Il transmet la requê
 
 ## Mode navigateur
 
-`npm run dev` sert à travailler sur l’interface. Les fonctions natives y utilisent des adaptations de développement : elles ne représentent ni le stockage Argon2id natif, ni le Trousseau, ni l’isolation des fichiers, ni le comportement réel de WKWebView.
+`npm run dev` sert à travailler sur l’interface. Les fonctions natives y utilisent des adaptations de développement : elles ne représentent ni le stockage Argon2id natif, ni le coffre sécurisé, ni l’isolation des fichiers, ni le comportement réel des WebViews système.
+
+## Portabilité et livraison
+
+Les intégrations propres à macOS restent derrière des gardes `cfg(target_os = "macos")`. La suppression ciblée des données Google utilise ainsi les API WebKit natives sur macOS et est annoncée indisponible sur les autres systèmes. Les opérations portables — profils, fichiers, PDF, calendrier, réseau et coffre sécurisé — sont compilées nativement sur les quatre jobs du workflow de release.
+
+Les artefacts publics sont construits par GitHub Actions sur des runners macOS ARM64, macOS Intel, Windows x64 et Linux x64. La release reste en brouillon jusqu’à la réussite de toute la matrice et à la création d’un manifeste SHA-256.

@@ -6,12 +6,12 @@ Dowze Academie privilégie le stockage local, mais peut communiquer avec des ser
 
 | Donnée | Stockage ou destination | Portée |
 | --- | --- | --- |
-| Profil, progression, planning, tâches, notes et résultats | Stockage local du Mac | Profil Dowze Academie |
+| Profil, progression, planning, tâches, notes et résultats | Stockage local de l’appareil | Profil Dowze Academie |
 | Vérificateur du mot de passe | Registre natif privé, sous forme Argon2id | Compte local |
-| Identifiants de reconnexion, si activée | Trousseau macOS | Application sur ce Mac |
-| Clés API du Chat libre | Trousseau macOS | Application sur ce Mac |
+| Identifiants de reconnexion, si activée | Coffre sécurisé du système | Application sur cet appareil |
+| Clés API du Chat libre | Coffre sécurisé du système | Application sur cet appareil |
 | Conversations du Chat libre | Données locales, puis backend choisi à l’envoi | Profil local et fournisseur choisi |
-| Cookies et sessions des sites | Profil WKWebView persistant | Application sur ce Mac |
+| Cookies et sessions des sites | Profil persistant de la WebView native | Application sur cet appareil |
 | PDF archivés | Dossier privé géré par Tauri | Profil et évaluation |
 | Export JSON | Emplacement explicitement choisi | Fichier utilisateur |
 
@@ -19,7 +19,7 @@ Dowze Academie privilégie le stockage local, mais peut communiquer avec des ser
 
 Les comptes ne sont pas synchronisés avec un serveur Dowze Academie. Le registre natif stocke un vérificateur Argon2id, pas le mot de passe en clair. Sans l’option de reconnexion, la session disparaît avec le processus de l’application.
 
-Lorsque **Se souvenir de moi sur ce Mac** est activé, l’identifiant, le mot de passe et l’identifiant interne du compte sont conservés comme secret dans le Trousseau macOS. Ils servent à refaire une authentification Argon2id au prochain lancement. Toute personne pouvant ouvrir la session macOS déverrouillée peut alors potentiellement accéder au profil tant que cette option n’a pas été révoquée.
+Lorsque **Se souvenir de moi sur cet appareil** est activé, l’identifiant, le mot de passe et l’identifiant interne du compte sont conservés comme secret dans le coffre du système : Trousseau macOS, Gestionnaire d’identifiants Windows ou service Secret Service Linux. Ils servent à refaire une authentification Argon2id au prochain lancement. Toute personne pouvant ouvrir la session système déverrouillée peut alors potentiellement accéder au profil tant que cette option n’a pas été révoquée. Sous Linux, l’opération échoue explicitement si aucun service Secret Service persistant et déverrouillé n’est disponible.
 
 Il n’existe pas encore de récupération distante. Perdre le mot de passe d’un compte non mémorisé peut rendre son espace inaccessible.
 
@@ -27,15 +27,15 @@ Il n’existe pas encore de récupération distante. Perdre le mot de passe d’
 
 Les données fonctionnelles et les PDF sont séparés par identifiant de profil. Les changements de compte ferment le panneau distant afin d’éviter d’afficher à un profil une page laissée ouverte par le précédent.
 
-Les cookies des fournisseurs web et les clés API restent toutefois des réglages de l’application sur le Mac, pas des secrets séparés par profil Dowze Academie. Un utilisateur partageant la même session macOS doit se déconnecter des services tiers s’il ne souhaite pas réutiliser leurs sessions.
+Les cookies des fournisseurs web et les clés API restent toutefois des réglages de l’application sur l’appareil, pas des secrets séparés par profil Dowze Academie. Un utilisateur partageant la même session système doit se déconnecter des services tiers s’il ne souhaite pas réutiliser leurs sessions.
 
 ## Services web intégrés
 
 Les pages distantes s’exécutent dans des WebViews sans permission Tauri. Dowze Academie n’enregistre pas leurs mots de passe ou messages. Chaque fournisseur reste responsable de son service, de ses cookies et de sa politique de confidentialité.
 
-Le profil WKWebView n’est pas celui de Safari ou Chrome. Le bouton d’ouverture dans le navigateur système ne transfère aucun cookie vers l’application.
+Le profil de la WebView native n’est pas celui du navigateur système. Le bouton d’ouverture dans le navigateur système ne transfère aucun cookie vers l’application.
 
-La suppression Google cible les données WebKit liées à une liste fermée de domaines Google et YouTube. Elle ne supprime pas le compte en ligne et ne garantit pas la déconnexion des sessions propres aux domaines d’autres fournisseurs.
+Sur macOS, la suppression Google cible les données WebKit liées à une liste fermée de domaines Google et YouTube. Elle ne supprime pas le compte en ligne et ne garantit pas la déconnexion des sessions propres aux domaines d’autres fournisseurs. Cette commande est désactivée sous Windows et Linux tant qu’une suppression ciblée équivalente n’est pas implémentée.
 
 ## Chat libre
 

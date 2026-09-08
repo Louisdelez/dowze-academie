@@ -52,7 +52,7 @@ try {
   );
   await page.getByText("Local, sans cloud", { exact: true }).waitFor();
   await page.getByText(
-    "Ce compte fonctionne uniquement sur ce Mac. Il ne synchronise aucune donnée en ligne.",
+    "Ce compte fonctionne uniquement sur cet appareil. Il ne synchronise aucune donnée en ligne.",
     { exact: true }
   ).waitFor();
   assert.equal(await page.locator(".app-shell").count(), 0, "L’espace d’étude ne doit pas être monté avant connexion.");
@@ -132,7 +132,7 @@ try {
   });
   await rememberCheckbox.waitFor();
   assert.equal(await rememberCheckbox.isChecked(), false, "La case doit être décochée par défaut.");
-  await page.getByText("Se souvenir de moi sur ce Mac", { exact: true }).waitFor();
+  await page.getByText("Se souvenir de moi sur cet appareil", { exact: true }).waitFor();
   await page.getByText(
     "Prévisualisation : la session de test reste dans ce navigateur.",
     { exact: true }

@@ -59,7 +59,7 @@ export function dateAtTimeZone(
   let instant = desired;
 
   // Deux itérations gèrent aussi le changement de décalage été/hiver autour
-  // de la date recherchée, sans dépendre du fuseau configuré sur le Mac.
+  // de la date recherchée, sans dépendre du fuseau configuré sur l’appareil.
   for (let index = 0; index < 3; index += 1) {
     const parts = zonedDateParts(new Date(instant), timeZone);
     const represented = Date.UTC(

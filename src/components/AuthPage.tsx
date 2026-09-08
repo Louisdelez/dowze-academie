@@ -182,10 +182,10 @@ export function AuthPage({
                     aria-label="Se souvenir de moi"
                   />
                   <span>
-                    <strong>Se souvenir de moi sur ce Mac</strong>
+                    <strong>Se souvenir de moi sur cet appareil</strong>
                     <small>
                       {isTauri()
-                        ? "Identifiant et mot de passe protégés dans le Trousseau macOS."
+                        ? "Identifiant et mot de passe protégés dans le coffre sécurisé du système."
                         : "Prévisualisation : la session de test reste dans ce navigateur."}
                     </small>
                   </span>
@@ -212,7 +212,7 @@ export function AuthPage({
 
             <div className="auth-local-note">
               <ShieldCheck aria-hidden="true" />
-              <p><strong>Local, sans cloud</strong><span>Ce compte fonctionne uniquement sur ce Mac. Il ne synchronise aucune donnée en ligne.</span></p>
+              <p><strong>Local, sans cloud</strong><span>Ce compte fonctionne uniquement sur cet appareil. Il ne synchronise aucune donnée en ligne.</span></p>
             </div>
           </div>
         </div>
