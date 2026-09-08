@@ -1,0 +1,28 @@
+# Dependencies and generated builds
+node_modules/
+dist/
+src-tauri/target/
+
+# Local environment and tooling
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+.DS_Store
+.idea/
+.vscode/
+playwright-report/
+test-results/
+
+# Private project handoff and unrelated local workspaces
+AGENTS.md
+PROJECT_MEMORY.md
+build-projects/
+learning-data/
+pro-exemplars/
+refinement-sessions/
+voxel-flow/

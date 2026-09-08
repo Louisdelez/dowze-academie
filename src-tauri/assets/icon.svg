@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Dowze Academie">
+  <rect width="512" height="512" rx="112" fill="#3457d5"/>
+  <path d="M151 116h210a35 35 0 0 1 35 35v210a35 35 0 0 1-35 35H151a35 35 0 0 1-35-35V151a35 35 0 0 1 35-35Z" fill="#fff"/>
+  <path d="M186 177h140M186 256h140M186 335h94" fill="none" stroke="#3457d5" stroke-linecap="round" stroke-width="28"/>
+</svg>
