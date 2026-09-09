@@ -12,6 +12,7 @@ Dowze Academie privilégie le stockage local, mais peut communiquer avec des ser
 | Clés API du Chat libre | Coffre sécurisé du système | Application sur cet appareil |
 | Conversations du Chat libre | Données locales, puis backend choisi à l’envoi | Profil local et fournisseur choisi |
 | Cookies et sessions des sites | Profil persistant de la WebView native | Application sur cet appareil |
+| Audio capté lorsqu’une fonction vocale d’un site est utilisée | Service web choisi dans la WebView, après autorisation système | Fournisseur choisi |
 | PDF archivés | Dossier privé géré par Tauri | Profil et évaluation |
 | Export JSON | Emplacement explicitement choisi | Fichier utilisateur |
 
@@ -33,9 +34,11 @@ Les cookies des fournisseurs web et les clés API restent toutefois des réglage
 
 Les pages distantes s’exécutent dans des WebViews sans permission Tauri. Dowze Academie n’enregistre pas leurs mots de passe ou messages. Chaque fournisseur reste responsable de son service, de ses cookies et de sa politique de confidentialité.
 
+Les fonctions de dictée et de conversation vocale appartiennent aux sites. Sur macOS, seul un clic dans la WebView locale principale sur le bouton microphone de la barre du panneau peut appeler le pont AVFoundation de Dowze Academie. Si l’état est encore indéterminé, macOS affiche alors son consentement ; après accord, l’application recharge la page pour que WebKit remette l’accès au service compatible. Cette activation ne démarre pas le microphone et un refus n’empêche pas l’usage textuel du site. Lorsqu’une fonction vocale est ensuite utilisée, le site actif traite l’audio selon sa propre politique. Dowze Academie n’archive pas le son et ne reçoit ni l’audio ni sa transcription. L’autorisation vaut pour toute l’application et peut être retirée dans **Réglages Système → Confidentialité et sécurité → Microphone**.
+
 Le profil de la WebView native n’est pas celui du navigateur système. Le bouton d’ouverture dans le navigateur système ne transfère aucun cookie vers l’application.
 
-Sur macOS, la suppression Google cible les données WebKit liées à une liste fermée de domaines Google et YouTube. Elle ne supprime pas le compte en ligne et ne garantit pas la déconnexion des sessions propres aux domaines d’autres fournisseurs. Cette commande est désactivée sous Windows et Linux tant qu’une suppression ciblée équivalente n’est pas implémentée.
+Sur macOS, la suppression Google cible les données WebKit liées à une liste fermée de domaines Google et YouTube, y compris les vidéos intégrées via le domaine YouTube sans cookies. Elle ne supprime pas le compte en ligne et ne garantit pas la déconnexion des sessions propres aux domaines d’autres fournisseurs, notamment Khan Academy. Cette commande est désactivée sous Windows et Linux tant qu’une suppression ciblée équivalente n’est pas implémentée.
 
 ## Chat libre
 

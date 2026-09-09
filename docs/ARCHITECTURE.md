@@ -43,6 +43,8 @@ La fenêtre principale charge uniquement le bundle local. Elle possède les capa
 
 Les pages de fournisseurs sont chargées dans des WebViews séparées sans permission Tauri. La navigation, les nouvelles fenêtres, les téléchargements et les domaines sensibles sont filtrés côté Rust. Une transition de compte ferme les contenus distants avant d’afficher le profil suivant.
 
+Sur macOS, l’accès vocal sépare trois frontières : seul le frontend local peut invoquer la demande TCC AVFoundation de l’application hôte, Wry décide ensuite de la permission média de l’origine WebKit, et la page distante ne reçoit toujours aucune permission Tauri. La demande native ne capture aucun son ; seule une fonction vocale déclenchée ensuite dans le site peut ouvrir le microphone.
+
 ### Persistance
 
 Les données fonctionnelles sont préfixées par profil. Le registre de comptes natif conserve des vérificateurs Argon2id et s’écrit de façon atomique. Les PDF archivés sont rangés par compte et par évaluation. Les clés API et la reconnexion facultative utilisent le backend natif de `keyring` : Trousseau macOS, Gestionnaire d’identifiants Windows ou Secret Service Linux persistant. Aucun backend mock n’est activé dans les builds pris en charge.

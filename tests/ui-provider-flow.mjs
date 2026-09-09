@@ -4,7 +4,7 @@ import { bootstrapAuthenticatedPage } from "./browser-auth-helpers.mjs";
 
 const baseUrl = process.env.ETUDE_TEST_URL ?? "http://127.0.0.1:1420";
 const screenshotPath = process.env.ETUDE_PROVIDER_SCREENSHOT ?? "/tmp/etude-services-history.png";
-const menuScreenshotPath = process.env.ETUDE_PROVIDER_MENU_SCREENSHOT ?? "/tmp/etude-duolingo-menu.png";
+const menuScreenshotPath = process.env.ETUDE_PROVIDER_MENU_SCREENSHOT ?? "/tmp/etude-services-menu.png";
 
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
@@ -55,11 +55,11 @@ try {
   );
   for (const expected of [
     "ChatGPT", "Claude", "Gemini", "Mistral", "DeepSeek", "Kimi", "Chat libre",
-    "Duolingo", "YouTube", "TikTok", "NotebookLM"
+    "Duolingo", "Khan Academy", "YouTube", "TikTok", "NotebookLM"
   ]) {
     assert.ok(providerLabels.includes(expected), `${expected} absent du menu`);
   }
-  assert.equal(providerLabels.length, 11);
+  assert.equal(providerLabels.length, 12);
   const triggerBox = await providerTrigger.boundingBox();
   const menuBox = await providerMenu.boundingBox();
   const notebookOptionBox = await providerMenu.getByRole("option", { name: "NotebookLM", exact: true }).boundingBox();
@@ -68,7 +68,7 @@ try {
   assert.ok(menuBox.y >= triggerBox.y + triggerBox.height - 1, `${menuBox.y} < ${triggerBox.y + triggerBox.height}`);
   assert.ok(
     notebookOptionBox.y + notebookOptionBox.height <= 760,
-    "Les onze services, dont NotebookLM, doivent rester visibles sans déborder à la hauteur minimale."
+    "Les douze services, dont Khan Academy et NotebookLM, doivent rester visibles sans déborder à la hauteur minimale."
   );
   await page.screenshot({ path: menuScreenshotPath, fullPage: true });
   await page.keyboard.press("Escape");
@@ -151,7 +151,19 @@ try {
     return entries.filter((entry) => entry.provider === "duolingo").length;
   }, conversationsStorageKey), 0);
 
-  await selectProvider("Duolingo", "NotebookLM");
+  await selectProvider("Duolingo", "Khan Academy");
+  await page.getByText("Cours et exercices · Khan Academy", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Accueil Khan Academy" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Associer la conversation" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Consigne" }).count(), 0);
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "NE_PAS_REMPLACER_DUOLINGO");
+  assert.equal(await page.evaluate((storageKey) => localStorage.getItem(storageKey), storage.provider), '"khanacademy"');
+  assert.equal(await page.evaluate((storageKey) => {
+    const entries = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+    return entries.filter((entry) => entry.provider === "khanacademy").length;
+  }, conversationsStorageKey), 0);
+
+  await selectProvider("Khan Academy", "NotebookLM");
   await page.getByText(`Contexte NotebookLM · Cours · ${lessonOne}`, { exact: true }).waitFor();
   const notebookContext = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(notebookContext, /# CADRE DE TRAVAIL — NOTEBOOKLM/);

@@ -83,7 +83,7 @@ try {
   await removalDialog.getByText(/pour tous les profils Dowze Academie de cet appareil/).waitFor();
   await removalDialog.getByText(/Google, Gemini, NotebookLM et YouTube seront déconnectés/).waitFor();
   await removalDialog.getByText(/Votre compte Google en ligne ne sera pas supprimé/).waitFor();
-  await removalDialog.getByText(/Les sessions propres de ChatGPT, Claude et Duolingo resteront enregistrées/).waitFor();
+  await removalDialog.getByText(/Les sessions propres de ChatGPT, Claude, Duolingo et Khan Academy resteront enregistrées/).waitFor();
   await removalDialog.getByRole("button", { name: "Annuler" }).click();
   await removalDialog.waitFor({ state: "detached" });
 

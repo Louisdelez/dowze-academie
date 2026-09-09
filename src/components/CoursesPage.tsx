@@ -54,6 +54,7 @@ function providerMark(provider: Conversation["provider"]) {
     case "kimi": return "KI";
     case "freechat": return "FL";
     case "duolingo": return "DU";
+    case "khanacademy": return "KA";
     case "youtube": return "YT";
     case "tiktok": return "TK";
     case "notebooklm": return "NB";
@@ -62,6 +63,7 @@ function providerMark(provider: Conversation["provider"]) {
 
 function historySessionLabel(conversation: Conversation) {
   if (conversation.provider === "duolingo") return "Pratique Duolingo";
+  if (conversation.provider === "khanacademy") return "Ressource Khan Academy";
   if (conversation.provider === "youtube") return "Recherche YouTube";
   if (conversation.provider === "tiktok") return "Recherche TikTok";
   if (conversation.provider === "notebooklm") return "NotebookLM";
@@ -266,6 +268,7 @@ export function CoursesPage({
         conversation.kind === "general" ||
         conversation.lessonMode !== "chapter-test" ||
         conversation.provider === "duolingo" ||
+        conversation.provider === "khanacademy" ||
         conversation.provider === "youtube" ||
         conversation.provider === "tiktok" ||
         conversation.provider === "notebooklm" ||
@@ -869,6 +872,7 @@ export function CoursesPage({
                   const lessonMode = conversation.lessonMode ?? "course";
                   const isAssessment = conversation.kind === "lesson" &&
                     conversation.provider !== "duolingo" &&
+                    conversation.provider !== "khanacademy" &&
                     conversation.provider !== "youtube" &&
                     conversation.provider !== "tiktok" &&
                     conversation.provider !== "notebooklm" &&

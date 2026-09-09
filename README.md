@@ -19,7 +19,7 @@ La version actuelle embarque l’Année 1 « Ingénierie de l’énergie & physi
 - **Planning académique** — vues année, mois, semaine et jour, événements personnels, tâches et export iCalendar vers le calendrier de l’appareil ou Google Agenda.
 - **Évaluations sur papier** — préparation de sujets et corrigés PDF, archivage local des copies, notes sur 20, coefficients et appréciations.
 - **Espace de notes** — éditeur Markdown visuel, onglets globaux, tags et association d’une même note à plusieurs matières.
-- **Assistants au choix** — pages officielles de plusieurs services dans une WebView native persistante, plus un Chat libre pour des API compatibles ou Ollama local.
+- **Assistants au choix** — pages officielles de plusieurs services dans une WebView native persistante, fonctions vocales propres aux sites après autorisation du microphone, plus un Chat libre pour des API compatibles ou Ollama local.
 - **Profils locaux** — comptes protégés par Argon2id, espaces de travail séparés et reconnexion facultative via le coffre sécurisé du système.
 
 ## Confidentialité en bref
@@ -31,6 +31,8 @@ La version actuelle embarque l’Année 1 « Ingénierie de l’énergie & physi
 - les clés du Chat libre et, avec consentement, les identifiants de reconnexion sont stockés dans le Trousseau macOS, le Gestionnaire d’identifiants Windows ou un service Secret Service sous Linux ;
 - un message envoyé dans le Chat libre est transmis uniquement au fournisseur configuré, ou à Ollama sur `127.0.0.1` ;
 - les sites ouverts dans la WebView appliquent leurs propres politiques de compte, de cookies et de confidentialité.
+
+Sur macOS, le bouton microphone de la barre du panneau web demande explicitement l’autorisation système avec AVFoundation, puis recharge le service après accord. Cette activation ne démarre aucun enregistrement et vaut pour tous les services web intégrés compatibles. Lorsqu’une dictée ou une conversation vocale est ensuite lancée dans un site, Dowze Academie ne reçoit ni ne conserve l’audio ou sa transcription ; leur traitement et leur disponibilité restent ceux du fournisseur choisi. Ce pont natif fait partie des changements non publiés postérieurs à la version 0.1.0.
 
 Les comptes Dowze Academie n’ont actuellement ni serveur, ni synchronisation cloud, ni récupération distante. Consultez la [documentation de confidentialité et de sécurité](./docs/CONFIDENTIALITE.md) avant d’utiliser un service tiers.
 
@@ -133,4 +135,4 @@ La liste détaillée se trouve dans [Limites connues](./docs/LIMITES.md).
 
 Le code et les ressources de ce dépôt sont distribués sous [licence MIT](./LICENSE), copyright © 2026 Louis Délez.
 
-Les noms ChatGPT, Claude, Gemini, Mistral, DeepSeek, Kimi, Duolingo, YouTube, TikTok, NotebookLM, Apple et Google appartiennent à leurs titulaires respectifs. Dowze Academie est un projet indépendant, sans affiliation ni approbation de leur part.
+Les noms ChatGPT, Claude, Gemini, Mistral, DeepSeek, Kimi, Duolingo, Khan Academy, YouTube, TikTok, NotebookLM, Apple et Google appartiennent à leurs titulaires respectifs. Dowze Academie est un projet indépendant, sans affiliation ni approbation de leur part.

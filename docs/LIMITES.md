@@ -6,6 +6,7 @@ Cette liste décrit les limites de Dowze Academie 0.1.0. Elles font partie du p�
 
 - La release GitHub fournit des builds natifs pour macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64 ; elle ne couvre pas encore Windows ARM ni Linux ARM.
 - Les applications macOS utilisent une signature ad hoc, sans certificat Apple Developer ID ni notarisation. Gatekeeper peut demander une autorisation explicite.
+- Comme l'identité d'une signature ad hoc peut changer après une reconstruction, macOS peut redemander l'autorisation du microphone sur un nouveau bundle de développement. Une distribution signée avec Developer ID fournirait une identité durable.
 - L’installateur Windows n’est pas signé et Microsoft Defender SmartScreen peut afficher un avertissement. Les paquets Linux ne disposent pas d’une signature de dépôt.
 - Aucun mécanisme de mise à jour automatique n’est encore configuré.
 - La compilation CI prouve le packaging sur chaque système, pas tous les parcours réels avec un bureau, un trousseau déverrouillé et des comptes tiers. Les intégrations Windows et Linux demandent encore une validation manuelle approfondie.
@@ -33,6 +34,8 @@ Cette liste décrit les limites de Dowze Academie 0.1.0. Elles font partie du p�
 - La réutilisation réelle d’une session Google par chaque fournisseur et sa suppression WebKit doivent encore être vérifiées manuellement avec un vrai compte.
 - La suppression ciblée des données Google intégrées est disponible uniquement sur macOS ; elle est désactivée sous Windows et Linux afin de ne jamais effacer globalement des sessions qui ne sont pas dans la liste autorisée.
 - Les automatismes d’insertion ou de capture de lien dépendent de pages tierces qui peuvent évoluer.
+- Khan Academy est proposé sur son accueil français comme plateforme autonome. Le menu, le routage et les sous-cadres nécessaires aux exercices et vidéos sont couverts automatiquement, mais un parcours complet avec un vrai compte dans WKWebView reste à vérifier manuellement ; le navigateur système demeure le secours.
+- Sur macOS, un bouton local demande explicitement le consentement microphone via AVFoundation puis recharge le panneau ; après accord, WebKit peut remettre l’accès au site compatible. Cela ne garantit pas qu’un fournisseur expose ou accepte sa dictée, ses appels vocaux ou ses exercices de prononciation dans WKWebView : le compte, l’offre, le déploiement et les politiques du service restent déterminants, et un refus laisse l’usage textuel disponible. Le comportement WebView2 reste à vérifier sous Windows. Sous Linux, le runtime Tauri/Wry actuel ne traite pas encore la demande `getUserMedia` de WebKitGTK, refusée par défaut ; le navigateur système reste nécessaire tant qu’un gestionnaire natif ou une mise à niveau compatible n’est pas intégré.
 
 ## IA et évaluations
 
@@ -47,7 +50,7 @@ Cette liste décrit les limites de Dowze Academie 0.1.0. Elles font partie du p�
 - Le calendrier d’évaluations n’est pas celui d’un établissement officiel.
 - Les niveaux d’anglais sont alignés sur le CECRL mais ne sont pas certifiants.
 - Les évaluations papier d’anglais ne mesurent pas à elles seules l’écoute, la parole spontanée ou la prononciation.
-- Les exercices vocaux Duolingo peuvent nécessiter le navigateur système, la WebView ne demandant pas actuellement une autorisation microphone globale.
+- Les exercices vocaux de plateformes comme Duolingo restent soumis à leurs propres contrôles de compatibilité ; le navigateur système demeure le secours lorsqu’un site refuse ou limite la WebView intégrée.
 
 ## Éditeur et cursus
 

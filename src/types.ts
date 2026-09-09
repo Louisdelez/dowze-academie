@@ -10,6 +10,7 @@ export type AiProvider =
   | "kimi"
   | "freechat"
   | "duolingo"
+  | "khanacademy"
   | "youtube"
   | "tiktok"
   | "notebooklm";

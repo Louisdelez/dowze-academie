@@ -60,6 +60,7 @@ import {
   isFreeChatProvider,
   isLanguagePracticeProvider,
   isNotebookProvider,
+  isStandaloneLearningProvider,
   isVideoProvider,
   supportsPromptInjection,
   videoSearchUrl
@@ -444,7 +445,7 @@ function isStoredAssessments(value: unknown): value is AssessmentRecord[] {
 
 const AI_PROVIDERS = new Set<AiProvider>([
   "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
-  "freechat", "duolingo", "youtube", "tiktok", "notebooklm"
+  "freechat", "duolingo", "khanacademy", "youtube", "tiktok", "notebooklm"
 ]);
 const HISTORY_PROVIDERS = new Set<AiProvider>([
   "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
@@ -945,7 +946,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   ) => {
     const subjectId = lesson?.subjectId ?? pendingRef.current?.subjectId ?? selectedSubjectId;
     const subject = subjectOverride ?? activeSubjects.find((candidate) => candidate.id === subjectId);
-    if (isLanguagePracticeProvider(targetProvider)) return false;
+    if (isStandaloneLearningProvider(targetProvider)) return false;
     const content = isVideoProvider(targetProvider)
       ? subject ? buildVideoSearchQuery(targetProvider, subject, lesson) : ""
       : isNotebookProvider(targetProvider)
@@ -1037,17 +1038,19 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       return;
     }
 
-    if (isLanguagePracticeProvider(forcedProvider)) {
+    if (isStandaloneLearningProvider(forcedProvider)) {
       pendingRef.current = null;
       setPendingCapture(null);
       addToast({
-        title: "Duolingo ouvert",
-        detail: "Ta pratique d’anglais est prête. Aucune consigne de cours n’est envoyée à Duolingo.",
+        title: `${providerLabel(forcedProvider)} ouvert`,
+        detail: isLanguagePracticeProvider(forcedProvider)
+          ? "Ta pratique d’anglais est prête. Aucune consigne de cours n’est envoyée à Duolingo."
+          : "La plateforme pédagogique officielle est prête. Aucune consigne de cours n’est envoyée à Khan Academy.",
         tone: "success"
       });
       scheduleAiAction(() => {
         void navigateAi(providerHome(forcedProvider)).catch((error) => {
-          addToast({ title: "Impossible d’ouvrir Duolingo", detail: String(error), tone: "warning" });
+          addToast({ title: `Impossible d’ouvrir ${providerLabel(forcedProvider)}`, detail: String(error), tone: "warning" });
         });
       }, 260);
       return;
@@ -1127,17 +1130,19 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       return;
     }
 
-    if (isLanguagePracticeProvider(forcedProvider)) {
+    if (isStandaloneLearningProvider(forcedProvider)) {
       pendingRef.current = null;
       setPendingCapture(null);
       addToast({
-        title: "Duolingo ouvert",
-        detail: "Cette pratique d’anglais reste indépendante de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée.",
+        title: `${providerLabel(forcedProvider)} ouvert`,
+        detail: isLanguagePracticeProvider(forcedProvider)
+          ? "Cette pratique d’anglais reste indépendante de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée."
+          : "Khan Academy reste indépendant de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée.",
         tone: "success"
       });
       scheduleAiAction(() => {
         void navigateAi(providerHome(forcedProvider)).catch((error) => {
-          addToast({ title: "Impossible d’ouvrir Duolingo", detail: String(error), tone: "warning" });
+          addToast({ title: `Impossible d’ouvrir ${providerLabel(forcedProvider)}`, detail: String(error), tone: "warning" });
         });
       }, 260);
       return;
@@ -1714,11 +1719,11 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     if (
       activeLesson &&
       ["chapter-test", "paper-assessment"].includes(activeLesson.lessonMode) &&
-      (isVideoProvider(next) || isNotebookProvider(next) || isLanguagePracticeProvider(next))
+      (isVideoProvider(next) || isNotebookProvider(next) || isStandaloneLearningProvider(next))
     ) {
       addToast({
         title: "Choisis un assistant IA pour cette évaluation",
-        detail: "Duolingo, YouTube, TikTok et NotebookLM servent à pratiquer ou consulter des ressources, pas à générer une épreuve papier.",
+        detail: "Duolingo, Khan Academy, YouTube, TikTok et NotebookLM servent à pratiquer ou consulter des ressources, pas à générer une épreuve papier.",
         tone: "warning"
       });
       return false;
@@ -1749,19 +1754,21 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       });
       return;
     }
-    if (isLanguagePracticeProvider(next)) {
+    if (isStandaloneLearningProvider(next)) {
       pendingRef.current = null;
       setPendingCapture(null);
       setProvider(next);
       setAiVisible(true);
       addToast({
-        title: "Duolingo ouvert",
-        detail: "Pratique l’anglais sur la page officielle, sans transmettre la consigne de ta séance Dowze Academie.",
+        title: `${providerLabel(next)} ouvert`,
+        detail: isLanguagePracticeProvider(next)
+          ? "Pratique l’anglais sur la page officielle, sans transmettre la consigne de ta séance Dowze Academie."
+          : "Explore les cours et exercices de la page officielle, sans transmettre la consigne de ta séance Dowze Academie.",
         tone: "success"
       });
       scheduleAiAction(() => {
         void navigateAi(providerHome(next)).catch((error) => {
-          addToast({ title: "Impossible d’ouvrir Duolingo", detail: String(error), tone: "warning" });
+          addToast({ title: `Impossible d’ouvrir ${providerLabel(next)}`, detail: String(error), tone: "warning" });
         });
       }, 220);
       return;

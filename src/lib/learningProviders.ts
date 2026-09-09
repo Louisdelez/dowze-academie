@@ -4,9 +4,13 @@ export type VideoProvider = Extract<AiProvider, "youtube" | "tiktok">;
 export type NotebookProvider = Extract<AiProvider, "notebooklm">;
 export type FreeChatProvider = Extract<AiProvider, "freechat">;
 export type LanguagePracticeProvider = Extract<AiProvider, "duolingo">;
+export type StandaloneLearningProvider = Extract<
+  AiProvider,
+  "duolingo" | "khanacademy"
+>;
 export type PromptInjectionProvider = Exclude<
   AiProvider,
-  VideoProvider | NotebookProvider | FreeChatProvider | LanguagePracticeProvider
+  VideoProvider | NotebookProvider | FreeChatProvider | StandaloneLearningProvider
 >;
 
 export const NOTEBOOKLM_CONTEXT_START = "<CONTEXTE_NOTEBOOKLM_DYNAMIQUE>";
@@ -40,6 +44,13 @@ export function isLanguagePracticeProvider(
   return provider === "duolingo";
 }
 
+/** Duolingo et Khan Academy restent autonomes, sans consigne ni historique IA. */
+export function isStandaloneLearningProvider(
+  provider: AiProvider
+): provider is StandaloneLearningProvider {
+  return provider === "duolingo" || provider === "khanacademy";
+}
+
 /**
  * Indique si la consigne pédagogique classique de la leçon peut être injectée
  * telle quelle. Les ressources autonomes ont leur propre fonctionnement.
@@ -50,7 +61,7 @@ export function supportsPromptInjection(
   return !isVideoProvider(provider) &&
     !isNotebookProvider(provider) &&
     !isFreeChatProvider(provider) &&
-    !isLanguagePracticeProvider(provider);
+    !isStandaloneLearningProvider(provider);
 }
 
 type ResolvedCurriculum = {

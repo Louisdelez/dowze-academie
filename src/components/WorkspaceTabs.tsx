@@ -74,8 +74,13 @@ export function WorkspaceTabs({
   };
 
   return (
-    <div className="workspace-tabs-shell">
-      <div className="workspace-tabs" role="tablist" aria-label="Pages ouvertes">
+    <div className="workspace-tabs-shell" data-tauri-drag-region>
+      <div
+        className="workspace-tabs"
+        role="tablist"
+        aria-label="Pages ouvertes"
+        data-tauri-drag-region
+      >
         <div className="workspace-tab-frame workspace-tab-frame--page">
           <button
             ref={(element) => { tabRefs.current[0] = element; }}
@@ -135,6 +140,7 @@ export function WorkspaceTabs({
         >
           <Plus aria-hidden="true" />
         </button>
+        <div className="workspace-window-drag" data-tauri-drag-region aria-hidden="true" />
       </div>
     </div>
   );

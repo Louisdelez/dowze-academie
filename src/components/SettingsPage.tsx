@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Gem,
   Globe2,
+  GraduationCap,
   Info,
   Languages,
   LoaderCircle,
@@ -44,6 +45,7 @@ const PROVIDERS: Array<{ value: AiProvider; label: string }> = [
   { value: "kimi", label: "Kimi" },
   { value: "freechat", label: "Chat libre" },
   { value: "duolingo", label: "Duolingo" },
+  { value: "khanacademy", label: "Khan Academy" },
   { value: "youtube", label: "YouTube" },
   { value: "tiktok", label: "TikTok" },
   { value: "notebooklm", label: "NotebookLM" }
@@ -67,6 +69,8 @@ function SettingsProviderIcon({ provider }: { provider: AiProvider }) {
       return <MessagesSquare />;
     case "duolingo":
       return <Languages />;
+    case "khanacademy":
+      return <GraduationCap />;
     case "youtube":
       return <Play />;
     case "tiktok":
@@ -307,7 +311,7 @@ export function SettingsPage({
         </section>
 
         <section className="settings-section">
-          <div className="settings-title"><span><Monitor /></span><div><h2>Services d’étude</h2><p>Assistants, langues, vidéos et carnet de sources</p></div></div>
+          <div className="settings-title"><span><Monitor /></span><div><h2>Services d’étude</h2><p>Assistants, langues, cours, vidéos et carnet de sources</p></div></div>
           <div className="setting-row">
             <div><strong>Service préféré</strong><small>Ouvert par défaut dans le panneau latéral.</small></div>
             <div className={`settings-provider-select settings-provider-select--${provider}`}>
@@ -385,7 +389,7 @@ export function SettingsPage({
               Cette action supprime de l’application les cookies, caches et données locales Google
               pour tous les profils Dowze Academie de cet appareil. Google, Gemini, NotebookLM et YouTube seront
               déconnectés. Votre compte Google en ligne ne sera pas supprimé. Les sessions propres
-              de ChatGPT, Claude et Duolingo resteront enregistrées.
+              de ChatGPT, Claude, Duolingo et Khan Academy resteront enregistrées.
             </p>
           </div>
           <div className="modal-actions confirm-actions">

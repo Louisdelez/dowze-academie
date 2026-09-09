@@ -55,12 +55,12 @@ npm audit --audit-level=low
 
 Pour un changement ciblé, commencez par les tests concernés, puis exécutez la suite complète avant livraison.
 
-### Référence validée le 8 septembre 2026
+### Référence validée le 9 septembre 2026
 
 - build frontend réussi, avec 3 851 modules transformés ;
-- 152/152 tests unitaires TypeScript réussis ;
+- 155/155 tests unitaires TypeScript réussis ;
 - 16/16 parcours UI Playwright réussis ;
-- 71/71 tests Rust réussis ;
+- 72/72 tests Rust réussis ;
 - formatage Rust et Clippy strict réussis ;
 - audit npm : 0 vulnérabilité connue.
 
@@ -69,6 +69,12 @@ Vite signale encore deux chunks supérieurs à 500 ko : le cœur de l’interfac
 ## Builds de bureau
 
 Exécutez sur le système concerné la commande `--bundles` du tableau ci-dessus. Les sorties se trouvent sous `src-tauri/target/release/bundle/`. Pour macOS, l’architecture correspond à celle de la cible Rust choisie ; la matrice CI fixe explicitement ARM64 ou x64. Les sommes de contrôle des bundles publics sont publiées avec chaque release plutôt que consignées dans le dépôt.
+
+Sur macOS, le support du microphone comporte trois couches suivies dans le dépôt : `src-tauri/Info.plist` fournit `NSMicrophoneUsageDescription`, `src-tauri/Entitlements.plist` fournit `com.apple.security.device.audio-input`, et `objc2-av-foundation` permet à la commande locale `request_microphone_access` de consulter l’état AVFoundation puis de déclencher le consentement TCC sur le thread principal. Wry 0.55.1 accorde ensuite la demande média de l’origine web. `tauri.conf.json` fixe macOS 10.14 au minimum, version d’apparition des API utilisées. Le test `macos-media-permissions.test.ts` protège les déclarations de packaging, la dépendance native, la consultation, la demande, le pont frontend et sa disponibilité dans le panneau. Après packaging, le workflow macOS contrôle aussi la clé fusionnée avec `plutil`, la version minimale, la liaison AVFoundation avec `otool`, l’entitlement réellement signé avec `codesign -d --entitlements :-` et la validité profonde du bundle.
+
+La fenêtre principale utilise `titleBarStyle: "Overlay"` avec un titre masqué. La capacité locale `core:window:allow-start-dragging` et les régions `data-tauri-drag-region` du rail, de la barre d’onglets et du panneau IA doivent rester coordonnées. Le test `window-dragging.test.ts` protège ce contrat ; cette capacité reste réservée à la WebView locale `main`.
+
+Sur un checkout ayant servi avant le renommage, arrêtez toutes les anciennes instances et ouvrez explicitement `src-tauri/target/release/bundle/macos/Dowze Academie.app`. Tout artefact historique `src-tauri/target/release/bundle/macos/Étude.app` doit être retiré avant la validation : macOS peut sinon relancer l’ancien exécutable et fausser les contrôles de code, de signature et de consentement TCC.
 
 ## Release GitHub multiplateforme
 

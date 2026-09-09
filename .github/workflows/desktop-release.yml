@@ -192,6 +192,29 @@ jobs:
           args: ${{ matrix.bundle_args }}
           releaseAssetNamePattern: Dowze-Academie-v[version]-${{ matrix.asset_suffix }}[setup][ext]
 
+      - name: Verify macOS microphone bridge
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          RUST_TARGET: ${{ matrix.rust_target }}
+        run: |
+          set -euo pipefail
+          app_path="src-tauri/target/${RUST_TARGET}/release/bundle/macos/Dowze Academie.app"
+          test -d "$app_path"
+
+          purpose="$(plutil -extract NSMicrophoneUsageDescription raw "$app_path/Contents/Info.plist")"
+          test -n "$purpose"
+          test "$(plutil -extract LSMinimumSystemVersion raw "$app_path/Contents/Info.plist")" = "10.14"
+
+          executable="$app_path/Contents/MacOS/dowze-academie"
+          test -x "$executable"
+          otool -L "$executable" | grep -Fq '/AVFoundation.framework/'
+
+          signed_entitlements="$RUNNER_TEMP/dowze-academie-entitlements.plist"
+          codesign -d --entitlements :- "$app_path" > "$signed_entitlements" 2>/dev/null
+          test "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.device.audio-input' "$signed_entitlements")" = "true"
+          codesign --verify --deep --strict "$app_path"
+
   finalize-release:
     name: Verify and publish release
     if: startsWith(github.ref, 'refs/tags/v')

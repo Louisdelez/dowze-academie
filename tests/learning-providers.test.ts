@@ -10,6 +10,7 @@ import {
   isFreeChatProvider,
   isLanguagePracticeProvider,
   isNotebookProvider,
+  isStandaloneLearningProvider,
   isVideoProvider,
   NOTEBOOKLM_CONTEXT_END,
   NOTEBOOKLM_CONTEXT_START,
@@ -111,6 +112,7 @@ test("les fournisseurs spéciaux sont classés sans ambiguïté", () => {
     "kimi",
     "freechat",
     "duolingo",
+    "khanacademy",
     "youtube",
     "tiktok",
     "notebooklm"
@@ -120,6 +122,10 @@ test("les fournisseurs spéciaux sont classés sans ambiguïté", () => {
   assert.deepEqual(providers.filter(isNotebookProvider), ["notebooklm"]);
   assert.deepEqual(providers.filter(isFreeChatProvider), ["freechat"]);
   assert.deepEqual(providers.filter(isLanguagePracticeProvider), ["duolingo"]);
+  assert.deepEqual(providers.filter(isStandaloneLearningProvider), [
+    "duolingo",
+    "khanacademy"
+  ]);
   assert.deepEqual(providers.filter(supportsPromptInjection), [
     "chatgpt",
     "claude",

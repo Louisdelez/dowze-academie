@@ -43,7 +43,9 @@
     "shortDescription": "Cursus, planning, notes et apprentissage assisté par IA sur ordinateur.",
     "longDescription": "Application de bureau local-first pour organiser un cursus structuré, suivre sa progression et travailler avec plusieurs assistants IA contextuels.",
     "macOS": {
-      "signingIdentity": "-"
+      "signingIdentity": "-",
+      "minimumSystemVersion": "10.14",
+      "entitlements": "./Entitlements.plist"
     },
     "icon": [
       "icons/32x32.png",

@@ -5,7 +5,9 @@ mod local_auth;
 use block2::RcBlock;
 use chrono::{DateTime, NaiveDate, Utc};
 #[cfg(target_os = "macos")]
-use objc2::{rc::Retained, MainThreadMarker};
+use objc2::{rc::Retained, runtime::Bool, MainThreadMarker};
+#[cfg(target_os = "macos")]
+use objc2_av_foundation::{AVAuthorizationStatus, AVCaptureDevice, AVMediaTypeAudio};
 #[cfg(target_os = "macos")]
 use objc2_foundation::NSArray;
 #[cfg(target_os = "macos")]
@@ -47,9 +49,17 @@ const GOOGLE_WEB_DATA_ROOTS: &[&str] = &[
     "ytimg.com",
     "ggpht.com",
     "googlevideo.com",
+    "youtube-nocookie.com",
+];
+const REQUIRED_AUXILIARY_FRAME_HOSTS: &[&str] = &[
+    "www.recaptcha.net",
+    "www.kasandbox.org",
+    "www.youtube-nocookie.com",
 ];
 #[cfg(target_os = "macos")]
 const GOOGLE_WEB_DATA_OPERATION_TIMEOUT: Duration = Duration::from_secs(20);
+#[cfg(target_os = "macos")]
+const MICROPHONE_PERMISSION_OPERATION_TIMEOUT: Duration = Duration::from_secs(300);
 const MAX_URL_LENGTH: usize = 8_192;
 // A detailed lesson prompt can legitimately be fairly long. Keep a generous,
 // explicit byte bound while never truncating the text sent to the provider.
@@ -129,6 +139,16 @@ struct GoogleWebProfileRemovalResult {
 struct NativeCapabilities {
     platform: &'static str,
     google_web_profile_removal: bool,
+    microphone_access_request: bool,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+enum MicrophoneAccessStatus {
+    Authorized,
+    Denied,
+    Restricted,
+    Unsupported,
 }
 
 #[derive(Default)]
@@ -163,6 +183,7 @@ enum AiProvider {
     Kimi,
     Freechat,
     Duolingo,
+    Khanacademy,
     Youtube,
     Tiktok,
     Notebooklm,
@@ -200,6 +221,7 @@ impl AiProvider {
                 )
             }
             Self::Duolingo => "https://www.duolingo.com/learn",
+            Self::Khanacademy => "https://fr.khanacademy.org/",
             Self::Youtube => "https://www.youtube.com/",
             Self::Tiktok => "https://www.tiktok.com/",
             Self::Notebooklm => "https://notebook.google.com/",
@@ -1200,6 +1222,8 @@ fn provider_for_url(url: &Url) -> CommandResult<AiProvider> {
         Ok(AiProvider::Kimi)
     } else if matches!(host, "duolingo.com" | "www.duolingo.com") {
         Ok(AiProvider::Duolingo)
+    } else if is_domain_or_subdomain(host, "khanacademy.org") {
+        Ok(AiProvider::Khanacademy)
     } else if is_domain_or_subdomain(host, "youtube.com") || host == "youtu.be" {
         Ok(AiProvider::Youtube)
     } else if is_domain_or_subdomain(host, "tiktok.com") {
@@ -1254,6 +1278,7 @@ fn is_provider_new_chat_url(url: &Url, provider: AiProvider) -> bool {
         // must never trigger the automatic chat-composer injection.
         AiProvider::Freechat
         | AiProvider::Duolingo
+        | AiProvider::Khanacademy
         | AiProvider::Youtube
         | AiProvider::Tiktok
         | AiProvider::Notebooklm => false,
@@ -1284,7 +1309,10 @@ fn validate_webview_navigation(url: &Url) -> CommandResult<()> {
     let host = url
         .domain()
         .ok_or_else(|| "L’URL doit utiliser un nom de domaine autorisé.".to_string())?;
-    let is_required_auxiliary_frame = host == "www.recaptcha.net";
+    // These exact hosts are embedded by supported providers for authentication,
+    // interactive Khan Academy exercises, or privacy-enhanced course videos.
+    // They remain forbidden as direct navigate_ai/open_in_browser targets.
+    let is_required_auxiliary_frame = REQUIRED_AUXILIARY_FRAME_HOSTS.contains(&host);
 
     if is_authentication_host(host) || is_required_auxiliary_frame {
         Ok(())
@@ -1976,6 +2004,76 @@ async fn remove_google_website_data(caller: Webview) -> CommandResult<usize> {
     callback_result
 }
 
+#[cfg(target_os = "macos")]
+async fn request_macos_microphone_access(
+    app: tauri::AppHandle,
+) -> CommandResult<MicrophoneAccessStatus> {
+    let (result_sender, result_receiver) = mpsc::sync_channel(1);
+    app.run_on_main_thread(move || {
+        // SAFETY: `AVMediaTypeAudio` is an immutable AVFoundation framework
+        // constant that is available on every supported macOS release.
+        let Some(media_type) = (unsafe { AVMediaTypeAudio }) else {
+            let _ = result_sender.send(MicrophoneAccessStatus::Unsupported);
+            return;
+        };
+
+        // SAFETY: This class-level authorization query runs on the app's main
+        // thread and uses AVFoundation's canonical audio media constant.
+        let status = unsafe { AVCaptureDevice::authorizationStatusForMediaType(media_type) };
+        match status {
+            AVAuthorizationStatus::Authorized => {
+                let _ = result_sender.send(MicrophoneAccessStatus::Authorized);
+            }
+            AVAuthorizationStatus::Denied => {
+                let _ = result_sender.send(MicrophoneAccessStatus::Denied);
+            }
+            AVAuthorizationStatus::Restricted => {
+                let _ = result_sender.send(MicrophoneAccessStatus::Restricted);
+            }
+            AVAuthorizationStatus::NotDetermined => {
+                let completion_handler = RcBlock::new(move |granted: Bool| {
+                    let status = if granted.as_bool() {
+                        MicrophoneAccessStatus::Authorized
+                    } else {
+                        MicrophoneAccessStatus::Denied
+                    };
+                    let _ = result_sender.send(status);
+                });
+
+                // SAFETY: The media type is AVMediaTypeAudio and AVFoundation
+                // copies the completion block for its asynchronous TCC request.
+                // This asks for consent only; it does not start audio capture.
+                unsafe {
+                    AVCaptureDevice::requestAccessForMediaType_completionHandler(
+                        media_type,
+                        &completion_handler,
+                    );
+                }
+            }
+            _ => {
+                let _ = result_sender.send(MicrophoneAccessStatus::Unsupported);
+            }
+        }
+    })
+    .map_err(|error| format!("Impossible de préparer la demande d’accès au microphone: {error}"))?;
+
+    tauri::async_runtime::spawn_blocking(move || {
+        result_receiver
+            .recv_timeout(MICROPHONE_PERMISSION_OPERATION_TIMEOUT)
+            .map_err(|error| match error {
+                mpsc::RecvTimeoutError::Timeout => {
+                    "La demande d’accès au microphone n’a pas reçu de réponse dans le délai prévu."
+                        .to_string()
+                }
+                mpsc::RecvTimeoutError::Disconnected => {
+                    "macOS a interrompu la demande d’accès au microphone.".to_string()
+                }
+            })
+    })
+    .await
+    .map_err(|error| format!("La demande d’accès au microphone s’est interrompue: {error}"))?
+}
+
 fn account_transition_home(provider: AiProvider) -> CommandResult<Option<Url>> {
     if provider == AiProvider::Freechat {
         Ok(None)
@@ -2162,6 +2260,7 @@ const sendSelectors = [
         ),
         AiProvider::Freechat
         | AiProvider::Duolingo
+        | AiProvider::Khanacademy
         | AiProvider::Youtube
         | AiProvider::Tiktok
         | AiProvider::Notebooklm => None,
@@ -2534,7 +2633,23 @@ fn native_capabilities(caller: Webview) -> CommandResult<NativeCapabilities> {
     Ok(NativeCapabilities {
         platform,
         google_web_profile_removal: cfg!(target_os = "macos"),
+        microphone_access_request: cfg!(target_os = "macos"),
     })
+}
+
+#[tauri::command]
+async fn request_microphone_access(caller: Webview) -> CommandResult<MicrophoneAccessStatus> {
+    require_main_caller(&caller)?;
+
+    #[cfg(target_os = "macos")]
+    {
+        request_macos_microphone_access(caller.app_handle().clone()).await
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(MicrophoneAccessStatus::Unsupported)
+    }
 }
 
 #[tauri::command]
@@ -3087,6 +3202,7 @@ pub fn run() {
             local_auth::login_local_account,
             local_auth::logout_local_account,
             native_capabilities,
+            request_microphone_access,
             open_google_web_profile,
             remove_google_web_profile,
             sync_ai_panel,
@@ -3133,6 +3249,8 @@ mod tests {
             "i.ytimg.com",
             "ggpht.com",
             "googlevideo.com",
+            "youtube-nocookie.com",
+            "www.youtube-nocookie.com",
         ] {
             assert!(
                 is_google_web_data_record_name(display_name),
@@ -3150,12 +3268,14 @@ mod tests {
             "googleapis.com.evil.example",
             "notgoogle.com",
             "youtube.com.evil.example",
+            "youtube-nocookie.com.evil.example",
             "fakeyoutube.com",
             "chatgpt.com",
             "openai.com",
             "claude.ai",
             "anthropic.com",
             "duolingo.com",
+            "khanacademy.org",
             "recaptcha.net",
             "tiktok.com",
         ] {
@@ -3178,6 +3298,7 @@ mod tests {
             "https://chat.deepseek.com/a/chat/s/01234567-89ab-cdef-0123-456789abcdef",
             "https://www.kimi.com/chat/01234567-89ab-cdef-0123-456789abcdef",
             "https://www.duolingo.com/learn",
+            "https://fr.khanacademy.org/math",
             "https://www.youtube.com/results?search_query=thermodynamique",
             "https://m.youtube.com/watch?v=dQw4w9WgXcQ",
             "https://youtu.be/dQw4w9WgXcQ?si=tracking",
@@ -3272,6 +3393,11 @@ mod tests {
                 AiProvider::Kimi,
             ),
             ("https://www.duolingo.com/learn", AiProvider::Duolingo),
+            ("https://www.khanacademy.org/math", AiProvider::Khanacademy),
+            (
+                "https://fr.khanacademy.org/science",
+                AiProvider::Khanacademy,
+            ),
             (
                 "https://www.youtube.com/results?search_query=thermodynamique",
                 AiProvider::Youtube,
@@ -3339,6 +3465,10 @@ mod tests {
             "https://www.duolingo.com:8443/learn",
             "https://api.duolingo.com/learn",
             "https://fr.duolingo.com/learn",
+            "http://www.khanacademy.org/math",
+            "https://www.khanacademy.org.evil.example/math",
+            "https://www.khanacademy.org@evil.example/math",
+            "https://www.khanacademy.org:8443/math",
             "https://www.youtube.com.evil.example/watch?v=test",
             "https://www.youtube.com@evil.example/watch?v=test",
             "https://youtu.be.evil.example/dQw4w9WgXcQ",
@@ -3368,6 +3498,8 @@ mod tests {
             "https://auth.mistral.ai/ui/login",
             "https://v2.auth.mistral.ai/ui/login",
             "https://www.recaptcha.net/recaptcha/enterprise/anchor",
+            "https://www.kasandbox.org/programming-scratchpad-iframe.html",
+            "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
         ] {
             let url = Url::parse(raw).unwrap();
             assert!(
@@ -3512,6 +3644,16 @@ mod tests {
             "https://www.recaptcha.net.evil.example/recaptcha/enterprise/anchor",
             "https://www.recaptcha.net@evil.example/recaptcha/enterprise/anchor",
             "https://www.recaptcha.net:8443/recaptcha/enterprise/anchor",
+            "https://www.kasandbox.org.evil.example/programming-scratchpad-iframe.html",
+            "https://www.kasandbox.org@evil.example/programming-scratchpad-iframe.html",
+            "https://kasandbox.org/programming-scratchpad-iframe.html",
+            "http://www.kasandbox.org/programming-scratchpad-iframe.html",
+            "https://www.kasandbox.org:8443/programming-scratchpad-iframe.html",
+            "https://www.youtube-nocookie.com.evil.example/embed/test",
+            "https://www.youtube-nocookie.com@evil.example/embed/test",
+            "https://youtube-nocookie.com/embed/test",
+            "http://www.youtube-nocookie.com/embed/test",
+            "https://www.youtube-nocookie.com:8443/embed/test",
             "http://notebook.google.com/",
             "https://notebook.google.com.evil.example/",
             "https://notebook.google.com@evil.example/",
@@ -3595,6 +3737,7 @@ mod tests {
         for provider in [
             AiProvider::Freechat,
             AiProvider::Duolingo,
+            AiProvider::Khanacademy,
             AiProvider::Youtube,
             AiProvider::Tiktok,
             AiProvider::Notebooklm,
@@ -3629,6 +3772,7 @@ mod tests {
             ("kimi", AiProvider::Kimi),
             ("freechat", AiProvider::Freechat),
             ("duolingo", AiProvider::Duolingo),
+            ("khanacademy", AiProvider::Khanacademy),
             ("youtube", AiProvider::Youtube),
             ("tiktok", AiProvider::Tiktok),
             ("notebooklm", AiProvider::Notebooklm),
@@ -3732,6 +3876,11 @@ mod tests {
                 AiProvider::Duolingo,
                 false,
             ),
+            (
+                "https://fr.khanacademy.org/",
+                AiProvider::Khanacademy,
+                false,
+            ),
             ("https://www.youtube.com/", AiProvider::Youtube, false),
             (
                 "https://notebook.google.com/",
@@ -3788,6 +3937,7 @@ mod tests {
             (AiProvider::Deepseek, "https://chat.deepseek.com/"),
             (AiProvider::Kimi, "https://www.kimi.com/"),
             (AiProvider::Duolingo, "https://www.duolingo.com/learn"),
+            (AiProvider::Khanacademy, "https://fr.khanacademy.org/"),
             (AiProvider::Youtube, "https://www.youtube.com/"),
             (AiProvider::Notebooklm, "https://notebook.google.com/"),
         ] {
@@ -3812,6 +3962,7 @@ mod tests {
             AiProvider::Deepseek,
             AiProvider::Kimi,
             AiProvider::Duolingo,
+            AiProvider::Khanacademy,
             AiProvider::Youtube,
             AiProvider::Tiktok,
             AiProvider::Notebooklm,
@@ -4942,6 +5093,29 @@ mod tests {
         assert!(!AiProvider::Duolingo.supports_lesson_injection());
         assert!(lesson_provider_script_config(AiProvider::Duolingo).is_none());
         assert!(!is_provider_new_chat_url(&start, AiProvider::Duolingo));
+    }
+
+    #[test]
+    fn khan_academy_routes_are_allowed_without_history_or_prompt_injection() {
+        for raw in [
+            "https://www.khanacademy.org/",
+            "https://fr.khanacademy.org/",
+            "https://www.khanacademy.org/math/algebra",
+        ] {
+            let url = Url::parse(raw).unwrap();
+            assert_eq!(
+                provider_for_url(&url).unwrap(),
+                AiProvider::Khanacademy,
+                "{raw}"
+            );
+            assert!(validate_webview_navigation(&url).is_ok(), "{raw}");
+        }
+
+        let start = AiProvider::Khanacademy.start_url().unwrap();
+        assert_eq!(start.as_str(), "https://fr.khanacademy.org/");
+        assert!(!AiProvider::Khanacademy.supports_lesson_injection());
+        assert!(lesson_provider_script_config(AiProvider::Khanacademy).is_none());
+        assert!(!is_provider_new_chat_url(&start, AiProvider::Khanacademy));
     }
 
     #[test]

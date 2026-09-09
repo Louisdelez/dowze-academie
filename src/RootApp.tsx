@@ -20,7 +20,7 @@ import type { AiProvider, ToastMessage } from "./types";
 
 const ACCOUNT_PROVIDERS = new Set<AiProvider>([
   "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
-  "freechat", "duolingo", "youtube", "tiktok", "notebooklm"
+  "freechat", "duolingo", "khanacademy", "youtube", "tiktok", "notebooklm"
 ]);
 
 function accountProvider(accountId: string): AiProvider {

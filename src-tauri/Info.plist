@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Dowze Academie demande l’accès au microphone pour permettre la dictée et les conversations vocales lorsque vous les lancez dans un service web intégré.</string>
+</dict>
+</plist>

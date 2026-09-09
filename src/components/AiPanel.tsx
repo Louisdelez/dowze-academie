@@ -8,10 +8,14 @@ import {
   ClipboardCopy,
   ExternalLink,
   Gem,
+  GraduationCap,
   Link2,
   Languages,
+  LoaderCircle,
   MessagesSquare,
   MessageSquarePlus,
+  Mic,
+  MicOff,
   MoonStar,
   Music2,
   PanelRightClose,
@@ -26,12 +30,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { clampAiPanelWidth } from "../lib/layout";
 import {
+  isLanguagePracticeProvider,
+  isStandaloneLearningProvider,
+  isVideoProvider
+} from "../lib/learningProviders";
+import {
   currentAiUrl,
+  getNativeCapabilities,
   isTauri,
   openInBrowser,
   providerHome,
   providerLabel,
   reloadAi,
+  requestMicrophoneAccess,
   syncAiPanel
 } from "../lib/tauri";
 import type { StoredFreeChatConversation } from "../lib/freeChat";
@@ -47,6 +58,7 @@ const AI_PROVIDERS: AiProvider[] = [
   "kimi",
   "freechat",
   "duolingo",
+  "khanacademy",
   "youtube",
   "tiktok",
   "notebooklm"
@@ -61,6 +73,7 @@ const PROVIDER_DESCRIPTIONS: Readonly<Record<AiProvider, string>> = {
   kimi: "Assistant IA",
   freechat: "API personnelle ou IA locale",
   duolingo: "Pratique de l’anglais",
+  khanacademy: "Cours et exercices",
   youtube: "Vidéos pédagogiques",
   tiktok: "Vidéos courtes pédagogiques",
   notebooklm: "Carnet de sources"
@@ -84,6 +97,8 @@ function ProviderIcon({ provider }: { provider: AiProvider }) {
       return <MessagesSquare />;
     case "duolingo":
       return <Languages />;
+    case "khanacademy":
+      return <GraduationCap />;
     case "youtube":
       return <Play />;
     case "tiktok":
@@ -154,8 +169,9 @@ export function AiPanel({
   onCopyLessonPrompt
 }: AiPanelProps) {
   const providerIsFreeChat = provider === "freechat";
-  const providerIsLanguagePractice = provider === "duolingo";
-  const providerIsVideo = provider === "youtube" || provider === "tiktok";
+  const providerIsLanguagePractice = isLanguagePracticeProvider(provider);
+  const providerIsStandaloneLearning = isStandaloneLearningProvider(provider);
+  const providerIsVideo = isVideoProvider(provider);
   const slotRef = useRef<HTMLDivElement>(null);
   const providerPickerRef = useRef<HTMLDivElement>(null);
   const providerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -169,10 +185,30 @@ export function AiPanel({
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [isProviderMenuOpening, setIsProviderMenuOpening] = useState(false);
   const [isProviderMenuOpen, setIsProviderMenuOpen] = useState(false);
+  const [microphoneControlAvailable, setMicrophoneControlAvailable] = useState(false);
+  const [isRequestingMicrophone, setIsRequestingMicrophone] = useState(false);
+  const [microphoneNotice, setMicrophoneNotice] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
 
   providerRef.current = provider;
   desiredNativeVisibilityRef.current =
     visible && !suspended && !providerIsFreeChat && !isProviderMenuOpening && !isProviderMenuOpen;
+
+  useEffect(() => {
+    let active = true;
+    void getNativeCapabilities()
+      .then((capabilities) => {
+        if (active) setMicrophoneControlAvailable(capabilities.microphoneAccessRequest);
+      })
+      .catch(() => {
+        if (active) setMicrophoneControlAvailable(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const syncBounds = useCallback(async (): Promise<boolean> => {
     const request = nativeSyncQueueRef.current
@@ -369,6 +405,45 @@ export function AiPanel({
     }
   };
 
+  const handleRequestMicrophone = async () => {
+    if (isRequestingMicrophone) return;
+    setIsRequestingMicrophone(true);
+    setMicrophoneNotice(null);
+    try {
+      const status = await requestMicrophoneAccess();
+      if (status === "authorized") {
+        await reloadAi();
+        setNativeError(null);
+        setMicrophoneNotice({
+          kind: "success",
+          message: "Microphone autorisé · page rechargée"
+        });
+      } else if (status === "denied") {
+        setMicrophoneNotice({
+          kind: "error",
+          message: "Accès refusé · activez Dowze Academie dans Réglages Système → Confidentialité et sécurité → Microphone"
+        });
+      } else if (status === "restricted") {
+        setMicrophoneNotice({
+          kind: "error",
+          message: "L’accès au microphone est bloqué par les restrictions de ce Mac"
+        });
+      } else {
+        setMicrophoneNotice({
+          kind: "error",
+          message: "L’activation native du microphone n’est pas disponible sur ce système"
+        });
+      }
+    } catch (error) {
+      setMicrophoneNotice({
+        kind: "error",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    } finally {
+      setIsRequestingMicrophone(false);
+    }
+  };
+
   const handleAssociate = async () => {
     const url = await currentAiUrl().catch(() => null);
     onAssociateCurrent(url);
@@ -415,7 +490,7 @@ export function AiPanel({
             <span />
           </button>
         )}
-        <header className="ai-toolbar">
+        <header className="ai-toolbar" data-tauri-drag-region>
           <div className="ai-provider-picker" ref={providerPickerRef}>
             <button
               ref={providerTriggerRef}
@@ -487,12 +562,12 @@ export function AiPanel({
               <>
                 <button
                   onClick={onNewConversation}
-                  aria-label={providerIsLanguagePractice ? "Accueil Duolingo" : providerIsVideo ? "Nouvelle recherche" : provider === "notebooklm" ? "Nouveau notebook" : "Nouvelle conversation"}
-                  data-tooltip={providerIsLanguagePractice ? "Retour au parcours Duolingo" : providerIsVideo ? "Nouvelle recherche" : provider === "notebooklm" ? "Nouveau notebook" : "Nouvelle conversation"}
+                  aria-label={providerIsStandaloneLearning ? `Accueil ${providerLabel(provider)}` : providerIsVideo ? "Nouvelle recherche" : provider === "notebooklm" ? "Nouveau notebook" : "Nouvelle conversation"}
+                  data-tooltip={providerIsStandaloneLearning ? `Retour à l’accueil ${providerLabel(provider)}` : providerIsVideo ? "Nouvelle recherche" : provider === "notebooklm" ? "Nouveau notebook" : "Nouvelle conversation"}
                 >
-                  {providerIsLanguagePractice ? <Languages /> : <MessageSquarePlus />}
+                  {providerIsLanguagePractice ? <Languages /> : provider === "khanacademy" ? <GraduationCap /> : <MessageSquarePlus />}
                 </button>
-                {!providerIsLanguagePractice && (
+                {!providerIsStandaloneLearning && (
                   <button onClick={() => void handleAssociate()} aria-label="Associer la conversation" data-tooltip="Enregistrer le lien">
                     <Link2 />
                   </button>
@@ -500,7 +575,20 @@ export function AiPanel({
                 <button onClick={() => void handleReload()} aria-label="Recharger" data-tooltip="Recharger">
                   <RefreshCw />
                 </button>
-                <button onClick={() => void handleOpenBrowser()} aria-label={providerIsLanguagePractice ? "Ouvrir Duolingo dans le navigateur" : "Ouvrir dans le navigateur"} data-tooltip={providerIsLanguagePractice ? "Ouvrir Duolingo dans le navigateur" : "Ouvrir dans le navigateur"}>
+                {microphoneControlAvailable && (
+                  <button
+                    type="button"
+                    className={microphoneNotice?.kind === "success" ? "is-microphone-authorized" : ""}
+                    onClick={() => void handleRequestMicrophone()}
+                    aria-label="Autoriser la dictée et les appels vocaux"
+                    aria-busy={isRequestingMicrophone}
+                    disabled={isRequestingMicrophone}
+                    data-tooltip={microphoneNotice?.kind === "success" ? "Microphone autorisé" : "Autoriser la dictée et les appels"}
+                  >
+                    {isRequestingMicrophone ? <LoaderCircle className="is-spinning" /> : <Mic />}
+                  </button>
+                )}
+                <button onClick={() => void handleOpenBrowser()} aria-label={providerIsStandaloneLearning ? `Ouvrir ${providerLabel(provider)} dans le navigateur` : "Ouvrir dans le navigateur"} data-tooltip={providerIsStandaloneLearning ? `Ouvrir ${providerLabel(provider)} dans le navigateur` : "Ouvrir dans le navigateur"}>
                   <ExternalLink />
                 </button>
               </>
@@ -510,6 +598,24 @@ export function AiPanel({
             </button>
           </div>
         </header>
+
+        {microphoneNotice && !providerIsFreeChat && (
+          <div
+            className={`ai-microphone-notice is-${microphoneNotice.kind}`}
+            role="status"
+            aria-live="polite"
+          >
+            {microphoneNotice.kind === "success" ? <Mic aria-hidden="true" /> : <MicOff aria-hidden="true" />}
+            <span>{microphoneNotice.message}</span>
+            <button
+              type="button"
+              onClick={() => setMicrophoneNotice(null)}
+              aria-label="Fermer le message du microphone"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {isProviderMenuOpen && (
           <button
@@ -525,6 +631,8 @@ export function AiPanel({
             <i />
             {providerIsLanguagePractice
               ? "Pratique d’anglais · Duolingo"
+              : provider === "khanacademy"
+              ? "Cours et exercices · Khan Academy"
               : providerIsFreeChat
               ? activeLesson
                 ? `Chat libre · ${lessonModeLabel(activeLesson)} · ${activeLesson.title}`
@@ -553,7 +661,7 @@ export function AiPanel({
                   ? "Contexte NotebookLM général"
                   : "Assistant général"}
           </span>
-          {!providerIsFreeChat && !providerIsLanguagePractice && (activeLesson || ((providerIsVideo || provider === "notebooklm") && activeSubject)) ? (
+          {!providerIsFreeChat && !providerIsStandaloneLearning && (activeLesson || ((providerIsVideo || provider === "notebooklm") && activeSubject)) ? (
             <button
               className="lesson-copy-button"
               onClick={onCopyLessonPrompt}
@@ -624,8 +732,8 @@ export function AiPanel({
 
       {!visible && (
         <button className="ai-reopen-tab" onClick={onOpen} aria-label={`Afficher ${providerLabel(provider)}`}>
-          {providerIsLanguagePractice ? <Languages /> : <Bot />}
-          <span>{providerIsLanguagePractice ? "Anglais" : providerIsFreeChat ? "Chat" : "Web"}</span>
+          {providerIsLanguagePractice ? <Languages /> : provider === "khanacademy" ? <GraduationCap /> : <Bot />}
+          <span>{providerIsLanguagePractice ? "Anglais" : provider === "khanacademy" ? "Khan" : providerIsFreeChat ? "Chat" : "Web"}</span>
           <ChevronRight />
         </button>
       )}

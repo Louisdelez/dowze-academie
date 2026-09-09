@@ -14,6 +14,8 @@ Il n’existe ni récupération distante du mot de passe, ni synchronisation ent
 
 La barre latérale donne accès à l’accueil, au planning, aux cours, aux notes et évaluations, aux tâches et aux réglages.
 
+Sur macOS, maintenez le bouton principal de la souris dans une zone vide en haut du rail gauche, de la barre d’onglets centrale ou du panneau IA, puis faites glisser pour déplacer la fenêtre. Les boutons et les onglets restent interactifs et ne servent pas de poignée.
+
 Dans **Cours**, choisissez une matière, puis un chapitre et une notion atomique. Deux parcours indépendants sont proposés :
 
 - **Cours** pour l’explication guidée ;
@@ -70,7 +72,17 @@ Les PDF sélectionnés sont copiés dans le dossier privé du profil. L’origin
 
 Le panneau droit propose des pages officielles de services tiers et un **Chat libre** intégré.
 
-Pour un service web, Dowze Academie prépare la consigne et tente de l’insérer. Si l’éditeur du site a changé, utilisez **Consigne** pour la recopier puis collez-la manuellement. L’action **Associer** permet aussi d’enregistrer manuellement l’URL d’une conversation.
+Pour un assistant web, Dowze Academie prépare la consigne et tente de l’insérer. Si l’éditeur du site a changé, utilisez **Consigne** pour la recopier puis collez-la manuellement. L’action **Associer** permet aussi d’enregistrer manuellement l’URL d’une conversation.
+
+Duolingo et Khan Academy sont des plateformes autonomes : leur page officielle conserve sa propre session, mais Dowze Academie n’y copie ni n’injecte la consigne du cours et ne crée pas d’entrée dans l’historique IA. YouTube et TikTok reçoivent plutôt une recherche pédagogique ciblée ; NotebookLM reçoit un contexte adapté à son fonctionnement par sources.
+
+### Dictée et conversation vocale
+
+Dans l’application macOS, cliquez d’abord sur le bouton microphone **Autoriser la dictée et les appels** dans la barre supérieure du panneau web. Au premier clic, acceptez la demande macOS pour **Dowze Academie**. L’application consulte l’état AVFoundation, demande le consentement s’il est encore indéterminé, puis recharge la page après accord. Cette étape ne démarre aucun enregistrement et son refus ne bloque pas les fonctions textuelles.
+
+Les boutons de microphone ou d’appel proposés par ChatGPT et les autres sites compatibles peuvent ensuite utiliser le microphone à travers leur page officielle. L’autorisation bénéficie à tous les services web intégrés qui exposent eux-mêmes une fonction vocale ; elle ne crée pas une fonction absente chez un fournisseur.
+
+Si l’accès a déjà été refusé, ouvrez **Réglages Système → Confidentialité et sécurité → Microphone**, activez **Dowze Academie**, puis relancez complètement l’application et rechargez le service. La disponibilité dépend aussi du compte, de l’offre, du déploiement et de la compatibilité WKWebView du fournisseur. L’audio est traité par le fournisseur actif selon ses propres règles ; Dowze Academie ne l’enregistre pas dans ses données locales. Cette activation native est un changement non publié après la version 0.1.0.
 
 ### Chat libre et Ollama
 
@@ -88,7 +100,7 @@ Les conversations du Chat libre sont enregistrées localement. Leur contenu est 
 
 La rubrique **Réglages → Compte Google** ouvre une fenêtre utilisant le même profil de WebView que les services intégrés. Chaque service garde toutefois sa propre session et peut redemander une confirmation.
 
-Sur macOS, **Retirer Google de Dowze Academie…** ferme les fenêtres distantes et supprime les données WebKit rattachées aux domaines Google et YouTube. Cette suppression ciblée n’est pas encore disponible sous Windows ou Linux ; le bouton y est désactivé. Elle ne supprime jamais le compte Google en ligne et n’efface pas automatiquement les cookies propres aux domaines de ChatGPT, Claude ou Duolingo.
+Sur macOS, **Retirer Google de Dowze Academie…** ferme les fenêtres distantes et supprime les données WebKit rattachées aux domaines Google et YouTube. Cette suppression ciblée n’est pas encore disponible sous Windows ou Linux ; le bouton y est désactivé. Elle ne supprime jamais le compte Google en ligne et n’efface pas automatiquement les cookies propres aux domaines de ChatGPT, Claude, Duolingo ou Khan Academy.
 
 Google peut refuser les navigateurs embarqués. Dans ce cas, utilisez le navigateur système ; ses cookies ne sont pas transférés dans l’application.
 

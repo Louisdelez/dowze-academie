@@ -18,12 +18,13 @@ const providers: AiProvider[] = [
   "kimi",
   "freechat",
   "duolingo",
+  "khanacademy",
   "youtube",
   "tiktok",
   "notebooklm"
 ];
 
-test("les onze services ont un libellé et une destination déterministes", () => {
+test("les douze services ont un libellé et une destination déterministes", () => {
   assert.deepEqual(AI_PROVIDER_OPTIONS.map((option) => option.value), providers);
   assert.deepEqual(providers.map(providerLabel), [
     "ChatGPT",
@@ -34,6 +35,7 @@ test("les onze services ont un libellé et une destination déterministes", () =
     "Kimi",
     "Chat libre",
     "Duolingo",
+    "Khan Academy",
     "YouTube",
     "TikTok",
     "NotebookLM"
@@ -47,6 +49,7 @@ test("les onze services ont un libellé et une destination déterministes", () =
     "https://chat.deepseek.com/",
     "https://www.kimi.com/",
     "https://www.duolingo.com/learn",
+    "https://fr.khanacademy.org/",
     "https://www.youtube.com/",
     "https://www.tiktok.com/",
     "https://notebook.google.com/"
@@ -64,6 +67,7 @@ test("chaque service reconnaît uniquement ses propres liens d’historique", ()
     kimi: "https://www.kimi.com/chat/kimi-history-test",
     freechat: "",
     duolingo: "https://www.duolingo.com/learn",
+    khanacademy: "https://www.khanacademy.org/",
     youtube: "https://www.youtube.com/watch?v=video-history-test",
     tiktok: "https://www.tiktok.com/@science/video/1234567890123456789",
     notebooklm: "https://notebook.google.com/notebook/notebook-history-test"
@@ -73,8 +77,8 @@ test("chaque service reconnaît uniquement ses propres liens d’historique", ()
     for (const candidate of providers) {
       assert.equal(
         isConversationUrl(urls[candidate], provider),
-        candidate === provider && candidate !== "freechat" && candidate !== "duolingo",
-        `${provider} ne doit ${candidate === provider && candidate !== "freechat" && candidate !== "duolingo" ? "pas refuser" : "pas accepter"} ${candidate}`
+        candidate === provider && !["freechat", "duolingo", "khanacademy"].includes(candidate),
+        `${provider} ne doit ${candidate === provider && !["freechat", "duolingo", "khanacademy"].includes(candidate) ? "pas refuser" : "pas accepter"} ${candidate}`
       );
     }
   }
@@ -88,6 +92,17 @@ test("Duolingo ouvre sa page officielle sans créer de faux historique", () => {
     "https://www.duolingo.com/lesson/unit-1"
   ]) {
     assert.equal(isConversationUrl(url, "duolingo"), false, url);
+  }
+});
+
+test("Khan Academy ouvre sa plateforme officielle sans créer de faux historique", () => {
+  assert.equal(providerHome("khanacademy"), "https://fr.khanacademy.org/");
+  for (const url of [
+    "https://www.khanacademy.org/",
+    "https://fr.khanacademy.org/",
+    "https://www.khanacademy.org/math"
+  ]) {
+    assert.equal(isConversationUrl(url, "khanacademy"), false, url);
   }
 });
 
@@ -121,6 +136,10 @@ test("les URL non sûres et les domaines ressemblants sont rejetés côté inter
     "https://www.duolingo.com@evil.example/learn",
     "http://www.duolingo.com/learn",
     "https://www.duolingo.com:444/learn",
+    "https://www.khanacademy.org.evil.example/math",
+    "https://www.khanacademy.org@evil.example/math",
+    "http://www.khanacademy.org/math",
+    "https://www.khanacademy.org:444/math",
     "https://www.youtube.com.evil.example/watch?v=history-test",
     "https://www.tiktok.com.evil.example/search?q=history-test",
     "https://notebooklm.google.com.evil.example/notebook/history-test"

@@ -19,7 +19,7 @@ export interface AiNavigationPayload {
 export const AI_PROVIDER_OPTIONS: ReadonlyArray<{
   value: AiProvider;
   label: string;
-  category: "assistant" | "custom" | "language" | "video" | "notebook";
+  category: "assistant" | "custom" | "language" | "learning" | "video" | "notebook";
 }> = [
   { value: "chatgpt", label: "ChatGPT", category: "assistant" },
   { value: "claude", label: "Claude", category: "assistant" },
@@ -29,6 +29,7 @@ export const AI_PROVIDER_OPTIONS: ReadonlyArray<{
   { value: "kimi", label: "Kimi", category: "assistant" },
   { value: "freechat", label: "Chat libre", category: "custom" },
   { value: "duolingo", label: "Duolingo", category: "language" },
+  { value: "khanacademy", label: "Khan Academy", category: "learning" },
   { value: "youtube", label: "YouTube", category: "video" },
   { value: "tiktok", label: "TikTok", category: "video" },
   { value: "notebooklm", label: "NotebookLM", category: "notebook" }
@@ -67,7 +68,10 @@ export interface GoogleWebProfileRemovalResult {
 export interface NativeCapabilities {
   platform: "macos" | "windows" | "linux" | "other" | "browser";
   googleWebProfileRemoval: boolean;
+  microphoneAccessRequest: boolean;
 }
+
+export type MicrophoneAccessStatus = "authorized" | "denied" | "restricted" | "unsupported";
 
 export interface CalendarTransferPayload {
   events: CalendarIcsEvent[];
@@ -166,9 +170,18 @@ export async function openGoogleWebProfile(): Promise<GoogleWebProfileOpenTarget
 
 export async function getNativeCapabilities(): Promise<NativeCapabilities> {
   if (!isTauri()) {
-    return { platform: "browser", googleWebProfileRemoval: false };
+    return {
+      platform: "browser",
+      googleWebProfileRemoval: false,
+      microphoneAccessRequest: false
+    };
   }
   return invoke<NativeCapabilities>("native_capabilities");
+}
+
+export async function requestMicrophoneAccess(): Promise<MicrophoneAccessStatus> {
+  if (!isTauri()) return "unsupported";
+  return invoke<MicrophoneAccessStatus>("request_microphone_access");
 }
 
 export async function removeGoogleWebProfile(): Promise<GoogleWebProfileRemovalResult> {
@@ -308,6 +321,7 @@ export function providerHome(provider: AiProvider) {
     case "kimi": return "https://www.kimi.com/";
     case "freechat": throw new Error("Le Chat libre est intégré à Dowze Academie et n'a pas de page web.");
     case "duolingo": return "https://www.duolingo.com/learn";
+    case "khanacademy": return "https://fr.khanacademy.org/";
     case "youtube": return "https://www.youtube.com/";
     case "tiktok": return "https://www.tiktok.com/";
     case "notebooklm": return "https://notebook.google.com/";
@@ -352,6 +366,7 @@ export function isConversationUrl(url: string, provider: AiProvider) {
           /^\/chat\/[a-zA-Z0-9_-]+\/?$/.test(parsed.pathname);
       case "freechat":
       case "duolingo":
+      case "khanacademy":
         return false;
       case "notebooklm":
         return (
