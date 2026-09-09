@@ -140,7 +140,7 @@ try {
 
   await page.evaluate(() => navigator.clipboard.writeText("NE_PAS_REMPLACER_DUOLINGO"));
   await selectProvider("TikTok", "Duolingo");
-  await page.getByText("Pratique d’anglais · Duolingo", { exact: true }).waitFor();
+  await page.getByText("Pratique linguistique · Langues", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Accueil Duolingo" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Associer la conversation" }).count(), 0);
   assert.equal(await page.getByRole("button", { name: "Consigne" }).count(), 0);

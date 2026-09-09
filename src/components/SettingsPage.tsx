@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 import type { AiProvider, AssessmentRecord, CalendarEvent, Conversation, Subject, SubjectNotesStore, TaskItem } from "../types";
 import type { StoredFreeChatConversation } from "../lib/freeChat";
 import type { LocalAccount } from "../lib/localAuth";
+import { slugifyFormationName, type InstalledFormation } from "../lib/formations";
 import {
   getNativeCapabilities,
   openGoogleWebProfile,
@@ -82,7 +83,8 @@ function SettingsProviderIcon({ provider }: { provider: AiProvider }) {
 
 interface SettingsPageProps {
   account: LocalAccount;
-  profileStoragePrefix: string;
+  formation: InstalledFormation;
+  workspaceRecoveryKeys: readonly string[];
   provider: AiProvider;
   aiWidth: number;
   maxAiWidth: number;
@@ -102,7 +104,8 @@ interface SettingsPageProps {
 
 export function SettingsPage({
   account,
-  profileStoragePrefix,
+  formation,
+  workspaceRecoveryKeys,
   provider,
   aiWidth,
   maxAiWidth,
@@ -199,7 +202,7 @@ export function SettingsPage({
     try {
       for (let index = 0; index < window.localStorage.length; index += 1) {
         const key = window.localStorage.key(index);
-        if (!key?.startsWith(profileStoragePrefix) || !key.endsWith(".recovery")) continue;
+        if (!key || !workspaceRecoveryKeys.includes(key)) continue;
         const value = window.localStorage.getItem(key);
         if (value !== null) recoveryCopies[key] = value;
       }
@@ -207,12 +210,18 @@ export function SettingsPage({
       // L'export principal reste utilisable si WebKit refuse l'énumération du stockage.
     }
     const payload = JSON.stringify({
-      version: 5,
+      version: 6,
       exportedAt: new Date().toISOString(),
       account: {
         id: account.id,
         displayName: account.displayName,
         username: account.username
+      },
+      formation: {
+        instanceId: formation.instanceId,
+        packageId: formation.packageId,
+        packageVersion: formation.packageVersion,
+        manifest: formation.manifest
       },
       subjects,
       events,
@@ -226,7 +235,7 @@ export function SettingsPage({
     try {
       const destination = await saveTextDocument(
         payload,
-        `dowze-academie-export-donnees-${new Date().toISOString().slice(0, 10)}.json`,
+        `dowze-academie-${slugifyFormationName(formation.manifest.shortName)}-${new Date().toISOString().slice(0, 10)}.json`,
         "json"
       );
       setExportStatus(destination ? "Export enregistré." : null);
@@ -350,7 +359,7 @@ export function SettingsPage({
         </section>
 
         <section className="settings-section">
-          <div className="settings-title"><span><Database /></span><div><h2>Données locales</h2><p>Vos programmes et liens de conversation</p></div></div>
+          <div className="settings-title"><span><Database /></span><div><h2>Données locales</h2><p>Formation active · {formation.manifest.name}</p></div></div>
           <div className="data-summary">
             <span><strong>{subjects.length}</strong> matières</span>
             <span><strong>{events.length}</strong> événements</span>
@@ -359,7 +368,7 @@ export function SettingsPage({
             <span><strong>{assessments.length}</strong> évaluations</span>
           </div>
           <div className="setting-row">
-            <div><strong>Exporter les données JSON</strong><small>Exporte les programmes, liens, notes et métadonnées. Les fichiers PDF archivés restent sur cet appareil.</small></div>
+            <div><strong>Exporter cette formation en JSON</strong><small>Exporte les programmes et vos données personnelles de l’année active uniquement. Ce fichier privé n’est pas un paquet de formation importable. Les PDF restent sur cet appareil.</small></div>
             <button className="secondary-button" onClick={() => void exportData()}><Download /> Exporter</button>
           </div>
           {exportStatus && <p className="settings-inline-status" role="status">{exportStatus}</p>}

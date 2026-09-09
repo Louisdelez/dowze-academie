@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import { PAPER_ASSESSMENT_KIND_OPTIONS } from "../lib/assessment";
+import type { FormationManifest } from "../lib/formations";
 import { dateKeyAtTimeZone } from "../lib/zonedDate";
 import type {
   AssessmentRecord,
@@ -35,11 +36,11 @@ const DEFAULT_COEFFICIENT: Record<RecordedAssessmentKind, number> = {
   evaluation: 1
 };
 
-function dateInputValue(value?: string) {
-  if (!value) return dateKeyAtTimeZone(new Date());
+function dateInputValue(value?: string, timeZone = "Europe/Zurich") {
+  if (!value) return dateKeyAtTimeZone(new Date(), timeZone);
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : dateKeyAtTimeZone(parsed);
+  return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : dateKeyAtTimeZone(parsed, timeZone);
 }
 
 function fileName(path: string) {
@@ -56,7 +57,9 @@ export function AssessmentEditor({
   subjects,
   onChoosePdf,
   onSave,
-  onClose
+  onClose,
+  grading = { scaleMax: 20, passMark: 10 },
+  timeZone = "Europe/Zurich"
 }: {
   assessment?: AssessmentRecord;
   initial?: Partial<AssessmentRecord>;
@@ -64,6 +67,8 @@ export function AssessmentEditor({
   onChoosePdf: () => Promise<string | null>;
   onSave: (assessment: AssessmentRecord, sources: AssessmentPdfSources) => Promise<void> | void;
   onClose: () => void;
+  grading?: FormationManifest["grading"];
+  timeZone?: string;
 }) {
   const seed = assessment ?? initial;
   const [recordId] = useState(seed?.id ?? crypto.randomUUID());
@@ -71,7 +76,7 @@ export function AssessmentEditor({
   const [title, setTitle] = useState(seed?.title ?? "");
   const [kind, setKind] = useState<RecordedAssessmentKind>(seed?.kind ?? "test");
   const [coefficient, setCoefficient] = useState(seed?.coefficient ?? DEFAULT_COEFFICIENT[seed?.kind ?? "test"]);
-  const [assessmentDate, setAssessmentDate] = useState(dateInputValue(seed?.assessmentDate));
+  const [assessmentDate, setAssessmentDate] = useState(dateInputValue(seed?.assessmentDate, timeZone));
   const [score, setScore] = useState(seed?.score === undefined ? "" : String(seed.score).replace(".", ","));
   const [appreciation, setAppreciation] = useState(seed?.appreciation ?? "");
   const [personalNote, setPersonalNote] = useState(seed?.personalNote ?? "");
@@ -95,7 +100,7 @@ export function AssessmentEditor({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!subjectId || !title.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > 20 || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20 || !appreciation.trim()) return;
+    if (!subjectId || !title.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > grading.scaleMax || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20 || !appreciation.trim()) return;
     const now = new Date().toISOString();
     setSaving(true);
     try {
@@ -106,7 +111,7 @@ export function AssessmentEditor({
         kind,
         assessmentDate,
         score: numericScore,
-        maxScore: 20,
+        maxScore: grading.scaleMax,
         coefficient,
         appreciation: appreciation.trim(),
         personalNote: personalNote.trim() || undefined,
@@ -126,7 +131,7 @@ export function AssessmentEditor({
   return (
     <Modal
       title={assessment ? "Modifier l’évaluation" : "Enregistrer une note"}
-      subtitle="Carnet de notes · barème sur 20"
+      subtitle={`Carnet de notes · barème sur ${grading.scaleMax}`}
       onClose={saving ? () => undefined : onClose}
       size="lg"
     >
@@ -177,11 +182,11 @@ export function AssessmentEditor({
                 value={score}
                 onChange={(event) => setScore(event.target.value)}
                 inputMode="decimal"
-                placeholder="14,5"
-                aria-label="Note sur 20"
+                placeholder={String(Math.round(grading.scaleMax * 0.7 * 10) / 10).replace(".", ",")}
+                aria-label={`Note sur ${grading.scaleMax}`}
                 required
               />
-              <em>/ 20</em>
+              <em>/ {grading.scaleMax}</em>
             </span>
           </label>
         </div>
@@ -240,7 +245,7 @@ export function AssessmentEditor({
         <div className="modal-actions">
           <span />
           <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annuler</button>
-          <button className="primary-button" disabled={saving || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > 20 || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20}>
+          <button className="primary-button" disabled={saving || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > grading.scaleMax || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20}>
             <Save /> {saving ? "Enregistrement…" : "Enregistrer dans les notes"}
           </button>
         </div>

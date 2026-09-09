@@ -24,6 +24,21 @@ export type WorkspaceStorageKeys = {
   [Key in keyof typeof WORKSPACE_STORAGE]: string;
 };
 
+export const FORMATION_REGISTRY_STORAGE = {
+  registry: "formations.registry.v1",
+  active: "formations.active.v1",
+  installJournal: "formations.install-journal.v1"
+} as const;
+
+export type FormationRegistryStorageKeys = {
+  [Key in keyof typeof FORMATION_REGISTRY_STORAGE]: string;
+};
+
+export type FormationStorageIdentity = {
+  instanceId: string;
+  storageKind: "legacy-energy-year1" | "formation-v1";
+};
+
 export const PROFILE_RESET_RECORD_IDS = [
   "conversations",
   "freeChatConversations",
@@ -40,6 +55,8 @@ export type ProfileResetRecordId = typeof PROFILE_RESET_RECORD_IDS[number];
 export type ProfileResetEntry = readonly [ProfileResetRecordId, unknown];
 
 const PROFILE_STORAGE_PREFIX = "etude.profile.v1";
+const FORMATION_DATA_STORAGE_PREFIX = "formations.data.v1";
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const LEGACY_WORKSPACE_KEYS = [
   ...Object.entries(WORKSPACE_STORAGE)
@@ -61,7 +78,7 @@ const LEGACY_WORKSPACE_PURGE_KEYS = [...new Set([
 
 export function isValidLocalAccountId(accountId: string): boolean {
   return /^[0-9a-f]{32}$/.test(accountId) ||
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(accountId);
+    UUID_V4_PATTERN.test(accountId);
 }
 
 export function profileStoragePrefix(accountId: string): string {
@@ -79,6 +96,39 @@ export function profileStorageKey(accountId: string, baseKey: string): string {
 export function workspaceStorageFor(accountId: string): WorkspaceStorageKeys {
   return Object.fromEntries(
     Object.entries(WORKSPACE_STORAGE).map(([name, key]) => [name, profileStorageKey(accountId, key)])
+  ) as WorkspaceStorageKeys;
+}
+
+export function formationRegistryStorageFor(accountId: string): FormationRegistryStorageKeys {
+  return Object.fromEntries(
+    Object.entries(FORMATION_REGISTRY_STORAGE)
+      .map(([name, suffix]) => [name, profileStorageKey(accountId, suffix)])
+  ) as FormationRegistryStorageKeys;
+}
+
+function formationRecordSuffix(baseKey: string): string {
+  const suffix = baseKey.startsWith("etude.") ? baseKey.slice("etude.".length) : baseKey;
+  return suffix.replace(".energy-year1", "");
+}
+
+export function formationStorageFor(
+  accountId: string,
+  formation: FormationStorageIdentity
+): WorkspaceStorageKeys {
+  if (formation.storageKind === "legacy-energy-year1") {
+    return workspaceStorageFor(accountId);
+  }
+  if (formation.storageKind !== "formation-v1") {
+    throw new Error("Type de stockage de formation invalide.");
+  }
+  if (!UUID_V4_PATTERN.test(formation.instanceId)) {
+    throw new Error("Identifiant d’instance de formation invalide.");
+  }
+
+  const prefix = `${profileStoragePrefix(accountId)}${FORMATION_DATA_STORAGE_PREFIX}.${formation.instanceId}.`;
+  return Object.fromEntries(
+    Object.entries(WORKSPACE_STORAGE)
+      .map(([name, key]) => [name, `${prefix}${formationRecordSuffix(key)}`])
   ) as WorkspaceStorageKeys;
 }
 
@@ -115,6 +165,55 @@ export function profileRecoveryKeys(
     return [];
   }
   return keys;
+}
+
+/**
+ * Énumère uniquement les copies de récupération appartenant à l’année active.
+ * Les autres formations et les métadonnées du registre restent hors de l’export.
+ */
+export function formationRecoveryKeys(
+  accountId: string,
+  formation: FormationStorageIdentity,
+  storage: Storage = window.localStorage
+): string[] {
+  const workspaceKeys = Object.values(formationStorageFor(accountId, formation));
+  const keys: string[] = [];
+  try {
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (!key?.endsWith(".recovery")) continue;
+      if (workspaceKeys.some((workspaceKey) =>
+        key === `${workspaceKey}.recovery` || key.startsWith(`${workspaceKey}.`)
+      )) {
+        keys.push(key);
+      }
+    }
+  } catch {
+    return [];
+  }
+  return keys;
+}
+
+/**
+ * Retire uniquement les copies de récupération de l’espace historique annuel.
+ * Les registres et espaces UUID des autres formations du compte sont exclus.
+ */
+export function clearWorkspaceRecoveryData(
+  accountId: string,
+  storage: Storage = window.localStorage
+): number {
+  const recoveryKeys = Object.values(workspaceStorageFor(accountId))
+    .map((key) => `${key}.recovery`);
+  let removed = 0;
+  for (const recoveryKey of recoveryKeys) {
+    if (storage.getItem(recoveryKey) === null) continue;
+    storage.removeItem(recoveryKey);
+    if (storage.getItem(recoveryKey) !== null) {
+      throw new Error("Une ancienne copie de récupération n’a pas pu être supprimée.");
+    }
+    removed += 1;
+  }
+  return removed;
 }
 
 interface ProfileResetIntent {

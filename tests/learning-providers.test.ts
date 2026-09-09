@@ -461,6 +461,7 @@ test("YouTube et TikTok ciblent chacun des six niveaux CECRL d’anglais sans ma
     const english: Subject = {
       ...subject,
       id: "anglais",
+      curriculumKind: "cefr-selectable",
       name: "Anglais",
       shortName: "Anglais",
       domain: "Langues",
@@ -521,6 +522,7 @@ test("les recherches d’une ancienne séance anglaise préfèrent son module au
   const currentSubject: Subject = {
     ...subject,
     id: "anglais",
+    curriculumKind: "cefr-selectable",
     name: "Anglais",
     shortName: "Anglais",
     domain: "Langues",
@@ -556,6 +558,41 @@ test("les recherches d’une ancienne séance anglaise préfèrent son module au
   assert.doesNotMatch(notebookContext, /parcours CECRL C2/);
 });
 
+test("les ressources reconnaissent une langue CECRL importée sans la convertir en anglais", () => {
+  const importedSubject: Subject = {
+    ...subject,
+    id: "allemand-professionnel",
+    name: "Allemand professionnel",
+    shortName: "Allemand pro",
+    domain: "Langues",
+    curriculumKind: undefined,
+    cefrLevel: undefined,
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [{
+      id: "allemand-b1",
+      period: "Annuel",
+      title: "Allemand B1",
+      cefrLevel: "B1",
+      items: []
+    }]
+  };
+
+  for (const query of [
+    buildYouTubeSearchQuery(importedSubject),
+    buildTikTokSearchQuery(importedSubject)
+  ]) {
+    assert.match(query, /\bB1\b/);
+    assert.match(query, /allemand/i);
+    assert.doesNotMatch(query, /anglais|English/i);
+    assert.doesNotMatch(query, /ingenieur/i);
+  }
+  const notebook = buildNotebookLmContext(importedSubject);
+  assert.match(notebook, /Cursus : Allemand — parcours CECRL B1/);
+  assert.match(notebook, /(?:principalement en allemand|allemand principalement)/);
+  assert.doesNotMatch(notebook, /principalement en anglais|Cursus : Anglais/);
+});
+
 test("le marqueur académique reste court et adapté au domaine", () => {
   const physics = {
     ...subject,
@@ -567,7 +604,7 @@ test("le marqueur académique reste court et adapté au domaine", () => {
   };
   const engineering = {
     ...subject,
-    id: "cao",
+    id: "conception-cao",
     name: "Conception d'ingénierie & CAO",
     shortName: "CAO",
     domain: "Ingénierie",
@@ -581,6 +618,35 @@ test("le marqueur académique reste court et adapté au domaine", () => {
     buildYouTubeSearchQuery(engineering),
     /niveau universitaire ingénieur/
   );
+});
+
+test("une formation importée ne reçoit ni alias legacy ni niveau ingénieur implicite", () => {
+  const importedSubjects: Subject[] = [
+    {
+      ...subject,
+      id: "analyse",
+      name: "Anatomie humaine",
+      shortName: "Anatomie",
+      domain: "Médecine",
+      modules: []
+    },
+    {
+      ...subject,
+      id: "histoire-contemporaine",
+      name: "Histoire contemporaine",
+      shortName: "Histoire",
+      domain: "Sciences humaines",
+      modules: []
+    }
+  ];
+
+  for (const importedSubject of importedSubjects) {
+    const youtube = buildYouTubeSearchQuery(importedSubject);
+    const tiktok = buildTikTokSearchQuery(importedSubject);
+    assert.doesNotMatch(`${youtube} ${tiktok}`, /ingenieur|\bL1\b|mathematiques/i);
+    assert.match(youtube, new RegExp(importedSubject.shortName, "i"));
+  }
+  assert.match(buildYouTubeSearchQuery(importedSubjects[0]), /medecine/i);
 });
 
 test("le cadre NotebookLM impose audit, plan, ancrage et citations", () => {

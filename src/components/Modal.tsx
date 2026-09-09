@@ -2,12 +2,21 @@ import { AlertTriangle, Bot, CalendarDays, FileText, Link2, Plus, RotateCcw, Spa
 import { FormEvent, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  buildPaperAssessmentPrompt,
   PAPER_ASSESSMENT_KIND_OPTIONS,
   candidateSubjectsForAssessment,
   defaultChapterIdsForAssessment,
   defaultPaperAssessmentDuration,
   inferPaperAssessmentKind
 } from "../lib/assessment";
+import {
+  aiPromptByteLength,
+  NATIVE_AI_PROMPT_MAX_BYTES
+} from "../lib/aiSessionContract";
+import {
+  buildCalendarIcs,
+  nativeCalendarCompatibilityError
+} from "../lib/calendarIcs";
 import {
   addCalendarDays,
   dateAtTimeZone,
@@ -25,6 +34,7 @@ import type {
   Subject,
   TaskItem
 } from "../types";
+import type { FormationManifest } from "../lib/formations";
 
 export function Modal({ title, subtitle, children, onClose, size = "md" }: {
   title: string;
@@ -129,7 +139,7 @@ export function Modal({ title, subtitle, children, onClose, size = "md" }: {
   return content;
 }
 
-export function EventEditor({ event, date, subjects, onSave, onDelete, onGeneratePaper, onClose }: {
+export function EventEditor({ event, date, subjects, onSave, onDelete, onGeneratePaper, onClose, timeZone = "Europe/Zurich" }: {
   event?: CalendarEvent;
   date: Date;
   subjects: Subject[];
@@ -137,22 +147,26 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
   onDelete?: (id: string) => void;
   onGeneratePaper?: (event: CalendarEvent) => void;
   onClose: () => void;
+  timeZone?: string;
 }) {
   const initialStart = event
-    ? dateTimeInputValueAtTimeZone(new Date(event.start))
-    : `${dateTimeInputValueAtTimeZone(date).slice(0, 13)}:00`;
+    ? dateTimeInputValueAtTimeZone(new Date(event.start), timeZone)
+    : `${dateTimeInputValueAtTimeZone(date, timeZone).slice(0, 13)}:00`;
   const initialEnd = event
-    ? dateTimeInputValueAtTimeZone(new Date(event.end))
-    : dateTimeInputValueAtTimeZone(new Date(dateFromTimeZoneInput(initialStart).getTime() + 60 * 60_000));
+    ? dateTimeInputValueAtTimeZone(new Date(event.end), timeZone)
+    : dateTimeInputValueAtTimeZone(
+        new Date(dateFromTimeZoneInput(initialStart, timeZone).getTime() + 60 * 60_000),
+        timeZone
+      );
   const [title, setTitle] = useState(event?.title ?? "");
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [allDay, setAllDay] = useState(Boolean(event?.allDay));
   const [allDayStart, setAllDayStart] = useState(() => event?.allDay
-    ? dateKeyAtTimeZone(new Date(event.start))
+    ? dateKeyAtTimeZone(new Date(event.start), timeZone)
     : initialStart.slice(0, 10));
   const [allDayEnd, setAllDayEnd] = useState(() => event?.allDay
-    ? dateKeyAtTimeZone(new Date(new Date(event.end).getTime() - 1))
+    ? dateKeyAtTimeZone(new Date(new Date(event.end).getTime() - 1), timeZone)
     : initialEnd.slice(0, 10));
   const [subjectId, setSubjectId] = useState(event?.subjectId ?? "");
   const [location, setLocation] = useState(event?.location ?? "");
@@ -160,6 +174,9 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
   const [type, setType] = useState<CalendarEvent["type"]>(event?.type ?? "course");
   const [formError, setFormError] = useState<string | null>(null);
   const selectedSubject = subjects.find((subject) => subject.id === subjectId);
+  const assessmentWillBeRemoved = Boolean(
+    event?.assessment && (type !== "exam" || subjectId !== (event.subjectId ?? ""))
+  );
   const buildEvent = () => {
     const normalizedTitle = title.trim();
     const normalizedLocation = location.trim();
@@ -189,11 +206,11 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
           setFormError("La date de fin doit être égale ou postérieure à la date de début.");
           return null;
         }
-        startDate = dateAtTimeZone(allDayStart);
-        endDate = dateAtTimeZone(addCalendarDays(allDayEnd, 1));
+        startDate = dateAtTimeZone(allDayStart, 0, 0, timeZone);
+        endDate = dateAtTimeZone(addCalendarDays(allDayEnd, 1), 0, 0, timeZone);
       } else {
-        startDate = dateFromTimeZoneInput(start);
-        endDate = dateFromTimeZoneInput(end);
+        startDate = dateFromTimeZoneInput(start, timeZone);
+        endDate = dateFromTimeZoneInput(end, timeZone);
         if (endDate <= startDate) {
           setFormError("L’heure de fin doit être postérieure à l’heure de début.");
           return null;
@@ -203,13 +220,40 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
         setFormError("Un événement ne peut pas couvrir plus de dix ans.");
         return null;
       }
+      if (startDate.getUTCFullYear() < 1900 || endDate.getUTCFullYear() > 2101) {
+        setFormError("Les instants UTC doivent rester compris entre 1900 et 2101 pour être conservés après redémarrage.");
+        return null;
+      }
     } catch {
       setFormError("Vérifie les dates et les heures saisies.");
       return null;
     }
-    setFormError(null);
-    return {
-      id: event?.id ?? crypto.randomUUID(),
+    const id = event?.id ?? crypto.randomUUID();
+    let retainedAssessment: PaperAssessmentConfig | undefined;
+    if (event?.assessment && !assessmentWillBeRemoved) {
+      let durationMinutes = event.assessment.durationMinutes;
+      if (!allDay) {
+        durationMinutes = (endDate.getTime() - startDate.getTime()) / 60_000;
+        if (!Number.isInteger(durationMinutes) || durationMinutes < 10 || durationMinutes > 360) {
+          setFormError("Une épreuve préparée pour les PDF doit durer entre 10 et 360 minutes entières.");
+          return null;
+        }
+      }
+      retainedAssessment = {
+        ...event.assessment,
+        eventId: id,
+        title: normalizedTitle,
+        scheduledAt: startDate.toISOString(),
+        durationMinutes
+      };
+      const descriptionChanged = normalizedDescription !== (event.description?.trim() ?? "");
+      if (descriptionChanged) {
+        if (normalizedDescription) retainedAssessment.instructions = normalizedDescription;
+        else delete retainedAssessment.instructions;
+      }
+    }
+    const nextEvent = {
+      id,
       title: normalizedTitle,
       subjectId: subjectId || undefined,
       start: startDate.toISOString(),
@@ -218,8 +262,17 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
       description: normalizedDescription || undefined,
       allDay,
       type,
-      color: selectedSubject?.color ?? event?.color ?? "#5c6ce5"
+      color: selectedSubject?.color ?? event?.color ?? "#5c6ce5",
+      ...(retainedAssessment ? { assessment: retainedAssessment } : {})
     } satisfies CalendarEvent;
+    const calendar = buildCalendarIcs([nextEvent], subjects, { timeZone });
+    const calendarError = nativeCalendarCompatibilityError(calendar, "Dowze Academie — Année 1");
+    if (calendarError) {
+      setFormError(calendarError);
+      return null;
+    }
+    setFormError(null);
+    return nextEvent;
   };
   const submit = (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -251,6 +304,11 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
         </div>
         <label className="form-field"><span>Lieu</span><input maxLength={1000} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Salle ou adresse" /></label>
         <label className="form-field"><span>Note</span><textarea maxLength={12000} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Consignes ou informations utiles" rows={3} /></label>
+        {assessmentWillBeRemoved && (
+          <p className="form-validation-error" role="status">
+            Changer la matière ou le type retirera la préparation PDF existante. Tu pourras en créer une nouvelle depuis cet événement.
+          </p>
+        )}
         {formError && <p className="form-validation-error" role="alert">{formError}</p>}
         {type === "exam" && onGeneratePaper && (
           <div className="paper-exam-callout">
@@ -278,23 +336,54 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
   );
 }
 
-export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent, onClose }: {
+export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent, onClose, timeZone = "Europe/Zurich", formation, legacyEnergyYear1 }: {
   event: CalendarEvent;
   subjects: Subject[];
   onGenerate: (subject: Subject, config: PaperAssessmentConfig) => void;
   onEditEvent: () => void;
   onClose: () => void;
+  timeZone?: string;
+  formation?: FormationManifest;
+  legacyEnergyYear1?: boolean;
 }) {
-  const suggestedSubjects = candidateSubjectsForAssessment(event, subjects);
-  const initialSubject = suggestedSubjects[0] ?? subjects[0];
-  const inferredKind = inferPaperAssessmentKind(event.title);
+  const suggestedSubjects = candidateSubjectsForAssessment(
+    event,
+    subjects,
+    formation,
+    legacyEnergyYear1
+  );
+  const plannedAssessment = event.assessment;
+  const plannedSubject = plannedAssessment
+    ? subjects.find((subject) => plannedAssessment.chapterIds.every((chapterId) =>
+        subject.modules.some((courseModule) =>
+          courseModule.items.some((item) => item.id === chapterId)
+        )
+      ))
+    : undefined;
+  const initialSubject = plannedSubject ?? suggestedSubjects[0] ?? subjects[0];
+  const inferredKind = plannedAssessment?.kind ?? inferPaperAssessmentKind(event.title);
   const [subjectId, setSubjectId] = useState(initialSubject?.id ?? "");
   const [kind, setKind] = useState<PaperAssessmentKind>(inferredKind);
-  const [durationMinutes, setDurationMinutes] = useState(defaultPaperAssessmentDuration(inferredKind));
-  const [allowedMaterials, setAllowedMaterials] = useState("Calculatrice scientifique non programmable ; formulaire fourni uniquement s’il figure dans le sujet");
-  const [instructions, setInstructions] = useState(event.description ?? "");
+  const [durationMinutes, setDurationMinutes] = useState(
+    plannedAssessment?.durationMinutes ?? defaultPaperAssessmentDuration(inferredKind)
+  );
+  const [allowedMaterials, setAllowedMaterials] = useState(
+    plannedAssessment?.allowedMaterials ??
+      "Aucun matériel"
+  );
+  const [instructions, setInstructions] = useState(
+    plannedAssessment ? plannedAssessment.instructions ?? "" : event.description ?? ""
+  );
   const [chapterIds, setChapterIds] = useState<string[]>(
-    initialSubject ? defaultChapterIdsForAssessment(event, initialSubject) : []
+    initialSubject
+      ? plannedAssessment?.chapterIds.length
+        ? plannedAssessment.chapterIds.filter((id) =>
+            initialSubject.modules.some((courseModule) =>
+              courseModule.items.some((item) => item.id === id)
+            )
+          )
+        : defaultChapterIdsForAssessment(event, initialSubject, timeZone, formation?.academicYear)
+      : []
   );
   const selectedSubject = subjects.find((subject) => subject.id === subjectId);
   const allChapters = selectedSubject?.modules.flatMap((courseModule) => courseModule.items) ?? [];
@@ -304,11 +393,28 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
     (total, item) => total + Math.max(1, item.lessons?.length ?? 0),
     0
   );
+  const validDuration = Number.isInteger(durationMinutes) && durationMinutes >= 10 && durationMinutes <= 360;
+  const draftConfig = (): PaperAssessmentConfig => ({
+    eventId: event.id,
+    kind,
+    title: event.title,
+    scheduledAt: event.start,
+    durationMinutes,
+    chapterIds,
+    allowedMaterials: allowedMaterials.trim() || "Aucun matériel",
+    instructions: instructions.trim() || undefined
+  });
+  const promptBytes = selectedSubject && chapterIds.length && validDuration
+    ? aiPromptByteLength(buildPaperAssessmentPrompt(selectedSubject, draftConfig(), formation))
+    : 0;
+  const promptTooLarge = promptBytes > NATIVE_AI_PROMPT_MAX_BYTES;
 
   const changeSubject = (nextSubjectId: string) => {
     setSubjectId(nextSubjectId);
     const nextSubject = subjects.find((subject) => subject.id === nextSubjectId);
-    setChapterIds(nextSubject ? defaultChapterIdsForAssessment(event, nextSubject) : []);
+    setChapterIds(nextSubject
+      ? defaultChapterIdsForAssessment(event, nextSubject, timeZone, formation?.academicYear)
+      : []);
   };
 
   const changeKind = (nextKind: PaperAssessmentKind) => {
@@ -318,17 +424,8 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
 
   const submit = (formEvent: FormEvent) => {
     formEvent.preventDefault();
-    if (!selectedSubject || !chapterIds.length || durationMinutes < 10 || durationMinutes > 360) return;
-    onGenerate(selectedSubject, {
-      eventId: event.id,
-      kind,
-      title: event.title,
-      scheduledAt: event.start,
-      durationMinutes,
-      chapterIds,
-      allowedMaterials: allowedMaterials.trim() || "Aucun matériel",
-      instructions: instructions.trim() || undefined
-    });
+    if (!selectedSubject || !chapterIds.length || !validDuration || promptTooLarge) return;
+    onGenerate(selectedSubject, draftConfig());
   };
 
   return (
@@ -381,7 +478,7 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
           </label>
           <label className="form-field">
             <span>Matériel autorisé</span>
-            <input value={allowedMaterials} onChange={(event) => setAllowedMaterials(event.target.value)} required />
+            <input maxLength={2000} value={allowedMaterials} onChange={(event) => setAllowedMaterials(event.target.value)} required />
           </label>
         </div>
 
@@ -419,9 +516,16 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
           {!chapterIds.length && <p className="paper-scope-error">Sélectionne au moins un chapitre.</p>}
         </fieldset>
 
+        {promptTooLarge && (
+          <p className="form-validation-error" role="alert">
+            Cette sélection produit {promptBytes.toLocaleString("fr-CH")} octets de contexte IA, au-delà de la limite de {NATIVE_AI_PROMPT_MAX_BYTES.toLocaleString("fr-CH")}. Sélectionne moins de chapitres.
+          </p>
+        )}
+
         <label className="form-field">
           <span>Consignes particulières <em>facultatif</em></span>
           <textarea
+            maxLength={4000}
             value={instructions}
             onChange={(event) => setInstructions(event.target.value)}
             placeholder="Ex. privilégier la modélisation, inclure un formulaire en annexe…"
@@ -437,7 +541,7 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
           <button type="button" className="secondary-button" onClick={onEditEvent}><CalendarDays /> Modifier l’événement</button>
           <span />
           <button type="button" className="secondary-button" onClick={onClose}>Annuler</button>
-          <button className="primary-button" disabled={!selectedSubject || !chapterIds.length}>
+          <button className="primary-button" disabled={!selectedSubject || !chapterIds.length || !validDuration || promptTooLarge}>
             <Sparkles /> Générer les deux PDF
           </button>
         </div>
@@ -510,10 +614,17 @@ export function LinkConversationEditor({ subject, provider, initialUrl, onSave, 
   );
 }
 
-export function TaskEditor({ task, subjects, onSave, onClose }: { task?: TaskItem; subjects: Subject[]; onSave: (task: TaskItem) => void; onClose: () => void }) {
+export function TaskEditor({ task, subjects, onSave, onClose, timeZone = "Europe/Zurich" }: { task?: TaskItem; subjects: Subject[]; onSave: (task: TaskItem) => void; onClose: () => void; timeZone?: string }) {
   const [title, setTitle] = useState(task?.title ?? "");
-  const defaultDueAt = dateAtTimeZone(addCalendarDays(dateKeyAtTimeZone(new Date()), 1), 18);
-  const [dueAt, setDueAt] = useState(dateTimeInputValueAtTimeZone(task ? new Date(task.dueAt) : defaultDueAt));
+  const defaultDueAt = dateAtTimeZone(
+    addCalendarDays(dateKeyAtTimeZone(new Date(), timeZone), 1),
+    18,
+    0,
+    timeZone
+  );
+  const [dueAt, setDueAt] = useState(
+    dateTimeInputValueAtTimeZone(task ? new Date(task.dueAt) : defaultDueAt, timeZone)
+  );
   const [subjectId, setSubjectId] = useState(task?.subjectId ?? "");
   const [priority, setPriority] = useState<TaskItem["priority"]>(task?.priority ?? "medium");
   const [formError, setFormError] = useState<string | null>(null);
@@ -525,7 +636,7 @@ export function TaskEditor({ task, subjects, onSave, onClose }: { task?: TaskIte
     }
     let dueDate: Date;
     try {
-      dueDate = dateFromTimeZoneInput(dueAt);
+      dueDate = dateFromTimeZoneInput(dueAt, timeZone);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Échéance invalide.");
       return;

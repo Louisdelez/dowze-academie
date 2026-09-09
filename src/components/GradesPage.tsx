@@ -20,6 +20,7 @@ import { format, isValid, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMemo, useState } from "react";
 import { paperAssessmentKindLabel } from "../lib/assessment";
+import type { FormationManifest } from "../lib/formations";
 import type { AssessmentRecord, RecordedAssessmentKind, Subject } from "../types";
 import { SubjectIcon } from "./SubjectIcon";
 
@@ -36,6 +37,7 @@ export interface GradesPageProps {
     variant: AssessmentPdfVariant
   ) => void;
   onOpenConversation: (conversationId: string) => void;
+  grading?: FormationManifest["grading"];
 }
 
 const averageFormatter = new Intl.NumberFormat("fr-FR", {
@@ -51,7 +53,7 @@ function assessmentKindLabel(kind: RecordedAssessmentKind): string {
   return kind === "mini-test" ? "Mini-test PDF" : paperAssessmentKindLabel(kind);
 }
 
-function normalizedScore(assessment: AssessmentRecord): number | null {
+function normalizedScore(assessment: AssessmentRecord, scaleMax: number): number | null {
   if (
     !Number.isFinite(assessment.score) ||
     !Number.isFinite(assessment.maxScore) ||
@@ -59,24 +61,29 @@ function normalizedScore(assessment: AssessmentRecord): number | null {
   ) {
     return null;
   }
-  return (assessment.score / assessment.maxScore) * 20;
+  return (assessment.score / assessment.maxScore) * scaleMax;
 }
 
-function averageOf(assessments: AssessmentRecord[]): number | null {
+function averageOf(assessments: AssessmentRecord[], scaleMax: number): number | null {
   const weighted = assessments
-    .map((assessment) => ({ score: normalizedScore(assessment), coefficient: assessment.coefficient ?? 1 }))
+    .map((assessment) => ({ score: normalizedScore(assessment, scaleMax), coefficient: assessment.coefficient ?? 1 }))
     .filter((entry): entry is { score: number; coefficient: number } => entry.score !== null && entry.coefficient > 0);
   const totalWeight = weighted.reduce((sum, entry) => sum + entry.coefficient, 0);
   if (!totalWeight) return null;
   return weighted.reduce((sum, entry) => sum + entry.score * entry.coefficient, 0) / totalWeight;
 }
 
-function scoreTone(score: number | null): "excellent" | "good" | "pass" | "low" | "ungraded" {
+function scoreTone(
+  score: number | null,
+  scaleMax: number,
+  passMark: number
+): "excellent" | "good" | "pass" | "low" | "ungraded" {
   if (score === null) return "ungraded";
-  if (score >= 16) return "excellent";
-  if (score >= 14) return "good";
-  if (score >= 10) return "pass";
-  return "low";
+  if (score < passMark) return "low";
+  const passingRange = Math.max(0, scaleMax - passMark);
+  if (score >= passMark + passingRange * 0.6) return "excellent";
+  if (score >= passMark + passingRange * 0.4) return "good";
+  return "pass";
 }
 
 function displayDate(value: string): string {
@@ -97,8 +104,10 @@ export function GradesPage({
   onEditAssessment,
   onDeleteAssessment,
   onOpenPdf,
-  onOpenConversation
+  onOpenConversation,
+  grading = { scaleMax: 20, passMark: 10 }
 }: GradesPageProps) {
+  const { scaleMax, passMark } = grading;
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [kindFilter, setKindFilter] = useState<"all" | RecordedAssessmentKind>("all");
 
@@ -122,10 +131,10 @@ export function GradesPage({
         subjectId,
         subject,
         records,
-        average: averageOf(records)
+        average: averageOf(records, scaleMax)
       };
     }).sort((a, b) => subjectName(a.subject).localeCompare(subjectName(b.subject), "fr"));
-  }, [assessments, subjects]);
+  }, [assessments, scaleMax, subjects]);
 
   const generalAverage = useMemo(() => {
     const averages = subjectAverages
@@ -136,9 +145,9 @@ export function GradesPage({
 
   const failingFundamentalSubjects = useMemo(() => subjectAverages.filter(({ subject, average }) =>
     average !== null &&
-    average < 10 &&
+    average < passMark &&
     subject?.validation?.toLocaleLowerCase("fr").includes("non compensable")
-  ), [subjectAverages]);
+  ), [passMark, subjectAverages]);
 
   const visibleAssessments = useMemo(
     () => assessments
@@ -188,7 +197,7 @@ export function GradesPage({
             <small>Moyenne actuelle</small>
             <strong>
               {generalAverage === null ? "—" : averageFormatter.format(generalAverage)}
-              <em>/20</em>
+              <em>/{scoreFormatter.format(scaleMax)}</em>
             </strong>
             <span>Indicateur · ne valide pas l’année</span>
           </span>
@@ -218,7 +227,7 @@ export function GradesPage({
             <strong>Validation annuelle non acquise à ce stade</strong>
             <small>
               {failingFundamentalSubjects.map(({ subject }) => subjectName(subject)).join(", ")} :
-              {" "}moyenne inférieure à 10/20 dans {failingFundamentalSubjects.length === 1 ? "une matière fondamentale non compensable" : "des matières fondamentales non compensables"}.
+              {" "}moyenne inférieure à {scoreFormatter.format(passMark)}/{scoreFormatter.format(scaleMax)} dans {failingFundamentalSubjects.length === 1 ? "une matière fondamentale non compensable" : "des matières fondamentales non compensables"}.
             </small>
           </span>
         </section>
@@ -237,7 +246,7 @@ export function GradesPage({
           <div className="grade-subject-grid">
             {subjectAverages.map(({ subjectId, subject, records, average }) => {
               const isNonCompensable = subject?.validation?.toLocaleLowerCase("fr").includes("non compensable") ?? false;
-              const validationStatus = average === null ? "Non calculable" : average >= 10 ? "Validée" : "À rattraper";
+              const validationStatus = average === null ? "Non calculable" : average >= passMark ? "Validée" : "À rattraper";
               return <article className="grade-subject-card" key={subjectId}>
                 {subject ? (
                   <SubjectIcon subject={subject} size="sm" />
@@ -252,11 +261,11 @@ export function GradesPage({
                   </small>
                 </span>
                 <span
-                  className={`grade-subject-average grade-score--${scoreTone(average)}`}
-                  aria-label={`Moyenne : ${average === null ? "non calculable" : `${averageFormatter.format(average)} sur 20`}`}
+                  className={`grade-subject-average grade-score--${scoreTone(average, scaleMax, passMark)}`}
+                  aria-label={`Moyenne : ${average === null ? "non calculable" : `${averageFormatter.format(average)} sur ${scoreFormatter.format(scaleMax)}`}`}
                 >
                   <strong>{average === null ? "—" : averageFormatter.format(average)}</strong>
-                  <small>/20</small>
+                  <small>/{scoreFormatter.format(scaleMax)}</small>
                 </span>
               </article>;
             })}
@@ -313,7 +322,7 @@ export function GradesPage({
           <div className="grade-record-list">
             {visibleAssessments.map((assessment) => {
               const subject = subjects.find((candidate) => candidate.id === assessment.subjectId);
-              const normalized = normalizedScore(assessment);
+              const normalized = normalizedScore(assessment, scaleMax);
               const titleId = `assessment-${assessment.id}-title`;
               const blankPdf = assessment.blankPdf;
               const completedPdf = assessment.completedPdf;
@@ -421,15 +430,15 @@ export function GradesPage({
                   </div>
 
                   <div
-                    className={`grade-record-score grade-score--${scoreTone(normalized)}`}
+                    className={`grade-record-score grade-score--${scoreTone(normalized, scaleMax, passMark)}`}
                     aria-label={`Note : ${scoreFormatter.format(assessment.score)} sur ${scoreFormatter.format(assessment.maxScore)}`}
                   >
                     <span>
                       <strong>{scoreFormatter.format(assessment.score)}</strong>
                       <small>/ {scoreFormatter.format(assessment.maxScore)}</small>
                     </span>
-                    {normalized !== null && assessment.maxScore !== 20 && (
-                      <em>{averageFormatter.format(normalized)}/20</em>
+                    {normalized !== null && assessment.maxScore !== scaleMax && (
+                      <em>{averageFormatter.format(normalized)}/{scoreFormatter.format(scaleMax)}</em>
                     )}
                   </div>
                 </article>

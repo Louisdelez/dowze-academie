@@ -55,13 +55,21 @@ export function dateAtTimeZone(
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
   if (!match) throw new Error(`Date civile invalide : ${dateKey}`);
   const [, yearText, monthText, dayText] = match;
-  const desired = Date.UTC(Number(yearText), Number(monthText) - 1, Number(dayText), hour, minute, 0);
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const desired = Date.UTC(year, month - 1, day, hour, minute, 0);
   let instant = desired;
+  const candidates = new Map<number, ZonedDateParts>();
 
-  // Deux itérations gèrent aussi le changement de décalage été/hiver autour
-  // de la date recherchée, sans dépendre du fuseau configuré sur l’appareil.
-  for (let index = 0; index < 3; index += 1) {
+  // Les corrections convergent normalement en deux passages. Lorsqu'une heure
+  // est sautée, elles oscillent entre les décalages placés avant et après la
+  // transition : on conserve alors les deux côtés pour choisir le premier
+  // instant représentable après l'heure murale demandée.
+  for (let index = 0; index < 4; index += 1) {
+    if (candidates.has(instant)) break;
     const parts = zonedDateParts(new Date(instant), timeZone);
+    candidates.set(instant, parts);
     const represented = Date.UTC(
       parts.year,
       parts.month - 1,
@@ -71,10 +79,43 @@ export function dateAtTimeZone(
       parts.second
     );
     const correction = desired - represented;
+    if (correction === 0) return new Date(instant);
     instant += correction;
-    if (correction === 0) break;
   }
-  return new Date(instant);
+
+  const afterRequestedTime = [...candidates.entries()]
+    .map(([candidateInstant, parts]) => ({
+      instant: candidateInstant,
+      parts,
+      wallTime: Date.UTC(
+        parts.year,
+        parts.month - 1,
+        parts.day,
+        parts.hour,
+        parts.minute,
+        parts.second
+      )
+    }))
+    .filter((candidate) => candidate.wallTime > desired)
+    .sort((left, right) =>
+      left.wallTime - right.wallTime || left.instant - right.instant
+    );
+  const sameCivilDate = afterRequestedTime.find(({ parts }) =>
+    parts.year === year && parts.month === month && parts.day === day
+  );
+  if (sameCivilDate) return new Date(sameCivilDate.instant);
+
+  // Si aucun candidat ne tombe sur ce jour (par exemple Apia 2011-12-30), la
+  // date civile entière a été sautée. Avancer silencieusement au lendemain
+  // changerait notamment les frontières des événements sur la journée entière.
+  const hasCandidateOnCivilDate = [...candidates.values()].some((parts) =>
+    parts.year === year && parts.month === month && parts.day === day
+  );
+  if (!hasCandidateOnCivilDate) {
+    throw new Error(`La date civile ${dateKey} n’existe pas dans le fuseau ${timeZone}.`);
+  }
+
+  throw new Error(`La date et l’heure ${dateKey} ${hour}:${minute} n’existent pas dans le fuseau ${timeZone}.`);
 }
 
 export function dateKeyAtTimeZone(date: Date, timeZone = "Europe/Zurich") {

@@ -4,6 +4,13 @@ import type {
   Conversation,
   Subject
 } from "../types";
+import type { FormationManifest } from "./formations";
+import {
+  isNativeAiPromptWithinLimit,
+  nativeAiSessionId,
+  NATIVE_AI_PROMPT_MAX_BYTES
+} from "./aiSessionContract.ts";
+import { resolveLanguageCurriculumRange } from "./languageCurriculum.ts";
 
 export type CorrectableAssessmentMode = Extract<
   AiSessionMode,
@@ -13,6 +20,7 @@ export type CorrectableAssessmentMode = Extract<
 export interface CreateActiveAssessmentCorrectionOptions {
   id?: string;
   startedAt?: string | Date;
+  formation?: FormationManifest;
 }
 
 export const ASSESSMENT_CORRECTION_CONTEXT_START =
@@ -35,7 +43,7 @@ export const UNIVERSAL_ASSESSMENT_CORRECTION_PROMPT = [
   "# PROFESSEUR IA — CORRECTION D’UNE ÉVALUATION SCANNÉE",
   "",
   "## Résultat attendu",
-  "Corrige avec rigueur la copie manuscrite de l’évaluation ciblée, attribue les crédits prévus par le barème, calcule une note vérifiable sur 20 et formule une appréciation professorale utile.",
+  "Corrige avec rigueur la copie manuscrite de l’évaluation ciblée, attribue les crédits prévus par le barème, calcule une note vérifiable sur l’échelle indiquée dans le contexte et formule une appréciation professorale utile.",
   "Une correction est définitive seulement si les documents de référence sont disponibles et si toutes les pages attendues de la copie sont présentes, rattachées au bon sujet et suffisamment lisibles pour évaluer chaque réponse sans supposition.",
   "",
   "## Sources obligatoires",
@@ -56,19 +64,17 @@ export const UNIVERSAL_ASSESSMENT_CORRECTION_PROMPT = [
   "- Si une page attendue manque, est dupliquée, appartient à un autre sujet, est coupée ou illisible, ou si une réponse nécessaire à la notation reste ambiguë, dresse la liste exacte des remplacements requis et attends. N’attribue aucune note définitive et n’émets aucune ligne destinée à l’enregistrement.",
   "",
   "## Notation",
-  "- Applique le barème officiel question par question et vérifie que le maximum total vaut 20. Si le barème n’est pas exprimé sur 20, conserve ses pondérations et convertis le total sur 20 de façon explicite et exacte.",
+  "- Applique le barème officiel question par question et vérifie que son maximum total correspond exactement à l’échelle indiquée dans le contexte. Si le sujet utilise une autre échelle, conserve ses pondérations et convertis le total de façon explicite et exacte.",
   "- Accorde le crédit partiel prévu pour toute étape correcte et identifiable. Distingue compréhension, méthode, calcul, justification, signe, unité et interprétation ; évite de pénaliser deux fois la même erreur propagée lorsque la suite du raisonnement est cohérente.",
-  "- Accepte toute méthode alternative mathématiquement ou scientifiquement valide. N’accorde aucun point à une étape absente en supposant qu’elle était comprise.",
-  "- Recalcule silencieusement les sous-totaux puis le total. La note finale doit être comprise entre 0 et 20 et découler exactement des points affichés.",
+  "- Accepte toute méthode alternative exacte, pertinente et entièrement conforme à l’énoncé et aux critères du barème. N’accorde aucun point à une étape absente en supposant qu’elle était comprise.",
+  "- Recalcule silencieusement les sous-totaux puis le total. La note finale doit être comprise entre zéro et le maximum indiqué et découler exactement des points affichés.",
   "",
   "## Compte rendu définitif",
   "- Indique pour chaque question ou sous-question les points obtenus et les points possibles, y compris lorsque la réponse est entièrement correcte.",
   "- Pour une réponse entièrement correcte, écris seulement son statut et ses points, sans réexpliquer la solution.",
   "- Explique uniquement les réponses fausses ou partielles : ce qui est acquis, l’erreur précise, la réponse ou méthode attendue et la raison du crédit accordé. Ne recopie pas tout le corrigé officiel.",
-  "- Après le tableau des points, donne les sous-totaux, leur somme vérifiée sur 20, puis une appréciation professorale d’exactement une phrase qui mentionne au moins un acquis réel et la priorité de progression la plus utile.",
-  "- Termine par exactement les deux lignes suivantes, en remplaçant x par la note numérique et les points de suspension par l’unique phrase d’appréciation :",
-  ASSESSMENT_NOTE_OUTPUT_TEMPLATE,
-  ASSESSMENT_APPRECIATION_OUTPUT_TEMPLATE,
+  "- Après le tableau des points, donne les sous-totaux, leur somme vérifiée sur l’échelle demandée, puis une appréciation professorale d’exactement une phrase qui mentionne au moins un acquis réel et la priorité de progression la plus utile.",
+  "- Termine par exactement les deux lignes dont le format est fourni dans le contexte, en remplaçant x par la note numérique et les points de suspension par l’unique phrase d’appréciation.",
   "Aucun titre, commentaire, espace de bilan ou autre texte ne doit suivre ces deux lignes. Elles ne doivent apparaître qu’après une correction complète et définitive.",
   "",
   "## Règle d’arrêt",
@@ -83,28 +89,16 @@ function contextValue(value: string | undefined, fallback: string): string {
     .replaceAll(">", "&gt;");
 }
 
-const CEFR_LEVEL_PATTERN = /(?:^|[^a-z0-9])(a1|a2|b1|b2|c1|c2)(?=$|[^a-z0-9])/i;
-
-function cefrLevelFromValue(value: string | undefined): string | undefined {
-  return value?.match(CEFR_LEVEL_PATTERN)?.[1]?.toUpperCase();
-}
-
-function englishCorrectionLevel(
+function correctionLanguageContext(
   subject: Subject,
   conversation: Conversation
-): string | undefined {
-  if (subject.id !== "anglais") return undefined;
-  const courseModule = conversation.moduleId
-    ? subject.modules.find((candidate) => candidate.id === conversation.moduleId)
-    : undefined;
-  return (
-    courseModule?.cefrLevel ??
-    cefrLevelFromValue(conversation.curriculumScope) ??
-    cefrLevelFromValue(conversation.lessonUnitId) ??
-    cefrLevelFromValue(conversation.itemId) ??
-    cefrLevelFromValue(conversation.moduleId) ??
-    subject.cefrLevel
+): ReturnType<typeof resolveLanguageCurriculumRange> {
+  const chapterIds = new Set(conversation.assessment?.chapterIds ?? []);
+  const courseModules = subject.modules.filter((candidate) =>
+    candidate.id === conversation.moduleId ||
+    candidate.items.some((item) => item.id === conversation.itemId || chapterIds.has(item.id))
   );
+  return resolveLanguageCurriculumRange(subject, courseModules, conversation);
 }
 
 export function assessmentCorrectionModeLabel(
@@ -163,10 +157,12 @@ function assessmentTitle(subject: Subject, conversation: Conversation): string {
 
 export function buildAssessmentCorrectionContext(
   subject: Subject,
-  conversation: Conversation
+  conversation: Conversation,
+  formation?: FormationManifest
 ): string {
   const mode = assertCorrectionSource(subject, conversation);
-  const cefrLevel = englishCorrectionLevel(subject, conversation);
+  const language = correctionLanguageContext(subject, conversation);
+  const cefrLabel = language?.cefrLabel;
   const lines = [
     ASSESSMENT_CORRECTION_CONTEXT_START,
     `Type d’évaluation : ${assessmentCorrectionModeLabel(mode)}`,
@@ -180,12 +176,16 @@ export function buildAssessmentCorrectionContext(
       "Non précisé"
     )}`,
     "Références attendues dans cette conversation : sujet élève, corrigé enseignant et barème détaillé correspondants",
+    `Échelle de notation : 0 à ${formation?.grading.scaleMax ?? 20}`,
+    `Seuil de réussite : ${formation?.grading.passMark ?? 10}`,
+    `Ligne exacte de note finale : NOTE À ENREGISTRER : x / ${formation?.grading.scaleMax ?? 20}`,
+    `Ligne exacte d’appréciation finale : ${ASSESSMENT_APPRECIATION_OUTPUT_TEMPLATE}`,
   ];
 
-  if (subject.id === "anglais") {
-    const levelLabel = cefrLevel ?? "non sélectionné";
+  if (language && (language.selectable || cefrLabel !== undefined)) {
+    const levelLabel = cefrLabel ?? "non sélectionné";
     lines.push(
-      `Cursus : Anglais — parcours CECRL ${levelLabel} sur une année`,
+      `Cursus : ${contextValue(language.displayLanguageName, "Langue cible")} — parcours CECRL ${levelLabel} sur une année`,
       `Niveau de référence : CECRL ${levelLabel}`,
       "Barème écrit à appliquer : compréhension, accomplissement et pertinence de la tâche, organisation/cohésion, étendue et correction grammaticales et lexicales, registre/pragmatique et médiation, selon le barème officiel du sujet.",
       "Limite de la correction : cette copie papier ne permet pas d’attribuer un niveau en écoute, production ou interaction orales, ni en prononciation ; ne revendiquer ces mesures sans protocole oral réel et média audio."
@@ -199,9 +199,10 @@ export function buildAssessmentCorrectionContext(
 /** Place le contrat invariant avant le court contexte propre à l'évaluation. */
 export function buildAssessmentCorrectionPrompt(
   subject: Subject,
-  conversation: Conversation
+  conversation: Conversation,
+  formation?: FormationManifest
 ): string {
-  return `${UNIVERSAL_ASSESSMENT_CORRECTION_PROMPT}\n\n${buildAssessmentCorrectionContext(subject, conversation)}`;
+  return `${UNIVERSAL_ASSESSMENT_CORRECTION_PROMPT}\n\n${buildAssessmentCorrectionContext(subject, conversation, formation)}`;
 }
 
 function normalizedStartedAt(value: string | Date | undefined): string {
@@ -232,20 +233,22 @@ export function createActiveAssessmentCorrection(
   const startedAt = normalizedStartedAt(options.startedAt);
   const title = assessmentTitle(subject, conversation);
   const generatedId = `assessment-correction-${idPart(conversation.id)}-${startedAt.replace(/[^0-9]/g, "")}`;
-  const cefrLevel = englishCorrectionLevel(subject, conversation);
+  const language = correctionLanguageContext(subject, conversation);
+  const prompt = buildAssessmentCorrectionPrompt(subject, conversation, options.formation);
+  if (!isNativeAiPromptWithinLimit(prompt)) {
+    throw new RangeError(`Le contexte IA dépasse la limite native de ${NATIVE_AI_PROMPT_MAX_BYTES} octets.`);
+  }
 
   return {
-    id: options.id?.trim() || generatedId,
+    id: nativeAiSessionId(options.id?.trim() || generatedId, "assessment-correction"),
     subjectId: subject.id,
     moduleId: conversation.moduleId,
     itemId: conversation.itemId,
     lessonUnitId: conversation.lessonUnitId,
     lessonMode: "assessment-correction",
     title: `Correction — ${title}`,
-    curriculumScope: cefrLevel
-      ? `cefr:${cefrLevel}`
-      : conversation.curriculumScope,
-    prompt: buildAssessmentCorrectionPrompt(subject, conversation),
+    curriculumScope: language?.curriculumScope ?? conversation.curriculumScope,
+    prompt,
     startedAt,
     assessment: conversation.assessment
       ? {

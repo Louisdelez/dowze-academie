@@ -18,16 +18,17 @@ import type { Subject, TaskItem } from "../types";
 interface TasksPageProps {
   tasks: TaskItem[];
   subjects: Subject[];
+  timeZone?: string;
   onToggle: (id: string) => void;
   onAdd: () => void;
   onEdit: (task: TaskItem) => void;
   onDelete: (task: TaskItem) => void;
 }
 
-export function TasksPage({ tasks, subjects, onToggle, onAdd, onEdit, onDelete }: TasksPageProps) {
+export function TasksPage({ tasks, subjects, timeZone = "Europe/Zurich", onToggle, onAdd, onEdit, onDelete }: TasksPageProps) {
   const [showCompleted, setShowCompleted] = useState(true);
   const now = useCurrentMinute();
-  const todayKey = dateKeyAtTimeZone(now);
+  const todayKey = dateKeyAtTimeZone(now, timeZone);
   const visibleTasks = tasks
     .filter((task) => showCompleted || !task.completed)
     .sort((a, b) => Number(a.completed) - Number(b.completed) || a.dueAt.localeCompare(b.dueAt));
@@ -51,7 +52,7 @@ export function TasksPage({ tasks, subjects, onToggle, onAdd, onEdit, onDelete }
         </article>
         <article>
           <span className="stat-icon stat-icon--amber"><CalendarClock /></span>
-          <div><strong>{tasks.filter((task) => !task.completed && dateKeyAtTimeZone(new Date(task.dueAt)) === todayKey).length}</strong><small>Pour aujourd’hui</small></div>
+          <div><strong>{tasks.filter((task) => !task.completed && dateKeyAtTimeZone(new Date(task.dueAt), timeZone) === todayKey).length}</strong><small>Pour aujourd’hui</small></div>
         </article>
         <article>
           <span className="stat-icon stat-icon--green"><CheckCircle2 /></span>
@@ -83,7 +84,7 @@ export function TasksPage({ tasks, subjects, onToggle, onAdd, onEdit, onDelete }
                 <span className="full-task-copy">
                   <strong>{task.title}</strong>
                   <small className={overdue ? "is-overdue" : ""}>
-                    {overdue ? "En retard · " : ""}{formatCalendarDate(dueAt, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).replace(",", " à")}
+                    {overdue ? "En retard · " : ""}{formatCalendarDate(dueAt, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }, timeZone).replace(",", " à")}
                   </small>
                 </span>
                 {subject && <span className="task-subject" style={{ color: subject.color, background: subject.accent }}>{subject.shortName}</span>}

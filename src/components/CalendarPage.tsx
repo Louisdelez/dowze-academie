@@ -13,6 +13,7 @@ import type { KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useCurrentMinute } from "../hooks/useCurrentMinute";
 import {
+  CALENDAR_TIME_ZONE,
   HOURS,
   WEEK_DAYS_SHORT,
   type CalendarEventIndex,
@@ -48,6 +49,7 @@ interface CalendarPageProps {
   onOpenEvent: (event: CalendarEvent) => void;
   onEditEvent: (event: CalendarEvent) => void;
   onExportCalendar: () => void;
+  timeZone?: string;
 }
 
 interface EventContextMenuState {
@@ -115,11 +117,12 @@ export function CalendarPage({
   onNewEvent,
   onOpenEvent,
   onEditEvent,
-  onExportCalendar
+  onExportCalendar,
+  timeZone = CALENDAR_TIME_ZONE
 }: CalendarPageProps) {
   const [contextMenu, setContextMenu] = useState<EventContextMenuState | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const eventIndex = useMemo(() => indexEventsByDay(events), [events]);
+  const eventIndex = useMemo(() => indexEventsByDay(events, timeZone), [events, timeZone]);
   const eventSubjectIds = useMemo(
     () => new Set(events.map((event) => event.subjectId).filter(Boolean)),
     [events]
@@ -218,16 +221,16 @@ export function CalendarPage({
         <div className="calendar-title-group">
           <p className="eyebrow">Mon planning</p>
           <div className="calendar-title-row">
-            <h1>{calendarTitle(currentDate, view)}</h1>
+            <h1>{calendarTitle(currentDate, view, timeZone)}</h1>
             <div className="date-stepper">
               <button
-                onClick={() => onDateChange(shiftCalendarDate(currentDate, view, -1))}
+                onClick={() => onDateChange(shiftCalendarDate(currentDate, view, -1, timeZone))}
                 aria-label="Période précédente"
               >
                 <ChevronLeft />
               </button>
               <button
-                onClick={() => onDateChange(shiftCalendarDate(currentDate, view, 1))}
+                onClick={() => onDateChange(shiftCalendarDate(currentDate, view, 1, timeZone))}
                 aria-label="Période suivante"
               >
                 <ChevronRight />
@@ -271,7 +274,7 @@ export function CalendarPage({
             </span>
           ))}
         </div>
-        <span className="timezone-label">Heure locale · Europe/Zurich</span>
+        <span className="timezone-label">Heure locale · {timeZone}</span>
       </div>
 
       <section className={`calendar-surface calendar-surface--${view}`}>
@@ -279,6 +282,7 @@ export function CalendarPage({
           <YearView
             date={currentDate}
             eventIndex={eventIndex}
+            timeZone={timeZone}
             onDateChange={onDateChange}
             onViewChange={onViewChange}
           />
@@ -287,6 +291,7 @@ export function CalendarPage({
           <MonthView
             date={currentDate}
             eventIndex={eventIndex}
+            timeZone={timeZone}
             onDateChange={onDateChange}
             onViewChange={onViewChange}
             onNewEvent={onNewEvent}
@@ -299,6 +304,7 @@ export function CalendarPage({
             mode={view}
             events={events}
             eventIndex={eventIndex}
+            timeZone={timeZone}
             onDateChange={onDateChange}
             onViewChange={onViewChange}
             onNewEvent={onNewEvent}
@@ -336,24 +342,30 @@ export function CalendarPage({
 function YearView({
   date,
   eventIndex,
+  timeZone,
   onDateChange,
   onViewChange
 }: {
   date: Date;
   eventIndex: CalendarEventIndex;
+  timeZone: string;
   onDateChange: (date: Date) => void;
   onViewChange: (view: CalendarView) => void;
 }) {
   return (
     <div className="year-grid">
       {Array.from({ length: 12 }, (_, monthIndex) => {
-        const year = calendarDateParts(date).year;
-        const monthDate = calendarDateFor(year, monthIndex + 1, 1);
-        const days = monthGridDays(monthDate);
+        const year = calendarDateParts(date, timeZone).year;
+        const monthDate = calendarDateFor(year, monthIndex + 1, 1, timeZone);
+        const days = monthGridDays(monthDate, timeZone);
         const monthEventIds = new Set<string>();
         const numberOfDays = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
         for (let day = 1; day <= numberOfDays; day += 1) {
-          indexedEventsForDay(eventIndex, calendarDateFor(year, monthIndex + 1, day))
+          indexedEventsForDay(
+            eventIndex,
+            calendarDateFor(year, monthIndex + 1, day, timeZone),
+            timeZone
+          )
             .forEach((event) => monthEventIds.add(event.id));
         }
         const monthEventCount = monthEventIds.size;
@@ -366,7 +378,7 @@ function YearView({
                 onViewChange("month");
               }}
             >
-              <strong>{formatCalendarDate(monthDate, { month: "long" })}</strong>
+              <strong>{formatCalendarDate(monthDate, { month: "long" }, timeZone)}</strong>
               {monthEventCount > 0 && <span>{monthEventCount}</span>}
             </button>
             <div className="mini-week-labels">
@@ -374,20 +386,20 @@ function YearView({
             </div>
             <div className="mini-days">
               {days.map((day) => {
-                const dayEvents = indexedEventsForDay(eventIndex, day);
+                const dayEvents = indexedEventsForDay(eventIndex, day, timeZone);
                 return (
                   <button
                     key={day.toISOString()}
-                    className={`${isCurrentMonth(day, monthDate) ? "" : "is-outside"} ${
-                      isDateToday(day) ? "is-today" : ""
+                    className={`${isCurrentMonth(day, monthDate, timeZone) ? "" : "is-outside"} ${
+                      isDateToday(day, timeZone) ? "is-today" : ""
                     }`}
                     onClick={() => {
                       onDateChange(day);
                       onViewChange("day");
                     }}
-                    aria-label={`${formatCalendarDate(day, { day: "numeric", month: "long", year: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} événement${dayEvents.length > 1 ? "s" : ""}` : ", aucun événement"}`}
+                    aria-label={`${formatCalendarDate(day, { day: "numeric", month: "long", year: "numeric" }, timeZone)}${dayEvents.length ? `, ${dayEvents.length} événement${dayEvents.length > 1 ? "s" : ""}` : ", aucun événement"}`}
                   >
-                    <span>{formatCalendarDate(day, { day: "numeric" })}</span>
+                    <span>{formatCalendarDate(day, { day: "numeric" }, timeZone)}</span>
                     {dayEvents.length > 0 && (
                       <i style={{ background: dayEvents[0].color }} />
                     )}
@@ -405,6 +417,7 @@ function YearView({
 function MonthView({
   date,
   eventIndex,
+  timeZone,
   onDateChange,
   onViewChange,
   onNewEvent,
@@ -412,12 +425,13 @@ function MonthView({
 }: {
   date: Date;
   eventIndex: CalendarEventIndex;
+  timeZone: string;
   onDateChange: (date: Date) => void;
   onViewChange: (view: CalendarView) => void;
   onNewEvent: (date?: Date) => void;
   eventInteractionProps: (event: CalendarEvent) => React.ButtonHTMLAttributes<HTMLButtonElement>;
 }) {
-  const days = monthGridDays(date);
+  const days = monthGridDays(date, timeZone);
   return (
     <div className="month-calendar">
       <div className="month-weekdays">
@@ -425,12 +439,12 @@ function MonthView({
       </div>
       <div className="month-days">
         {days.map((day) => {
-          const dayEvents = indexedEventsForDay(eventIndex, day);
+          const dayEvents = indexedEventsForDay(eventIndex, day, timeZone);
           return (
             <div
               key={day.toISOString()}
-              className={`month-day ${!isCurrentMonth(day, date) ? "is-outside" : ""} ${
-                isDateToday(day) ? "is-today" : ""
+              className={`month-day ${!isCurrentMonth(day, date, timeZone) ? "is-outside" : ""} ${
+                isDateToday(day, timeZone) ? "is-today" : ""
               }`}
               onDoubleClick={() => onNewEvent(day)}
             >
@@ -440,9 +454,9 @@ function MonthView({
                   onDateChange(day);
                   onViewChange("day");
                 }}
-                aria-label={formatCalendarDate(day, { day: "numeric", month: "long" })}
+                aria-label={formatCalendarDate(day, { day: "numeric", month: "long" }, timeZone)}
               >
-                {formatCalendarDate(day, { day: "numeric" })}
+                {formatCalendarDate(day, { day: "numeric" }, timeZone)}
               </button>
               <div className="month-events">
                 {dayEvents.slice(0, 3).map((event) => (
@@ -451,9 +465,9 @@ function MonthView({
                     className={`month-event ${isAllDayEvent(event) ? "is-all-day" : ""}`}
                     style={{ "--event-color": event.color } as React.CSSProperties}
                     {...eventInteractionProps(event)}
-                    aria-label={`${event.title}${isAllDayEvent(event) ? ", toute la journée" : `, ${timeLabel(event.start)}`}`}
+                    aria-label={`${event.title}${isAllDayEvent(event) ? ", toute la journée" : `, ${timeLabel(event.start, timeZone)}`}`}
                   >
-                    {!isAllDayEvent(event) && <span>{timeLabel(event.start)}</span>}
+                    {!isAllDayEvent(event) && <span>{timeLabel(event.start, timeZone)}</span>}
                     <strong>{event.title}</strong>
                   </button>
                 ))}
@@ -485,6 +499,7 @@ function TimeGrid({
   mode,
   events,
   eventIndex,
+  timeZone,
   onDateChange,
   onViewChange,
   onNewEvent,
@@ -494,6 +509,7 @@ function TimeGrid({
   mode: "week" | "day";
   events: CalendarEvent[];
   eventIndex: CalendarEventIndex;
+  timeZone: string;
   onDateChange: (date: Date) => void;
   onViewChange: (view: CalendarView) => void;
   onNewEvent: (date?: Date) => void;
@@ -501,14 +517,14 @@ function TimeGrid({
 }) {
   const calendarRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const days = mode === "week" ? weekDays(date) : [date];
+  const days = mode === "week" ? weekDays(date, timeZone) : [date];
   const now = useCurrentMinute();
-  const nowLabel = timeLabel(now.toISOString());
-  const nowOffset = (wallMinutes(now) / 60 - HOURS[0]) * 68;
-  const periodContainsToday = days.some((day) => isSameCalendarDay(day, now));
-  const zoneLabel = timeZoneOffsetLabel(date);
+  const nowLabel = timeLabel(now.toISOString(), timeZone);
+  const nowOffset = (wallMinutes(now, timeZone) / 60 - HOURS[0]) * 68;
+  const periodContainsToday = days.some((day) => isSameCalendarDay(day, now, timeZone));
+  const zoneLabel = timeZoneOffsetLabel(date, timeZone);
   const allDayEventsByDay = days.map((day) =>
-    indexedEventsForDay(eventIndex, day).filter(isAllDayEvent)
+    indexedEventsForDay(eventIndex, day, timeZone).filter(isAllDayEvent)
   );
   const hasAllDayEvents = allDayEventsByDay.some((dayEvents) => dayEvents.length > 0);
 
@@ -516,12 +532,12 @@ function TimeGrid({
     const scroller = scrollRef.current;
     if (!scroller) return;
     const current = new Date();
-    const currentOffset = (wallMinutes(current) / 60 - HOURS[0]) * 68;
+    const currentOffset = (wallMinutes(current, timeZone) / 60 - HOURS[0]) * 68;
     const target = periodContainsToday
       ? currentOffset - scroller.clientHeight * 0.36
       : (8.5 - HOURS[0]) * 68 - 24;
     scroller.scrollTo({ top: Math.max(0, target), behavior: "auto" });
-  }, [date, mode, periodContainsToday]);
+  }, [date, mode, periodContainsToday, timeZone]);
 
   useLayoutEffect(() => {
     const calendar = calendarRef.current;
@@ -553,14 +569,14 @@ function TimeGrid({
         {days.map((day) => (
           <button
             key={day.toISOString()}
-            className={isDateToday(day) ? "is-today" : ""}
+            className={isDateToday(day, timeZone) ? "is-today" : ""}
             onClick={() => {
               onDateChange(day);
               onViewChange("day");
             }}
           >
-            <span>{formatCalendarDate(day, { weekday: "short" }).replace(".", "")}</span>
-            <strong>{formatCalendarDate(day, { day: "numeric" })}</strong>
+            <span>{formatCalendarDate(day, { weekday: "short" }, timeZone).replace(".", "")}</span>
+            <strong>{formatCalendarDate(day, { day: "numeric" }, timeZone)}</strong>
           </button>
         ))}
       </div>
@@ -615,7 +631,8 @@ function TimeGrid({
             </div>
           )}
           {days.map((day) => {
-            const dayEvents = indexedEventsForDay(eventIndex, day).filter((event) => !isAllDayEvent(event));
+            const dayEvents = indexedEventsForDay(eventIndex, day, timeZone)
+              .filter((event) => !isAllDayEvent(event));
             const eventLayouts = layoutOverlappingEvents(dayEvents);
             return (
               <div className="time-day-column" key={day.toISOString()}>
@@ -623,11 +640,11 @@ function TimeGrid({
                   <button
                     className="hour-cell"
                     key={hour}
-                    onDoubleClick={() => onNewEvent(calendarTimeFor(day, hour))}
+                    onDoubleClick={() => onNewEvent(calendarTimeFor(day, hour, 0, timeZone))}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter" && event.key !== " ") return;
                       event.preventDefault();
-                      onNewEvent(calendarTimeFor(day, hour));
+                      onNewEvent(calendarTimeFor(day, hour, 0, timeZone));
                     }}
                     aria-label={`Ajouter à ${hour} heures`}
                   />
@@ -636,11 +653,11 @@ function TimeGrid({
                   const layout = eventLayouts.get(event) ?? { column: 0, columns: 1 };
                   const start = new Date(event.start);
                   const end = new Date(event.end);
-                  const dayKey = localDayKey(day);
-                  const continuesFromEarlier = localDayKey(start) < dayKey;
-                  const continuesLater = localDayKey(end) > dayKey;
-                  const startMinute = continuesFromEarlier ? 0 : wallMinutes(start);
-                  const endMinute = continuesLater ? 24 * 60 : wallMinutes(end);
+                  const dayKey = localDayKey(day, timeZone);
+                  const continuesFromEarlier = localDayKey(start, timeZone) < dayKey;
+                  const continuesLater = localDayKey(end, timeZone) > dayKey;
+                  const startMinute = continuesFromEarlier ? 0 : wallMinutes(start, timeZone);
+                  const endMinute = continuesLater ? 24 * 60 : wallMinutes(end, timeZone);
                   const visibleStartMinute = Math.max(HOURS[0] * 60, startMinute);
                   const visibleEndMinute = Math.min((HOURS[0] + HOURS.length) * 60, endMinute);
                   if (visibleEndMinute <= visibleStartMinute) return null;
@@ -651,8 +668,8 @@ function TimeGrid({
                   );
                   const renderedHeight = Math.min(height, HOURS.length * 68 - top);
                   const isCompact = renderedHeight <= 40;
-                  const startLabel = continuesFromEarlier ? "↤ 00:00" : timeLabel(event.start);
-                  const endLabel = continuesLater ? "24:00 ↦" : timeLabel(event.end);
+                  const startLabel = continuesFromEarlier ? "↤ 00:00" : timeLabel(event.start, timeZone);
+                  const endLabel = continuesLater ? "24:00 ↦" : timeLabel(event.end, timeZone);
                   return (
                     <button
                       key={event.id}

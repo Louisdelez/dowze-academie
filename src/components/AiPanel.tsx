@@ -34,6 +34,7 @@ import {
   isStandaloneLearningProvider,
   isVideoProvider
 } from "../lib/learningProviders";
+import { languagePracticeName } from "../lib/languageCurriculum.ts";
 import {
   currentAiUrl,
   getNativeCapabilities,
@@ -72,7 +73,7 @@ const PROVIDER_DESCRIPTIONS: Readonly<Record<AiProvider, string>> = {
   deepseek: "Assistant IA",
   kimi: "Assistant IA",
   freechat: "API personnelle ou IA locale",
-  duolingo: "Pratique de l’anglais",
+  duolingo: "Pratique linguistique",
   khanacademy: "Cours et exercices",
   youtube: "Vidéos pédagogiques",
   tiktok: "Vidéos courtes pédagogiques",
@@ -630,7 +631,7 @@ export function AiPanel({
           <span className={pendingCapture ? "is-capturing" : ""}>
             <i />
             {providerIsLanguagePractice
-              ? "Pratique d’anglais · Duolingo"
+              ? `Pratique linguistique · ${languagePracticeName(activeSubject)}`
               : provider === "khanacademy"
               ? "Cours et exercices · Khan Academy"
               : providerIsFreeChat
@@ -733,7 +734,7 @@ export function AiPanel({
       {!visible && (
         <button className="ai-reopen-tab" onClick={onOpen} aria-label={`Afficher ${providerLabel(provider)}`}>
           {providerIsLanguagePractice ? <Languages /> : provider === "khanacademy" ? <GraduationCap /> : <Bot />}
-          <span>{providerIsLanguagePractice ? "Anglais" : provider === "khanacademy" ? "Khan" : providerIsFreeChat ? "Chat" : "Web"}</span>
+          <span>{providerIsLanguagePractice ? languagePracticeName(activeSubject) : provider === "khanacademy" ? "Khan" : providerIsFreeChat ? "Chat" : "Web"}</span>
           <ChevronRight />
         </button>
       )}

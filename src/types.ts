@@ -1,4 +1,4 @@
-export type AppSection = "home" | "calendar" | "courses" | "grades" | "tasks" | "settings";
+export type AppSection = "home" | "calendar" | "courses" | "grades" | "tasks" | "formations" | "settings";
 export type CalendarView = "year" | "month" | "week" | "day";
 export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type AiProvider =
@@ -49,6 +49,8 @@ export interface CalendarEvent {
   allDay?: boolean;
   type: "course" | "study" | "exam" | "personal" | "milestone" | "break";
   color: string;
+  /** Configuration initiale d’une épreuve planifiée par un paquet de formation. */
+  assessment?: PaperAssessmentConfig;
 }
 
 export interface LessonUnit {
@@ -107,8 +109,14 @@ export interface Subject {
   validation?: string;
   chapterCount?: number;
   objective?: string;
-  /** Niveau CECRL pour une matière de langue dont le parcours est sélectionnable. */
+  /** Active le sélecteur de parcours CECRL fourni par le cursus historique. */
+  curriculumKind?: "standard" | "cefr-selectable";
+  /** Niveau CECRL explicite d’une matière de langue, y compris importée. */
   cefrLevel?: CefrLevel;
+  /** Balise BCP 47 canonique de la langue cible, par exemple `de` ou `fr-CH`. */
+  languageCode?: string;
+  /** Nom lisible de la langue cible utilisé dans les interfaces et les prompts. */
+  languageName?: string;
   modules: ProgramModule[];
 }
 

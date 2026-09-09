@@ -127,7 +127,8 @@ try {
     assert.match(chapterTestPrompt, new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
   assert.match(chapterTestPrompt, /deux fichiers binaires PDF distincts et téléchargeables/);
-  assert.match(chapterTestPrompt, /totalise exactement 20 points/);
+  assert.match(chapterTestPrompt, /totalise exactement le maximum indiqué dans le contexte/);
+  assert.match(chapterTestPrompt, /Barème total obligatoire : 20 points/);
   assert.match(chapterTestPrompt, /Le sujet élève ne contient aucune réponse/);
 
   await page.screenshot({ path: screenshotPath, fullPage: true });

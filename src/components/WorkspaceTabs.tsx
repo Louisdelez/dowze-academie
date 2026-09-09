@@ -4,6 +4,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
+  LibraryBig,
   NotebookPen,
   Plus,
   Settings,
@@ -19,6 +20,7 @@ const sectionDetails = {
   courses: { label: "Cours", icon: GraduationCap },
   grades: { label: "Notes & évaluations", icon: ClipboardCheck },
   tasks: { label: "À faire", icon: CheckSquare2 },
+  formations: { label: "Formations", icon: LibraryBig },
   settings: { label: "Réglages", icon: Settings }
 } satisfies Record<AppSection, { label: string; icon: typeof LayoutDashboard }>;
 

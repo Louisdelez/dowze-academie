@@ -18,8 +18,8 @@ const MAX_INDEXED_EVENT_DAYS = 3_660;
 
 const frenchFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
-function frenchFormatter(options: Intl.DateTimeFormatOptions) {
-  const normalized = { ...options, timeZone: CALENDAR_TIME_ZONE };
+function frenchFormatter(options: Intl.DateTimeFormatOptions, timeZone = CALENDAR_TIME_ZONE) {
+  const normalized = { ...options, timeZone };
   const key = JSON.stringify(normalized);
   const cached = frenchFormatterCache.get(key);
   if (cached) return cached;
@@ -47,23 +47,26 @@ function shiftedMonthKey(dateKey: string, amount: number) {
   return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
 }
 
-export function localDayKey(date: Date) {
-  return dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE);
+export function localDayKey(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  return dateKeyAtTimeZone(date, timeZone);
 }
 
 /**
- * Indexe les événements selon les jours civils de l'école (Europe/Zurich).
+ * Indexe les événements selon les jours civils du fuseau de la formation.
  * La borne de fin est exclusive : un congé du 7 au 8 apparaît uniquement le 7.
  */
-export function indexEventsByDay(events: readonly CalendarEvent[]): CalendarEventIndex {
+export function indexEventsByDay(
+  events: readonly CalendarEvent[],
+  timeZone = CALENDAR_TIME_ZONE
+): CalendarEventIndex {
   const index: CalendarEventIndex = new Map();
   events.forEach((event) => {
     const start = new Date(event.start);
     const end = new Date(event.end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return;
 
-    let cursorKey = dateKeyAtTimeZone(start, CALENDAR_TIME_ZONE);
-    const lastTouchedKey = dateKeyAtTimeZone(new Date(end.getTime() - 1), CALENDAR_TIME_ZONE);
+    let cursorKey = dateKeyAtTimeZone(start, timeZone);
+    const lastTouchedKey = dateKeyAtTimeZone(new Date(end.getTime() - 1), timeZone);
     let indexedDays = 0;
     while (cursorKey <= lastTouchedKey && indexedDays < MAX_INDEXED_EVENT_DAYS) {
       const dayEvents = index.get(cursorKey);
@@ -81,31 +84,49 @@ export function indexEventsByDay(events: readonly CalendarEvent[]): CalendarEven
   return index;
 }
 
-export function indexedEventsForDay(index: CalendarEventIndex, date: Date) {
-  return index.get(dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE)) ?? [];
+export function indexedEventsForDay(
+  index: CalendarEventIndex,
+  date: Date,
+  timeZone = CALENDAR_TIME_ZONE
+) {
+  return index.get(dateKeyAtTimeZone(date, timeZone)) ?? [];
 }
 
-export function formatCalendarDate(date: Date, options: Intl.DateTimeFormatOptions) {
-  return frenchFormatter(options).format(date);
+export function formatCalendarDate(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  timeZone = CALENDAR_TIME_ZONE
+) {
+  return frenchFormatter(options, timeZone).format(date);
 }
 
-export function calendarDateParts(date: Date) {
-  return zonedDateParts(date, CALENDAR_TIME_ZONE);
+export function calendarDateParts(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  return zonedDateParts(date, timeZone);
 }
 
-export function calendarDateFor(year: number, month: number, day: number) {
+export function calendarDateFor(
+  year: number,
+  month: number,
+  day: number,
+  timeZone = CALENDAR_TIME_ZONE
+) {
   return calendarDateFromKey(
     `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
-    CALENDAR_TIME_ZONE
+    timeZone
   );
 }
 
-export function calendarTimeFor(date: Date, hour: number, minute = 0) {
+export function calendarTimeFor(
+  date: Date,
+  hour: number,
+  minute = 0,
+  timeZone = CALENDAR_TIME_ZONE
+) {
   return dateAtTimeZone(
-    dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE),
+    dateKeyAtTimeZone(date, timeZone),
     hour,
     minute,
-    CALENDAR_TIME_ZONE
+    timeZone
   );
 }
 
@@ -113,33 +134,38 @@ export function capitalize(value: string) {
   return value.charAt(0).toLocaleUpperCase("fr") + value.slice(1);
 }
 
-export function calendarTitle(date: Date, view: CalendarView) {
-  if (view === "year") return formatCalendarDate(date, { year: "numeric" });
+export function calendarTitle(date: Date, view: CalendarView, timeZone = CALENDAR_TIME_ZONE) {
+  if (view === "year") return formatCalendarDate(date, { year: "numeric" }, timeZone);
   if (view === "month") {
-    return capitalize(formatCalendarDate(date, { month: "long", year: "numeric" }));
+    return capitalize(formatCalendarDate(date, { month: "long", year: "numeric" }, timeZone));
   }
   if (view === "day") {
     return capitalize(formatCalendarDate(date, {
       weekday: "long", day: "numeric", month: "long", year: "numeric"
-    }));
+    }, timeZone));
   }
-  const days = weekDays(date);
+  const days = weekDays(date, timeZone);
   const from = days[0];
   const to = days[6];
-  return `${formatCalendarDate(from, { day: "numeric", month: "short" })} – ${formatCalendarDate(to, {
+  return `${formatCalendarDate(from, { day: "numeric", month: "short" }, timeZone)} – ${formatCalendarDate(to, {
     day: "numeric", month: "short", year: "numeric"
-  })}`;
+  }, timeZone)}`;
 }
 
-export function shiftCalendarDate(date: Date, view: CalendarView, amount: number) {
-  const dateKey = dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE);
-  if (view === "year") return calendarDateFromKey(shiftedMonthKey(dateKey, amount * 12), CALENDAR_TIME_ZONE);
-  if (view === "month") return calendarDateFromKey(shiftedMonthKey(dateKey, amount), CALENDAR_TIME_ZONE);
-  return calendarDateFromKey(addCalendarDays(dateKey, amount * (view === "week" ? 7 : 1)), CALENDAR_TIME_ZONE);
+export function shiftCalendarDate(
+  date: Date,
+  view: CalendarView,
+  amount: number,
+  timeZone = CALENDAR_TIME_ZONE
+) {
+  const dateKey = dateKeyAtTimeZone(date, timeZone);
+  if (view === "year") return calendarDateFromKey(shiftedMonthKey(dateKey, amount * 12), timeZone);
+  if (view === "month") return calendarDateFromKey(shiftedMonthKey(dateKey, amount), timeZone);
+  return calendarDateFromKey(addCalendarDays(dateKey, amount * (view === "week" ? 7 : 1)), timeZone);
 }
 
-export function monthGridDays(date: Date) {
-  const { year, month } = calendarDateParts(date);
+export function monthGridDays(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  const { year, month } = calendarDateParts(date, timeZone);
   const firstKey = `${year}-${String(month).padStart(2, "0")}-01`;
   const weekday = weekdayFromDateKey(firstKey);
   const mondayOffset = (weekday + 6) % 7;
@@ -149,52 +175,56 @@ export function monthGridDays(date: Date) {
   const trailingDays = (7 - endWeekday) % 7;
   const dayCount = daysInMonth(year, month) + mondayOffset + trailingDays;
   return Array.from({ length: dayCount }, (_, index) =>
-    calendarDateFromKey(addCalendarDays(startKey, index), CALENDAR_TIME_ZONE)
+    calendarDateFromKey(addCalendarDays(startKey, index), timeZone)
   );
 }
 
-export function weekDays(date: Date) {
-  const key = dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE);
+export function weekDays(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  const key = dateKeyAtTimeZone(date, timeZone);
   const mondayOffset = (weekdayFromDateKey(key) + 6) % 7;
   const mondayKey = addCalendarDays(key, -mondayOffset);
   return Array.from({ length: 7 }, (_, index) =>
-    calendarDateFromKey(addCalendarDays(mondayKey, index), CALENDAR_TIME_ZONE)
+    calendarDateFromKey(addCalendarDays(mondayKey, index), timeZone)
   );
 }
 
-export function eventsForDay(events: CalendarEvent[], date: Date) {
-  return indexedEventsForDay(indexEventsByDay(events), date);
+export function eventsForDay(
+  events: CalendarEvent[],
+  date: Date,
+  timeZone = CALENDAR_TIME_ZONE
+) {
+  return indexedEventsForDay(indexEventsByDay(events, timeZone), date, timeZone);
 }
 
 export function isAllDayEvent(event: CalendarEvent) {
   return "allDay" in event && event.allDay === true;
 }
 
-export function isCurrentMonth(date: Date, anchor: Date) {
-  const dateParts = calendarDateParts(date);
-  const anchorParts = calendarDateParts(anchor);
+export function isCurrentMonth(date: Date, anchor: Date, timeZone = CALENDAR_TIME_ZONE) {
+  const dateParts = calendarDateParts(date, timeZone);
+  const anchorParts = calendarDateParts(anchor, timeZone);
   return dateParts.year === anchorParts.year && dateParts.month === anchorParts.month;
 }
 
-export function isDateToday(date: Date) {
-  return dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE) === dateKeyAtTimeZone(new Date(), CALENDAR_TIME_ZONE);
+export function isDateToday(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  return dateKeyAtTimeZone(date, timeZone) === dateKeyAtTimeZone(new Date(), timeZone);
 }
 
-export function isSameCalendarDay(left: Date, right: Date) {
-  return dateKeyAtTimeZone(left, CALENDAR_TIME_ZONE) === dateKeyAtTimeZone(right, CALENDAR_TIME_ZONE);
+export function isSameCalendarDay(left: Date, right: Date, timeZone = CALENDAR_TIME_ZONE) {
+  return dateKeyAtTimeZone(left, timeZone) === dateKeyAtTimeZone(right, timeZone);
 }
 
-export function timeLabel(dateString: string) {
+export function timeLabel(dateString: string, timeZone = CALENDAR_TIME_ZONE) {
   return formatCalendarDate(new Date(dateString), {
     hour: "2-digit", minute: "2-digit", hourCycle: "h23"
-  });
+  }, timeZone);
 }
 
-export function wallMinutes(date: Date) {
-  const parts = zonedDateParts(date, CALENDAR_TIME_ZONE);
+export function wallMinutes(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  const parts = zonedDateParts(date, timeZone);
   return parts.hour * 60 + parts.minute;
 }
 
-export function startOfLocalDay(date: Date) {
-  return dateAtTimeZone(dateKeyAtTimeZone(date, CALENDAR_TIME_ZONE), 0, 0, CALENDAR_TIME_ZONE);
+export function startOfLocalDay(date: Date, timeZone = CALENDAR_TIME_ZONE) {
+  return dateAtTimeZone(dateKeyAtTimeZone(date, timeZone), 0, 0, timeZone);
 }

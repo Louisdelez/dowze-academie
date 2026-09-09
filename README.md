@@ -16,11 +16,65 @@ La version actuelle embarque l’Année 1 « Ingénierie de l’énergie & physi
 ## Points forts
 
 - **Cursus structuré** — matières, chapitres, cours atomiques, exercices distincts, progression et anglais aligné sur le CECRL.
+- **Formations annuelles** — bibliothèque locale, import de cursus complets et espaces de travail indépendants pour chaque année scolaire.
 - **Planning académique** — vues année, mois, semaine et jour, événements personnels, tâches et export iCalendar vers le calendrier de l’appareil ou Google Agenda.
-- **Évaluations sur papier** — préparation de sujets et corrigés PDF, archivage local des copies, notes sur 20, coefficients et appréciations.
+- **Évaluations sur papier** — préparation de sujets et corrigés PDF, archivage local des copies, barème propre à la formation, coefficients et appréciations.
 - **Espace de notes** — éditeur Markdown visuel, onglets globaux, tags et association d’une même note à plusieurs matières.
 - **Assistants au choix** — pages officielles de plusieurs services dans une WebView native persistante, fonctions vocales propres aux sites après autorisation du microphone, plus un Chat libre pour des API compatibles ou Ollama local.
 - **Profils locaux** — comptes protégés par Argon2id, espaces de travail séparés et reconnexion facultative via le coffre sécurisé du système.
+
+## Formations annuelles importables
+
+Une formation Dowze Academie représente **une seule année scolaire**, sur 370 jours au maximum. Un cursus de plusieurs années doit donc être découpé en plusieurs formations indépendantes : par exemple Lycée — Seconde, Lycée — Première et Lycée — Terminale. L’Année 1 « Ingénierie de l’énergie & physique appliquée » reste incluse dans l’application ; d’autres années ou domaines peuvent être ajoutés depuis la page **Formations** du rail gauche.
+
+Cette fonctionnalité appartient au code courant postérieur à la release publique `v0.1.0` ; les installateurs attachés à cette release ne la contiennent pas encore.
+
+### Format du dossier
+
+Le dossier doit s’appeler exactement `dowze-formation-<id>`, où `<id>` est la valeur stable de `formation.json:id`. Cet identifiant utilise uniquement des lettres ASCII minuscules, des chiffres et des tirets. Les six fichiers JSON obligatoires se trouvent directement à la racine, avec ces noms exacts :
+
+| Fichier | Contenu initial |
+| --- | --- |
+| `formation.json` | Identité, année, niveau, pédagogie, notation, thème, locale et fuseau IANA |
+| `matieres.json` | Matières et métadonnées stables |
+| `programme.json` | Modules, chapitres et cours atomiques de chaque matière |
+| `planning.json` | Périodes, fermetures, créneaux récurrents et événements datés |
+| `evaluations.json` | Contrôles, examens et autres jalons évaluatifs planifiés |
+| `taches.json` | Tâches initiales et échéances de départ |
+
+Une matière de langue peut déclarer `languageCode` avec une balise BCP 47 canonique (`de`, `en`, `fr-CH`, etc.) et `languageName` avec son nom lisible. Ces deux champs vont toujours ensemble et deviennent obligatoires dès que `cefrLevel` apparaît sur la matière ou l’un de ses modules. Ainsi, un parcours CECRL B1 en allemand reste allemand dans les cours, évaluations, corrections, recherches et outils de pratique ; Dowze Academie ne déduit jamais « anglais » du seul niveau CECRL. Une évaluation couvrant plusieurs modules conserve tous leurs niveaux dans son contexte, par exemple A2–B1.
+
+Le kit complet ajoute `MODE_D_EMPLOI.md`, un prompt par fichier dans `prompts/` et les schémas JSON dans `schemas/`. Ces documents aident à préparer le paquet mais ne deviennent pas des données personnelles de l’année installée. Le format et ses schémas sont propres à Dowze Academie ; aucune compatibilité avec un standard d’échange de programmes scolaires n’est revendiquée.
+
+### Préparer et importer une formation
+
+Dans **Formations → Ajouter une formation**, saisissez le nom ainsi que les dates de début et de fin de l’année. L’identifiant, le nom du dossier, les six modèles et leurs prompts reprennent automatiquement cette période ; les dates proposées par défaut suivent l’année scolaire courante et restent modifiables. L’atelier permet soit de télécharger un kit ZIP complet, soit de récupérer séparément chacun des six modèles JSON. Le niveau, le barème et le contenu pédagogique doivent toujours être relus et adaptés avant import.
+
+Chaque carte de fichier fournit aussi un prompt autonome et copiable, avec ses dépendances et un modèle minimal. Dowze Academie ne contacte aucune IA pour cette opération : l’utilisateur choisit lui-même s’il remplit le JSON manuellement ou transmet le prompt et les fichiers de référence à un service externe. Une sortie générée reste à relire ; l’application valide sa structure et sa cohérence technique, pas sa qualité ou son exactitude pédagogique.
+
+Lors de l’import, les six fichiers sont lus et validés ensemble avant toute écriture : versions de schéma, propriétés autorisées, identifiants et références entre fichiers, métadonnées de langue explicites, dates réelles dans l’année déclarée, locale BCP 47 canonique, fuseau IANA connu, heures DST existantes, collisions d’événements, prompts IA générables et compatibilité exacte avec l’export calendrier natif. Les schémas Draft 2020-12 vérifient la structure ; ces contrôles sémantiques et inter-fichiers sont volontairement appliqués en plus par Dowze Academie. Le rapport affiche au plus 200 erreurs détaillées avec leur fichier et leur chemin JSON, puis un marqueur de troncature ; l’installation reste indisponible tant qu’une erreur bloquante subsiste. Une installation valide est journalisée et initialise le nouvel espace comme un lot, sans rendre visible un état partiel.
+
+### Activation, isolation et restauration
+
+Installer une formation crée une instance locale et un espace de travail neuf pour cette année. Les matières et le planning du paquet sont chargés, les tâches initiales commencent non terminées, et les notes, résultats, historiques et conversations personnels commencent vides. Les évaluations du paquet deviennent des événements planifiés ; elles ne préremplissent aucune note obtenue.
+
+La formation active se choisit depuis la bibliothèque après une confirmation dédiée. Le changement remonte l’espace de travail sur le couple **compte local + instance de formation** : progression, planning personnalisé, tâches, notes Markdown, résultats, PDF et historiques restent rattachés à leur année. Revenir à une ancienne formation restaure ses données au lieu de la remettre à zéro, et la dernière formation active est retrouvée séparément pour chaque compte au prochain lancement. Un miroir local du dernier registre valide et des copies de récupération versionnées empêchent une corruption de métadonnées de supprimer silencieusement les espaces annuels. L’export d’une année inclut uniquement ses propres copies de récupération, jamais celles d’une autre formation ni celles du registre.
+
+Changer de formation ne supprime rien. La version actuelle ne propose d’ailleurs aucune commande de suppression ou de désinstallation d’une formation. Les sessions et cookies des sites tiers ainsi que les clés API conservées dans le coffre sécurisé restent des réglages de l’application sur l’appareil ; ils ne sont pas cloisonnés par formation.
+
+### Limites du format actuel
+
+- jusqu’à 100 formations importées par profil local, en plus de la formation incluse ;
+- six fichiers JSON de 2 Mio maximum chacun et 8 Mio maximum pour l’ensemble lu ;
+- 5 000 événements maximum après développement des créneaux récurrents ;
+- 4 Mio maximum pour l’état initial compilé et 4 Mio pour le fichier iCalendar complet ;
+- 64 Kio maximum par prompt final envoyé à une WebView IA native ;
+- 1 000 modules, 10 000 chapitres et 50 000 cours atomiques au maximum, cumulés dans le paquet ;
+- évaluations planifiées de 10 à 360 minutes, avec au moins un chapitre appartenant à la matière ;
+- le dossier natif doit être réel et non un lien symbolique, et aucun fichier JSON supplémentaire n’est accepté à sa racine ;
+- le dossier source et ses JSON originaux ne sont pas archivés comme tels par Dowze Academie : conservez-en une copie pour les modifier ou les réimporter ;
+- aucun partage, catalogue distant, synchronisation cloud ou mise à jour automatique d’un paquet installé n’est fourni actuellement ;
+- la limite pratique peut être inférieure à 100 formations si le quota local WebKit est atteint ; l’installation échoue alors sans état partiel, et aucune désinstallation n’est encore proposée dans cette version.
 
 ## Confidentialité en bref
 

@@ -1,4 +1,5 @@
 import { CheckCircle2, Info, X } from "lucide-react";
+import { strToU8, zipSync } from "fflate";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiPanel } from "./components/AiPanel";
 import { AssessmentEditor, type AssessmentPdfSources } from "./components/AssessmentEditor";
@@ -53,7 +54,29 @@ import {
   type StoredFreeChatConversation
 } from "./lib/freeChat";
 import type { LocalAccount } from "./lib/localAuth";
-import { workspaceStorageFor } from "./lib/profileStorage";
+import { formationRecoveryKeys, formationStorageFor } from "./lib/profileStorage";
+import {
+  activateInstalledFormation,
+  assessmentDocumentRecordId,
+  installFormationFromPreview,
+  loadFormationCatalog
+} from "./lib/formationRegistry";
+import {
+  slugifyFormationName,
+  validateAndCompileFormationPackage
+} from "./lib/formations";
+import type { FormationImportPreview, FormationPackageFilename, InstalledFormation } from "./lib/formations";
+import {
+  buildFormationKitFiles,
+  buildFormationTemplateFiles,
+  formationTemplatePackageId,
+  type FormationTemplateInput
+} from "./lib/formationPrompts";
+import {
+  isStoredEvents,
+  isStoredSubjects,
+  isStoredTasks
+} from "./lib/workspaceValidation";
 import {
   buildNotebookLmContext,
   buildVideoSearchQuery,
@@ -65,6 +88,11 @@ import {
   supportsPromptInjection,
   videoSearchUrl
 } from "./lib/learningProviders";
+import {
+  languagePracticeName,
+  resolveGeneralLanguageCurriculum,
+  resolveLanguageCurriculumRange
+} from "./lib/languageCurriculum.ts";
 import { clampAiPanelWidth, maxAiPanelWidth } from "./lib/layout";
 import { calendarDateFromKey, dateKeyAtTimeZone } from "./lib/zonedDate";
 import {
@@ -76,10 +104,13 @@ import {
   navigateAi,
   normalizeConversationUrl,
   openAssessmentPdf,
+  pickFormationPackage,
   pickAssessmentPdf,
   providerHome,
   secureAiPanelForAccountTransition,
   providerLabel,
+  saveFormationKitArchive,
+  saveTextDocument,
   startAiLesson
 } from "./lib/tauri";
 import type {
@@ -110,6 +141,8 @@ const SettingsPage = lazy(() => import("./components/SettingsPage")
   .then((module) => ({ default: module.SettingsPage })));
 const TasksPage = lazy(() => import("./components/TasksPage")
   .then((module) => ({ default: module.TasksPage })));
+const FormationsPage = lazy(() => import("./components/FormationsPage")
+  .then((module) => ({ default: module.FormationsPage })));
 
 type PendingCapture = {
   subjectId: string;
@@ -284,90 +317,26 @@ function isStoredLessonMode(value: unknown) {
   ].includes(value as string);
 }
 
-function isStoredPaperAssessment(value: unknown) {
+const PAPER_ASSESSMENT_KINDS = new Set([
+  "test", "control", "midterm", "exam", "final-exam",
+  "written-practical", "resit", "evaluation"
+]);
+
+function isStoredPaperAssessment(value: unknown): value is PaperAssessmentConfig | undefined {
   if (value === undefined) return true;
   if (!isRecord(value)) return false;
-  return typeof value.eventId === "string" &&
-    typeof value.kind === "string" &&
-    typeof value.title === "string" &&
+  const chapterIds = value.chapterIds;
+  return typeof value.eventId === "string" && value.eventId.length > 0 &&
+    typeof value.kind === "string" && PAPER_ASSESSMENT_KINDS.has(value.kind) &&
+    typeof value.title === "string" && value.title.length > 0 &&
     isIsoDate(value.scheduledAt) &&
-    typeof value.durationMinutes === "number" && Number.isFinite(value.durationMinutes) &&
-    Array.isArray(value.chapterIds) && value.chapterIds.every((id) => typeof id === "string") &&
-    typeof value.allowedMaterials === "string" &&
+    typeof value.durationMinutes === "number" && Number.isInteger(value.durationMinutes) &&
+    value.durationMinutes >= 10 && value.durationMinutes <= 360 &&
+    Array.isArray(chapterIds) && chapterIds.length > 0 &&
+    chapterIds.every((id) => typeof id === "string" && id.length > 0) &&
+    new Set(chapterIds).size === chapterIds.length &&
+    typeof value.allowedMaterials === "string" && value.allowedMaterials.length > 0 &&
     isOptionalString(value.instructions);
-}
-
-function isStoredSubjects(value: unknown): value is Subject[] {
-  return isRecordArray(value) && value.every((subject) =>
-    typeof subject.id === "string" &&
-    typeof subject.name === "string" &&
-    typeof subject.shortName === "string" &&
-    typeof subject.teacher === "string" &&
-    typeof subject.room === "string" &&
-    typeof subject.color === "string" &&
-    typeof subject.accent === "string" &&
-    typeof subject.icon === "string" && SUBJECT_ICONS.has(subject.icon) &&
-    isOptionalString(subject.nextClass) &&
-    isOptionalString(subject.domain) &&
-    isOptionalString(subject.period) &&
-    isOptionalString(subject.validation) &&
-    (subject.chapterCount === undefined || (typeof subject.chapterCount === "number" && Number.isInteger(subject.chapterCount) && subject.chapterCount >= 0)) &&
-    isOptionalString(subject.objective) &&
-    (subject.cefrLevel === undefined || (typeof subject.cefrLevel === "string" && CEFR_LEVELS.has(subject.cefrLevel))) &&
-    Array.isArray(subject.modules) &&
-    subject.modules.every((courseModule) => isRecord(courseModule) &&
-      typeof courseModule.id === "string" &&
-      typeof courseModule.period === "string" &&
-      typeof courseModule.title === "string" &&
-      (courseModule.cefrLevel === undefined || (typeof courseModule.cefrLevel === "string" && CEFR_LEVELS.has(courseModule.cefrLevel))) &&
-      Array.isArray(courseModule.items) &&
-      courseModule.items.every((item) => isRecord(item) &&
-        typeof item.id === "string" &&
-        typeof item.title === "string" &&
-        typeof item.completed === "boolean" &&
-        isOptionalString(item.description) &&
-        (item.lessons === undefined || (Array.isArray(item.lessons) && item.lessons.every((lesson) =>
-          isRecord(lesson) &&
-          typeof lesson.id === "string" &&
-          typeof lesson.title === "string" &&
-          typeof lesson.objective === "string" &&
-          typeof lesson.completed === "boolean"
-        )))
-      )
-    )
-  );
-}
-
-function isStoredEvents(value: unknown): value is CalendarEvent[] {
-  return isRecordArray(value) && value.every((event) => {
-    const start = typeof event.start === "string" ? Date.parse(event.start) : Number.NaN;
-    const end = typeof event.end === "string" ? Date.parse(event.end) : Number.NaN;
-    const maximumDuration = 3_660 * 24 * 60 * 60_000;
-    return typeof event.id === "string" &&
-    typeof event.title === "string" &&
-    isIsoDate(event.start) &&
-    isIsoDate(event.end) &&
-    end > start && end - start <= maximumDuration &&
-    new Date(start).getUTCFullYear() >= 1900 && new Date(end).getUTCFullYear() <= 2101 &&
-    ["course", "study", "exam", "personal", "milestone", "break"].includes(event.type as string) &&
-    typeof event.color === "string" &&
-    isOptionalString(event.subjectId) &&
-    isOptionalString(event.location) &&
-    isOptionalString(event.description) &&
-    (event.allDay === undefined || typeof event.allDay === "boolean");
-  });
-}
-
-function isStoredTasks(value: unknown): value is TaskItem[] {
-  return isRecordArray(value) && value.every((task) =>
-    typeof task.id === "string" &&
-    typeof task.title === "string" &&
-    isIsoDate(task.dueAt) &&
-    typeof task.completed === "boolean" &&
-    (task.completedAt === undefined || isIsoDate(task.completedAt)) &&
-    ["low", "medium", "high"].includes(task.priority as string) &&
-    isOptionalString(task.subjectId)
-  );
 }
 
 function isStoredConversations(value: unknown): value is Conversation[] {
@@ -451,15 +420,16 @@ const HISTORY_PROVIDERS = new Set<AiProvider>([
   "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
   "freechat", "youtube", "tiktok", "notebooklm"
 ]);
-const SUBJECT_ICONS = new Set([
-  "function", "atom", "book", "languages", "leaf", "palette", "matrix",
-  "code", "flask", "drafting", "ruler", "zap", "wrench"
-]);
 const CEFR_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
-function curriculumScopeForSubject(subject: Subject | undefined): string | undefined {
-  return subject?.id === "anglais" && subject.cefrLevel
-    ? `cefr:${subject.cefrLevel}`
-    : undefined;
+function curriculumScopeForSubject(
+  subject: Subject | undefined,
+  courseModule?: Subject["modules"][number]
+): string | undefined {
+  if (!subject) return undefined;
+  if (courseModule) {
+    return resolveLanguageCurriculumRange(subject, [courseModule])?.curriculumScope;
+  }
+  return resolveGeneralLanguageCurriculum(subject)?.curriculumScope;
 }
 
 function cefrLevelFromScope(scope: string | undefined): CefrLevel | undefined {
@@ -473,7 +443,7 @@ function subjectForCurriculumScope(
   scope?: string
 ): Subject | undefined {
   const subject = subjects.find((candidate) => candidate.id === subjectId);
-  if (!subject || subject.id !== "anglais") return subject;
+  if (!subject || subject.curriculumKind !== "cefr-selectable") return subject;
   return projectEnglishSubject(subject, cefrLevelFromScope(scope));
 }
 const RECORDED_ASSESSMENT_KINDS = new Set([
@@ -498,16 +468,48 @@ interface AppProps {
   onLogout: () => Promise<void>;
 }
 
-function App({ account, startupNotice, onLogout }: AppProps) {
-  const storage = useMemo(() => workspaceStorageFor(account.id), [account.id]);
-  const [section, setSection] = useState<AppSection>("home");
-  const [subjects, setSubjects] = usePersistentState<Subject[]>(storage.subjects, defaultSubjects, isStoredSubjects);
-  const activeSubjects = useMemo(
-    () => projectSubjectsForActiveCurricula(subjects),
-    [subjects]
+interface FormationWorkspaceAppProps extends AppProps {
+  activeFormation: InstalledFormation;
+  formations: readonly InstalledFormation[];
+  onActivateFormation: (formation: InstalledFormation) => Promise<void>;
+  onChooseFormationPackage: () => Promise<FormationImportPreview | null>;
+  onInstallFormationPreview: (preview: FormationImportPreview) => Promise<void>;
+  onDownloadFormationKit: (input: FormationTemplateInput) => Promise<boolean>;
+  onDownloadFormationTemplate: (filename: FormationPackageFilename, input: FormationTemplateInput) => Promise<boolean>;
+}
+
+function FormationWorkspaceApp({
+  account,
+  startupNotice,
+  onLogout,
+  activeFormation,
+  formations,
+  onActivateFormation,
+  onChooseFormationPackage,
+  onInstallFormationPreview,
+  onDownloadFormationKit,
+  onDownloadFormationTemplate
+}: FormationWorkspaceAppProps) {
+  const storage = useMemo(
+    () => formationStorageFor(account.id, activeFormation),
+    [account.id, activeFormation]
   );
-  const [events, setEvents] = usePersistentState<CalendarEvent[]>(storage.events, defaultEvents, isStoredEvents);
-  const [tasks, setTasks] = usePersistentState<TaskItem[]>(storage.tasks, defaultTasks, isStoredTasks);
+  const isLegacyFormation = activeFormation.storageKind === "legacy-energy-year1";
+  const learningProviderContext = useMemo(() => ({
+    legacyEnergyYear1: isLegacyFormation,
+    teachingLanguage: activeFormation.manifest.pedagogy.teachingLanguage
+  }), [activeFormation.manifest.pedagogy.teachingLanguage, isLegacyFormation]);
+  const initialSubjects = isLegacyFormation ? defaultSubjects : [];
+  const initialEvents = isLegacyFormation ? defaultEvents : [];
+  const initialTasks = isLegacyFormation ? defaultTasks : [];
+  const [section, setSection] = useState<AppSection>("home");
+  const [subjects, setSubjects] = usePersistentState<Subject[]>(storage.subjects, initialSubjects, isStoredSubjects);
+  const activeSubjects = useMemo(
+    () => isLegacyFormation ? projectSubjectsForActiveCurricula(subjects) : subjects,
+    [isLegacyFormation, subjects]
+  );
+  const [events, setEvents] = usePersistentState<CalendarEvent[]>(storage.events, initialEvents, isStoredEvents);
+  const [tasks, setTasks] = usePersistentState<TaskItem[]>(storage.tasks, initialTasks, isStoredTasks);
   const [conversations, setConversations] = usePersistentState<Conversation[]>(storage.conversations, [], isStoredConversations);
   const [freeChatConversations, setFreeChatConversations] = usePersistentState<StoredFreeChatConversation[]>(
     storage.freeChatConversations,
@@ -538,6 +540,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     undefined,
     { allowEphemeralOnError: true }
   );
+  const [formationSwitching, setFormationSwitching] = useState(false);
   const [aiWidth, setAiWidth] = usePersistentState(
     storage.aiWidth,
     440,
@@ -547,7 +550,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   const [aiWidthLimit, setAiWidthLimit] = useState(() => maxAiPanelWidth(window.innerWidth));
   const [selectedSubjectId, setSelectedSubjectId] = usePersistentState<string | null>(
     storage.selectedSubject,
-    defaultSubjects[0]?.id ?? null,
+    initialSubjects[0]?.id ?? null,
     undefined,
     { allowEphemeralOnError: true }
   );
@@ -564,11 +567,13 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   );
   const [calendarDate, setCalendarDate] = useState(() => {
     const now = new Date();
-    const currentKey = dateKeyAtTimeZone(now, "Europe/Zurich");
-    const selectedKey = currentKey >= "2026-09-07" && currentKey <= "2027-07-24"
+    const { startDate, endDate } = activeFormation.manifest.academicYear;
+    const timeZone = activeFormation.manifest.timeZone;
+    const currentKey = dateKeyAtTimeZone(now, timeZone);
+    const selectedKey = currentKey >= startDate && currentKey <= endDate
       ? currentKey
-      : "2026-09-07";
-    return calendarDateFromKey(selectedKey, "Europe/Zurich");
+      : startDate;
+    return calendarDateFromKey(selectedKey, timeZone);
   });
   const freeChatHistoryEntries = useMemo<Conversation[]>(() => freeChatConversations
     .filter((conversation) => Boolean(conversation.subjectId))
@@ -655,6 +660,23 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     }, delay);
   }, [cancelScheduledAiAction]);
 
+  const handleActivateFormation = useCallback(async (formation: InstalledFormation) => {
+    if (formation.instanceId === activeFormation.instanceId) return;
+    setFormationSwitching(true);
+    cancelScheduledAiAction();
+    pendingRef.current = null;
+    setPendingCapture(null);
+    setActiveLesson(null);
+    setModal(null);
+    try {
+      await Promise.all([...pendingPdfOperationsRef.current]);
+      await secureAiPanelForAccountTransition("chatgpt");
+      await onActivateFormation(formation);
+    } finally {
+      setFormationSwitching(false);
+    }
+  }, [activeFormation.instanceId, cancelScheduledAiAction, onActivateFormation]);
+
   useEffect(() => { pendingRef.current = pendingCapture; }, [pendingCapture]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
   useEffect(() => cancelScheduledAiAction, [cancelScheduledAiAction]);
@@ -681,18 +703,20 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   // les chapitres. Réinjecter ici le référentiel canonique préserve leur
   // progression tout en leur donnant immédiatement accès aux 988 cours.
   useEffect(() => {
+    if (!isLegacyFormation) return;
     setSubjects((current) => hydratePersistedSubjects(current));
-  }, [setSubjects]);
+  }, [isLegacyFormation, setSubjects]);
 
   // Le planning v1 réserve désormais 08:30–09:00 à l’anglais. La migration
   // conserve les événements personnels et ne remplace que les anciens horaires
   // canoniques restés intacts. Le marqueur empêche de recréer ensuite un cours
   // que l’utilisateur aurait volontairement supprimé.
   useEffect(() => {
+    if (!isLegacyFormation) return;
     if (academicScheduleRevision >= ACADEMIC_SCHEDULE_REVISION) return;
     const stored = setEvents((current) => hydratePersistedEvents(current));
     if (stored) setAcademicScheduleRevision(ACADEMIC_SCHEDULE_REVISION);
-  }, [academicScheduleRevision, setAcademicScheduleRevision, setEvents]);
+  }, [academicScheduleRevision, isLegacyFormation, setAcademicScheduleRevision, setEvents]);
 
   const addToast = useCallback((message: Omit<ToastMessage, "id">) => {
     const id = crypto.randomUUID();
@@ -726,7 +750,11 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         const blank = legacyPath(assessment.blankPdf);
         const completed = legacyPath(assessment.completedPdf);
         try {
-          const imported = await importAssessmentPdfs(account.id, assessment.id, { blank, completed });
+          const imported = await importAssessmentPdfs(
+            account.id,
+            assessmentDocumentRecordId(activeFormation, assessment.id),
+            { blank, completed }
+          );
           if (disposed || resetInProgressRef.current) return;
           setAssessments((current) => current.map((candidate) => candidate.id === assessment.id ? {
             ...candidate,
@@ -948,9 +976,9 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     const subject = subjectOverride ?? activeSubjects.find((candidate) => candidate.id === subjectId);
     if (isStandaloneLearningProvider(targetProvider)) return false;
     const content = isVideoProvider(targetProvider)
-      ? subject ? buildVideoSearchQuery(targetProvider, subject, lesson) : ""
+      ? subject ? buildVideoSearchQuery(targetProvider, subject, lesson, learningProviderContext) : ""
       : isNotebookProvider(targetProvider)
-        ? subject ? buildNotebookLmContext(subject, lesson) : ""
+        ? subject ? buildNotebookLmContext(subject, lesson, learningProviderContext) : ""
         : lesson?.prompt ?? "";
     if (!content) return false;
     try {
@@ -998,7 +1026,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       }
       return false;
     }
-  }, [activeLesson, activeSubjects, addToast, provider, selectedSubjectId]);
+  }, [activeLesson, activeSubjects, addToast, learningProviderContext, provider, selectedSubjectId]);
 
   const startAiSession = useCallback((subjectId: string, forcedProvider = provider) => {
     cancelScheduledAiAction();
@@ -1007,7 +1035,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       addToast({ title: "Matière introuvable", tone: "warning" });
       return;
     }
-    if (subject.id === "anglais" && !subject.cefrLevel) {
+    if (subject.curriculumKind === "cefr-selectable" && !subject.cefrLevel) {
       pendingRef.current = null;
       setPendingCapture(null);
       setActiveLesson(null);
@@ -1029,7 +1057,9 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     if (isFreeChatProvider(forcedProvider)) {
       pendingRef.current = null;
       setPendingCapture(null);
-      setActiveLesson(createActiveLesson(subject));
+      setActiveLesson(createActiveLesson(subject, undefined, undefined, {
+        formation: activeFormation.manifest
+      }));
       addToast({
         title: `Chat libre — ${subject.shortName}`,
         detail: "Choisis une API personnelle ou un modèle Ollama local, puis démarre une conversation.",
@@ -1044,7 +1074,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       addToast({
         title: `${providerLabel(forcedProvider)} ouvert`,
         detail: isLanguagePracticeProvider(forcedProvider)
-          ? "Ta pratique d’anglais est prête. Aucune consigne de cours n’est envoyée à Duolingo."
+          ? `Ta pratique de la langue « ${languagePracticeName(subject)} » est prête. Aucune consigne de cours n’est envoyée à Duolingo.`
           : "La plateforme pédagogique officielle est prête. Aucune consigne de cours n’est envoyée à Khan Academy.",
         tone: "success"
       });
@@ -1065,7 +1095,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         token: crypto.randomUUID(),
         kind: "general"
       };
-      const searchUrl = videoSearchUrl(forcedProvider, subject);
+      const searchUrl = videoSearchUrl(forcedProvider, subject, undefined, learningProviderContext);
       pendingRef.current = null;
       setPendingCapture(null);
       void copyLessonPrompt(null, false, forcedProvider, subject);
@@ -1104,7 +1134,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         addToast({ title: "Impossible d’ouvrir la nouvelle session", detail: String(error), tone: "warning" });
       });
     }, 260);
-  }, [activeSubjects, addToast, cancelScheduledAiAction, copyLessonPrompt, provider, scheduleAiAction, setAiVisible, setProvider, setSelectedSubjectId, storeConversation]);
+  }, [activeSubjects, addToast, cancelScheduledAiAction, copyLessonPrompt, learningProviderContext, provider, scheduleAiAction, setAiVisible, setProvider, setSelectedSubjectId, storeConversation]);
 
   const launchLesson = useCallback((lesson: ActiveLesson, forcedProvider = provider) => {
     cancelScheduledAiAction();
@@ -1136,7 +1166,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       addToast({
         title: `${providerLabel(forcedProvider)} ouvert`,
         detail: isLanguagePracticeProvider(forcedProvider)
-          ? "Cette pratique d’anglais reste indépendante de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée."
+          ? `Cette pratique de la langue « ${languagePracticeName(subject)} » reste indépendante de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée.`
           : "Khan Academy reste indépendant de la séance Dowze Academie : aucune consigne n’est copiée ou envoyée.",
         tone: "success"
       });
@@ -1165,7 +1195,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     };
 
     if (isVideoProvider(forcedProvider)) {
-      const searchUrl = videoSearchUrl(forcedProvider, subject, lesson);
+      const searchUrl = videoSearchUrl(forcedProvider, subject, lesson, learningProviderContext);
       pendingRef.current = null;
       setPendingCapture(null);
       void copyLessonPrompt(lesson, false, forcedProvider, subject);
@@ -1223,7 +1253,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         });
       });
     }, 320);
-  }, [account.id, addToast, cancelScheduledAiAction, copyLessonPrompt, provider, scheduleAiAction, setAiVisible, setProvider, setSelectedSubjectId, storeConversation, subjects]);
+  }, [account.id, addToast, cancelScheduledAiAction, copyLessonPrompt, learningProviderContext, provider, scheduleAiAction, setAiVisible, setProvider, setSelectedSubjectId, storeConversation, subjects]);
 
   const handleOpenConversation = (conversation: Conversation) => {
     cancelScheduledAiAction();
@@ -1262,7 +1292,8 @@ function App({ account, startupNotice, onLogout }: AppProps) {
             {
               id: `freechat-open-${localConversation.id}-${Date.now()}`,
               startedAt: localConversation.createdAt,
-              lessonMode: localConversation.lessonMode as LessonMode
+              lessonMode: localConversation.lessonMode as LessonMode,
+              formation: activeFormation.manifest
             }
           );
         } catch {
@@ -1299,7 +1330,8 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     ) {
       setActiveLesson(createActivePaperAssessment(subject, conversation.assessment, {
         id: conversation.id,
-        startedAt: conversation.createdAt
+        startedAt: conversation.createdAt,
+        formation: activeFormation.manifest
       }));
     } else {
       const restorationOptions = {
@@ -1307,7 +1339,8 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         startedAt: conversation.createdAt,
         // Les conversations enregistrées avant la séparation des modes étaient
         // toutes des séances de cours.
-        lessonMode: (conversation.lessonMode ?? "course") as LessonMode
+        lessonMode: (conversation.lessonMode ?? "course") as LessonMode,
+        formation: activeFormation.manifest
       };
       setActiveLesson(
         conversation.kind !== "general" && subject &&
@@ -1370,7 +1403,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       lessonUnitId,
       lessonMode,
       provider,
-      curriculumScopeForSubject(subject)
+      curriculumScopeForSubject(subject, courseModule)
     );
     if (previousConversation) {
       const modeCopy = lessonModeCopy(lessonMode);
@@ -1382,7 +1415,10 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       });
       return;
     }
-    launchLesson(createActiveLesson(subject, courseModule, item, lessonUnit, { lessonMode }));
+    launchLesson(createActiveLesson(subject, courseModule, item, lessonUnit, {
+      lessonMode,
+      formation: activeFormation.manifest
+    }));
   };
 
   const handleStartChapterTest = (
@@ -1419,7 +1455,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       undefined,
       "chapter-test",
       assessmentProvider,
-      curriculumScopeForSubject(subject)
+      curriculumScopeForSubject(subject, courseModule)
     );
     if (previousConversation) {
       handleOpenConversation(previousConversation);
@@ -1436,7 +1472,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       courseModule,
       item,
       undefined,
-      { lessonMode: "chapter-test" }
+      { lessonMode: "chapter-test", formation: activeFormation.manifest }
     ), assessmentProvider);
   };
 
@@ -1465,13 +1501,42 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       });
       return;
     }
-    launchLesson(createActiveLesson(subject));
+    launchLesson(createActiveLesson(subject, undefined, undefined, {
+      formation: activeFormation.manifest
+    }));
   };
 
   const handleGeneratePaperAssessment = (
     subject: Subject,
     config: PaperAssessmentConfig
   ) => {
+    const scheduledEvent = events.find((event) => event.id === config.eventId);
+    if (!scheduledEvent) {
+      addToast({
+        title: "Évaluation introuvable",
+        detail: "Le planning a changé. Rouvre l’événement avant de préparer ses PDF.",
+        tone: "warning"
+      });
+      return;
+    }
+    const normalizedConfig: PaperAssessmentConfig = {
+      ...config,
+      eventId: scheduledEvent.id,
+      title: scheduledEvent.title,
+      scheduledAt: scheduledEvent.start,
+      chapterIds: [...config.chapterIds]
+    };
+    const synchronizedEnd = scheduledEvent.allDay
+      ? scheduledEvent.end
+      : new Date(
+          new Date(scheduledEvent.start).getTime() + normalizedConfig.durationMinutes * 60_000
+        ).toISOString();
+    const stored = setEvents((current) => current.map((event) =>
+      event.id === scheduledEvent.id
+        ? { ...event, end: synchronizedEnd, type: "exam", assessment: normalizedConfig }
+        : event
+    ));
+    if (!stored) return;
     setModal(null);
     const assessmentProvider = supportsPromptInjection(provider) ? provider : "chatgpt";
     if (assessmentProvider !== provider) {
@@ -1481,7 +1546,9 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         tone: "success"
       });
     }
-    launchLesson(createActivePaperAssessment(subject, config), assessmentProvider);
+    launchLesson(createActivePaperAssessment(subject, normalizedConfig, {
+      formation: activeFormation.manifest
+    }), assessmentProvider);
   };
 
   const handleCorrectAssessment = (conversation: Conversation) => {
@@ -1505,7 +1572,9 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       return;
     }
 
-    const correction = createActiveAssessmentCorrection(subject, conversation);
+    const correction = createActiveAssessmentCorrection(subject, conversation, {
+      formation: activeFormation.manifest
+    });
     pendingRef.current = null;
     setPendingCapture(null);
     setSelectedSubjectId(subject.id);
@@ -1545,7 +1614,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           : conversation.assessment?.kind ?? "evaluation",
         assessmentDate: dateKeyAtTimeZone(
           new Date(conversation.assessment?.scheduledAt ?? conversation.createdAt),
-          "Europe/Zurich"
+          activeFormation.manifest.timeZone
         ),
         conversationId: conversation.id,
         conversationUrl: conversation.url,
@@ -1566,7 +1635,11 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   const saveAssessment = (assessment: AssessmentRecord, sources: AssessmentPdfSources) => trackPdfOperation((async () => {
     try {
       const imported = sources.blank || sources.completed
-        ? await importAssessmentPdfs(account.id, assessment.id, sources)
+        ? await importAssessmentPdfs(
+            account.id,
+            assessmentDocumentRecordId(activeFormation, assessment.id),
+            sources
+          )
         : {};
       if (resetInProgressRef.current) return;
       const blankPdf = imported.blank ?? assessment.blankPdf;
@@ -1601,7 +1674,11 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     variant: "blank" | "completed"
   ) => {
     try {
-      await openAssessmentPdf(account.id, assessment.id, variant);
+      await openAssessmentPdf(
+        account.id,
+        assessmentDocumentRecordId(activeFormation, assessment.id),
+        variant
+      );
     } catch (error) {
       addToast({ title: "Impossible d’ouvrir le PDF", detail: String(error), tone: "warning" });
     }
@@ -1638,7 +1715,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
   const handleSelectSubject = (id: string) => {
     navigateToSection("courses");
     const subject = activeSubjects.find((candidate) => candidate.id === id);
-    if (subject?.id === "anglais" && !subject.cefrLevel) {
+    if (subject?.curriculumKind === "cefr-selectable" && !subject.cefrLevel) {
       cancelScheduledAiAction();
       pendingRef.current = null;
       setPendingCapture(null);
@@ -1659,7 +1736,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       if (restorePanel) window.setTimeout(() => setAiVisible(true), 0);
     };
     setAiVisible(false);
-    const previousLevel = subjects.find((subject) => subject.id === "anglais")?.cefrLevel;
+    const previousLevel = subjects.find((subject) => subject.curriculumKind === "cefr-selectable")?.cefrLevel;
     try {
       await secureAiPanelForAccountTransition(provider);
     } catch (error) {
@@ -1671,7 +1748,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       });
       return;
     }
-    const stored = setSubjects((current) => current.map((subject) => subject.id === "anglais"
+    const stored = setSubjects((current) => current.map((subject) => subject.curriculumKind === "cefr-selectable"
       ? { ...subject, cefrLevel: level }
       : subject
     ));
@@ -1701,7 +1778,10 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       return;
     }
 
-    setCalendarDate(calendarDateFromKey(dateKeyAtTimeZone(new Date(event.start))));
+    setCalendarDate(calendarDateFromKey(
+      dateKeyAtTimeZone(new Date(event.start), activeFormation.manifest.timeZone),
+      activeFormation.manifest.timeZone
+    ));
     setCalendarView("day");
     navigateToSection("calendar");
   };
@@ -1762,7 +1842,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       addToast({
         title: `${providerLabel(next)} ouvert`,
         detail: isLanguagePracticeProvider(next)
-          ? "Pratique l’anglais sur la page officielle, sans transmettre la consigne de ta séance Dowze Academie."
+          ? `Pratique la langue « ${languagePracticeName(activeSubjects.find((candidate) => candidate.id === selectedSubjectId))} » sur la page officielle, sans transmettre la consigne de ta séance Dowze Academie.`
           : "Explore les cours et exercices de la page officielle, sans transmettre la consigne de ta séance Dowze Academie.",
         tone: "success"
       });
@@ -1919,13 +1999,14 @@ function App({ account, startupNotice, onLogout }: AppProps) {
     ? safeSubjectNotesStore.documents.find((note) => note.id === modal.noteId)
     : undefined;
   const renderedAiWidth = Math.min(aiWidth, aiWidthLimit);
+  const renderedAiVisible = aiVisible && !formationSwitching;
 
   return (
-    <div className={`app-shell ${aiVisible ? "has-ai" : ""}`}>
+    <div className={`app-shell ${renderedAiVisible ? "has-ai" : ""}`}>
       <Sidebar
         section={section}
         pageActive={safeSubjectNotesStore.activeDocumentId === null}
-        aiVisible={aiVisible}
+        aiVisible={renderedAiVisible}
         profileName={account.displayName}
         onSectionChange={navigateToSection}
         onToggleAi={() => setAiVisible((value) => !value)}
@@ -1962,6 +2043,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           {section === "home" && (
           <HomePage
             displayName={account.displayName}
+            formation={activeFormation}
             subjects={activeSubjects}
             events={events}
             tasks={tasks}
@@ -1982,6 +2064,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
             view={calendarView}
             events={events}
             subjects={activeSubjects}
+            timeZone={activeFormation.manifest.timeZone}
             onDateChange={setCalendarDate}
             onViewChange={setCalendarView}
             onNewEvent={(date) => setModal({ type: "event", date: date ?? calendarDate })}
@@ -1996,6 +2079,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
             conversations={courseConversationHistory}
             notes={safeSubjectNotesStore.documents}
             sidebarStorageKey={storage.notesCoursesSidebarOpen}
+            academicYearLabel={`${activeFormation.manifest.yearLabel} · ${activeFormation.manifest.academicYear.startDate.slice(0, 4)}–${activeFormation.manifest.academicYear.endDate.slice(0, 4)}`}
             provider={provider}
             selectedSubjectId={selectedSubjectId}
             pendingSubjectId={pendingCapture?.subjectId ?? null}
@@ -2021,6 +2105,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           <GradesPage
             assessments={assessments}
             subjects={activeSubjects}
+            grading={activeFormation.manifest.grading}
             onAddAssessment={() => handleRecordAssessment()}
             onEditAssessment={(assessment) => setModal({ type: "assessment", assessment })}
             onDeleteAssessment={(assessment) => setModal({ type: "delete-assessment", assessment })}
@@ -2032,6 +2117,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           <TasksPage
             tasks={tasks}
             subjects={activeSubjects}
+            timeZone={activeFormation.manifest.timeZone}
             onToggle={(id) => setTasks((current) => current.map((task) => task.id === id ? {
               ...task,
               completed: !task.completed,
@@ -2042,10 +2128,22 @@ function App({ account, startupNotice, onLogout }: AppProps) {
             onDelete={(task) => setModal({ type: "delete-task", task })}
           />
           )}
+          {section === "formations" && (
+          <FormationsPage
+            formations={formations}
+            activeFormation={activeFormation}
+            onActivate={handleActivateFormation}
+            onChoosePackage={onChooseFormationPackage}
+            onInstallPreview={onInstallFormationPreview}
+            onDownloadKit={onDownloadFormationKit}
+            onDownloadTemplate={onDownloadFormationTemplate}
+          />
+          )}
           {section === "settings" && (
           <SettingsPage
             account={account}
-            profileStoragePrefix={`etude.profile.v1.${account.id}.`}
+            formation={activeFormation}
+            workspaceRecoveryKeys={formationRecoveryKeys(account.id, activeFormation)}
             provider={provider}
             aiWidth={renderedAiWidth}
             maxAiWidth={aiWidthLimit}
@@ -2112,7 +2210,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
       </div>
 
       <AiPanel
-        visible={aiVisible}
+        visible={renderedAiVisible}
         width={renderedAiWidth}
         provider={provider}
         activeSubject={activeSubject}
@@ -2139,6 +2237,14 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         <CalendarExportModal
           events={events}
           subjects={activeSubjects}
+          calendarName={isLegacyFormation
+            ? "Dowze Academie — Année 1"
+            : `Dowze Academie — ${activeFormation.manifest.shortName} · ${activeFormation.manifest.yearLabel}`}
+          filename={isLegacyFormation
+            ? "Dowze-Academie-Planning-2026-2027.ics"
+            : `Dowze-Academie-${slugifyFormationName(activeFormation.manifest.shortName)}-${activeFormation.manifest.academicYear.startDate.slice(0, 4)}-${activeFormation.manifest.academicYear.endDate.slice(0, 4)}.ics`}
+          timeZone={activeFormation.manifest.timeZone}
+          uidNamespace={isLegacyFormation ? undefined : activeFormation.instanceId}
           onClose={() => setModal(null)}
         />
       )}
@@ -2147,6 +2253,7 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           event={modal.event}
           date={modal.date}
           subjects={activeSubjects}
+          timeZone={activeFormation.manifest.timeZone}
           onSave={saveEvent}
           onDelete={deleteEvent}
           onGeneratePaper={(event) => {
@@ -2163,6 +2270,9 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         <PaperAssessmentEditor
           event={modal.event}
           subjects={activeSubjects}
+          timeZone={activeFormation.manifest.timeZone}
+          formation={activeFormation.manifest}
+          legacyEnergyYear1={isLegacyFormation}
           onGenerate={handleGeneratePaperAssessment}
           onEditEvent={() => setModal({
             type: "event",
@@ -2220,7 +2330,12 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         />
       )}
       {modal?.type === "task" && (
-        <TaskEditor task={modal.task} subjects={activeSubjects} onClose={() => setModal(null)} onSave={(task) => {
+        <TaskEditor
+          task={modal.task}
+          subjects={activeSubjects}
+          timeZone={activeFormation.manifest.timeZone}
+          onClose={() => setModal(null)}
+          onSave={(task) => {
           const stored = setTasks((current) => current.some((item) => item.id === task.id)
             ? current.map((item) => item.id === task.id ? task : item)
             : [...current, task]);
@@ -2246,6 +2361,8 @@ function App({ account, startupNotice, onLogout }: AppProps) {
           assessment={modal.assessment}
           initial={modal.initial}
           subjects={activeSubjects}
+          grading={activeFormation.manifest.grading}
+          timeZone={activeFormation.manifest.timeZone}
           onChoosePdf={chooseAssessmentPdf}
           onSave={saveAssessment}
           onClose={() => setModal(null)}
@@ -2266,7 +2383,10 @@ function App({ account, startupNotice, onLogout }: AppProps) {
               setAssessments(remainingAssessments);
               setModal(null);
               try {
-                await deleteAssessmentDocuments(account.id, assessment.id);
+                await deleteAssessmentDocuments(
+                  account.id,
+                  assessmentDocumentRecordId(activeFormation, assessment.id)
+                );
                 addToast({ title: "Évaluation supprimée", tone: "success" });
               } catch (cleanupError) {
                 addToast({
@@ -2336,6 +2456,81 @@ function App({ account, startupNotice, onLogout }: AppProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+function App(props: AppProps) {
+  const { account } = props;
+  const [catalog, setCatalog] = useState(() => loadFormationCatalog(account.id));
+  const [showStartupNotice, setShowStartupNotice] = useState(true);
+  const activeFormation = catalog.formations.find(
+    (formation) => formation.instanceId === catalog.activeFormation.instanceId
+  ) ?? catalog.activeFormation;
+
+  const refreshCatalog = useCallback(() => {
+    const next = loadFormationCatalog(account.id);
+    setCatalog(next);
+    return next;
+  }, [account.id]);
+
+  const chooseFormationPackage = useCallback(async () => {
+    const files = await pickFormationPackage(account.id);
+    return files ? validateAndCompileFormationPackage(files) : null;
+  }, [account.id]);
+
+  const installFormationPreview = useCallback(async (preview: FormationImportPreview) => {
+    installFormationFromPreview(account.id, preview);
+    refreshCatalog();
+  }, [account.id, refreshCatalog]);
+
+  const activateFormation = useCallback(async (formation: InstalledFormation) => {
+    activateInstalledFormation(account.id, formation);
+    setShowStartupNotice(false);
+    refreshCatalog();
+  }, [account.id, refreshCatalog]);
+
+  const downloadFormationKit = useCallback(async (input: FormationTemplateInput) => {
+    const directoryName = `dowze-formation-${formationTemplatePackageId(input)}`;
+    const kitFiles = buildFormationKitFiles(input);
+    const zippedFiles = Object.fromEntries(
+      Object.entries(kitFiles).map(([path, content]) => [
+        `${directoryName}/${path}`,
+        strToU8(content)
+      ])
+    );
+    const archive = zipSync(zippedFiles, { level: 6 });
+    return Boolean(await saveFormationKitArchive(account.id, archive, `${directoryName}.zip`));
+  }, [account.id]);
+
+  const downloadFormationTemplate = useCallback(async (
+    filename: FormationPackageFilename,
+    input: FormationTemplateInput
+  ) => {
+    const templates = buildFormationTemplateFiles(input);
+    return Boolean(await saveTextDocument(templates[filename], filename, "json"));
+  }, []);
+
+  return (
+    <FormationWorkspaceApp
+      key={`${account.id}:${activeFormation.instanceId}`}
+      {...props}
+      startupNotice={showStartupNotice
+        ? catalog.workspaceWarning
+          ? {
+              title: "Formation non ouverte",
+              detail: catalog.workspaceWarning,
+              tone: "warning"
+            }
+          : props.startupNotice
+        : null}
+      activeFormation={activeFormation}
+      formations={catalog.formations}
+      onActivateFormation={activateFormation}
+      onChooseFormationPackage={chooseFormationPackage}
+      onInstallFormationPreview={installFormationPreview}
+      onDownloadFormationKit={downloadFormationKit}
+      onDownloadFormationTemplate={downloadFormationTemplate}
+    />
   );
 }
 

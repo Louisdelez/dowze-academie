@@ -4,7 +4,7 @@ import process from "node:process";
 
 const port = 1421;
 const baseUrl = `http://127.0.0.1:${port}`;
-const server = spawn("npm", ["run", "dev", "--", "--host", "127.0.0.1", "--port", String(port), "--strictPort"], {
+const server = spawn("npm", ["run", "dev", "--", "--host", "127.0.0.1", "--port", String(port), "--strictPort", "--force"], {
   cwd: process.cwd(),
   env: process.env,
   stdio: ["ignore", "pipe", "pipe"]

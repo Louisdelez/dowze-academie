@@ -23,6 +23,7 @@ import type {
   ProgramModule,
   Subject
 } from "../src/types.ts";
+import { SIX_POINT_FORMATION } from "./fixtures/formations/manifest.ts";
 
 const languageLessons: LessonUnit[] = [
   {
@@ -151,6 +152,7 @@ const englishA2Module: ProgramModule = {
 };
 const english: Subject = {
   ...subjectFixture("anglais", "Anglais", "Anglais", [englishA2Module]),
+  curriculumKind: "cefr-selectable",
   icon: "languages",
   domain: "Langues",
   cefrLevel: "C1",
@@ -315,6 +317,61 @@ test("sans indice de matière, toutes les matières restent proposées", () => {
   assert.deepEqual(detected.map((subject) => subject.id), subjects.map((subject) => subject.id));
 });
 
+test("une formation importée ne réutilise pas les alias de matières historiques", () => {
+  const anatomy: Subject = {
+    ...analysis,
+    id: "analyse",
+    name: "Anatomie humaine",
+    shortName: "Anatomie",
+    domain: "Médecine"
+  };
+  const history: Subject = {
+    ...analysis,
+    id: "histoire",
+    name: "Histoire contemporaine",
+    shortName: "Histoire",
+    domain: "Sciences humaines"
+  };
+  const event = eventFixture({ title: "Épreuve de mathématiques" });
+
+  assert.deepEqual(
+    candidateSubjectsForAssessment(event, [anatomy, history], SIX_POINT_FORMATION)
+      .map((subject) => subject.id),
+    ["analyse", "histoire"]
+  );
+});
+
+test("un manifeste importé ne peut pas usurper les alias de la formation incluse", () => {
+  const customAnalyse: Subject = {
+    ...analysis,
+    id: "analyse",
+    name: "Anatomie humaine",
+    shortName: "Anatomie"
+  };
+  const customHistory: Subject = {
+    ...analysis,
+    id: "histoire",
+    name: "Histoire contemporaine",
+    shortName: "Histoire"
+  };
+  const spoofedManifest = {
+    ...SIX_POINT_FORMATION,
+    id: "ingenierie-energie-annee-1",
+    name: "Ingénierie de l’énergie et physique appliquée"
+  };
+  const event = eventFixture({ title: "Épreuve de mathématiques" });
+
+  assert.deepEqual(
+    candidateSubjectsForAssessment(
+      event,
+      [customAnalyse, customHistory],
+      spoofedManifest,
+      false
+    ).map((subject) => subject.id),
+    ["analyse", "histoire"]
+  );
+});
+
 test("un contrôle présélectionne les chapitres déjà terminés", () => {
   assert.deepEqual(
     defaultChapterIdsForAssessment(eventFixture(), analysis),
@@ -335,6 +392,24 @@ test("un partiel ou examen présélectionne le semestre concerné", () => {
       title: "Examen final S2 — Analyse II",
       start: "2027-06-21T00:00:00.000Z"
     }), analysis),
+    [integrationItem.id]
+  );
+});
+
+test("la présélection semestrielle suit les bornes d’une année de l’hémisphère sud", () => {
+  const southernYear = { startDate: "2027-02-01", endDate: "2027-12-15" };
+  assert.deepEqual(
+    defaultChapterIdsForAssessment(eventFixture({
+      title: "Examen d’analyse",
+      start: "2027-06-21T00:00:00.000Z"
+    }), analysis, "Australia/Sydney", southernYear),
+    [languageItem.id, functionsItem.id]
+  );
+  assert.deepEqual(
+    defaultChapterIdsForAssessment(eventFixture({
+      title: "Examen d’analyse",
+      start: "2027-10-21T00:00:00.000Z"
+    }), analysis, "Australia/Sydney", southernYear),
     [integrationItem.id]
   );
 });
@@ -421,6 +496,69 @@ test("une épreuve papier d’anglais conserve son scope CECRL historique", () =
   assert.doesNotMatch(active.prompt, /CECRL C1/);
 });
 
+test("une évaluation allemande importée applique son niveau CECRL sans fuite anglaise", () => {
+  const importedModule = { ...englishA2Module, cefrLevel: undefined };
+  const importedSubject: Subject = {
+    ...english,
+    id: "allemand-medical",
+    name: "Allemand médical",
+    shortName: "Allemand médical",
+    curriculumKind: undefined,
+    cefrLevel: "B1",
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [importedModule]
+  };
+  const config = configFixture({
+    eventId: "english-medical-test",
+    chapterIds: [englishA2Item.id]
+  });
+  const active = createActivePaperAssessment(importedSubject, config, {
+    startedAt: "2026-12-10T08:30:00.000Z"
+  });
+
+  assert.equal(active.curriculumScope, "cefr:B1");
+  assert.match(active.prompt, /Cursus : Allemand — parcours CECRL B1/);
+  assert.match(active.prompt, /principalement en allemand/);
+  assert.doesNotMatch(active.prompt, /principalement en anglais|Cursus : Anglais/);
+});
+
+test("une évaluation de langue couvrant plusieurs niveaux les conserve tous dans son scope", () => {
+  const b1Item = {
+    ...englishA2Item,
+    id: "allemand-b1-chapitre",
+    title: "Communication B1"
+  };
+  const b1Module = {
+    ...englishA2Module,
+    id: "allemand-b1-module",
+    cefrLevel: "B1" as const,
+    items: [b1Item]
+  };
+  const german: Subject = {
+    ...english,
+    id: "allemand",
+    name: "Allemand",
+    shortName: "Allemand",
+    curriculumKind: undefined,
+    cefrLevel: undefined,
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [englishA2Module, b1Module]
+  };
+  const config = configFixture({
+    eventId: "allemand-a2-b1",
+    chapterIds: [englishA2Item.id, b1Item.id]
+  });
+  const active = createActivePaperAssessment(german, config, {
+    startedAt: "2026-12-10T08:30:00.000Z"
+  });
+
+  assert.equal(active.curriculumScope, "cefr:A2+B1");
+  assert.match(active.prompt, /parcours CECRL A2–B1/);
+  assert.doesNotMatch(active.prompt, /Cursus : Anglais/);
+});
+
 test("le prompt exige deux vrais PDF séparés avec des noms distincts", () => {
   const prompt = buildPaperAssessmentPrompt(analysis, configFixture());
   assert.match(prompt, /deux véritables fichiers PDF binaires distincts et téléchargeables/i);
@@ -436,17 +574,33 @@ test("le prompt exige deux vrais PDF séparés avec des noms distincts", () => {
   assert.match(correctionFile, /^corrige-/);
 });
 
-test("le contrat impose A4, barème sur 20 et génération sans interaction", () => {
+test("le contrat impose A4, barème contextualisé et génération sans interaction", () => {
   const prompt = buildPaperAssessmentPrompt(analysis, configFixture());
   assert.match(prompt, /Document A4 portrait/);
   assert.match(prompt, /marges de 18 à 22 mm/);
   assert.match(prompt, /pagination « page X\/Y »/);
-  assert.match(prompt, /barème visible totalise exactement 20 points/);
-  assert.match(prompt, /somme vérifiée des 20 points/);
+  assert.match(prompt, /barème visible totalise exactement le maximum indiqué dans le contexte/);
+  assert.match(prompt, /Barème total obligatoire : 20 points/);
+  assert.match(prompt, /somme vérifiée du barème/);
+  assert.match(prompt, /total exact du barème indiqué dans le contexte/);
   assert.match(prompt, /Le sujet ne contient aucune réponse/);
   assert.match(prompt, /Ne me pose aucune question/);
   assert.match(prompt, /ne lance aucune passation interactive/);
   assert.ok(!prompt.includes("[ATTENTE_DE_TA_RÉPONSE]"));
+});
+
+test("une formation sur 6 produit une épreuve et un contexte cohérents sur 6", () => {
+  const prompt = buildPaperAssessmentPrompt(
+    analysis,
+    configFixture(),
+    SIX_POINT_FORMATION
+  );
+
+  assert.match(prompt, /Cursus : Année préparatoire — Maturité fédérale/);
+  assert.match(prompt, /Langue d’enseignement : fr/);
+  assert.match(prompt, /Barème total obligatoire : 6 points/);
+  assert.match(prompt, /Seuil de réussite de référence : 4 points/);
+  assert.doesNotMatch(prompt, /Barème total obligatoire : 20 points/);
 });
 
 test("la durée doit être un nombre entier compris entre 10 et 360 minutes", () => {

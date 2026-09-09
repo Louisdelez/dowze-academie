@@ -14,7 +14,8 @@ import { parseISO } from "date-fns";
 import energyLearningHero from "../assets/generated/energy-learning-hero.webp";
 import { useCurrentMinute } from "../hooks/useCurrentMinute";
 import { formatCalendarDate, timeLabel } from "../lib/date";
-import { addCalendarDays, dateKeyAtTimeZone, weekdayFromDateKey, zonedDateParts } from "../lib/zonedDate";
+import type { InstalledFormation } from "../lib/formations";
+import { addCalendarDays, calendarDateFromKey, dateKeyAtTimeZone, weekdayFromDateKey, zonedDateParts } from "../lib/zonedDate";
 import { SubjectIcon } from "./SubjectIcon";
 import type { AppSection, CalendarEvent, Subject, TaskItem } from "../types";
 
@@ -23,6 +24,7 @@ interface HomePageProps {
   subjects: Subject[];
   events: CalendarEvent[];
   tasks: TaskItem[];
+  formation: InstalledFormation;
   onNavigate: (section: AppSection) => void;
   onSelectSubject: (id: string) => void;
   onToggleTask: (id: string) => void;
@@ -30,11 +32,20 @@ interface HomePageProps {
   onOpenEvent: (event: CalendarEvent) => void;
 }
 
-function getGreeting(now: Date) {
-  const hour = zonedDateParts(now).hour;
+function getGreeting(now: Date, timeZone: string) {
+  const hour = zonedDateParts(now, timeZone).hour;
   if (hour < 12) return "Bonjour";
   if (hour < 18) return "Bon après-midi";
   return "Bonsoir";
+}
+
+function academicDateLabel(dateKey: string, locale: string, timeZone: string) {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone
+  }).format(calendarDateFromKey(dateKey, timeZone));
 }
 
 export function HomePage({
@@ -42,6 +53,7 @@ export function HomePage({
   subjects,
   events,
   tasks,
+  formation,
   onNavigate,
   onSelectSubject,
   onToggleTask,
@@ -49,6 +61,8 @@ export function HomePage({
   onOpenEvent
 }: HomePageProps) {
   const now = useCurrentMinute();
+  const { manifest } = formation;
+  const timeZone = manifest.timeZone;
   const nextEvents = events
     .filter((event) => parseISO(event.end) > now)
     .sort((a, b) => a.start.localeCompare(b.start))
@@ -60,13 +74,13 @@ export function HomePage({
       left.dueAt.localeCompare(right.dueAt) ||
       priorityWeight[left.priority] - priorityWeight[right.priority]
     );
-  const todayKey = dateKeyAtTimeZone(now);
+  const todayKey = dateKeyAtTimeZone(now, timeZone);
   const weekStartKey = addCalendarDays(todayKey, -((weekdayFromDateKey(todayKey) + 6) % 7));
   const weekEndKey = addCalendarDays(weekStartKey, 6);
   const weekTasks = tasks.filter((task) => {
     const dueAt = parseISO(task.dueAt);
     if (Number.isNaN(dueAt.getTime())) return false;
-    const dueKey = dateKeyAtTimeZone(dueAt);
+    const dueKey = dateKeyAtTimeZone(dueAt, timeZone);
     return dueKey >= weekStartKey && dueKey <= weekEndKey;
   });
   const weekDoneCount = weekTasks.filter((task) => task.completed).length;
@@ -74,7 +88,7 @@ export function HomePage({
     if (!task.completed) return false;
     const completedDate = parseISO(task.completedAt ?? task.dueAt);
     if (Number.isNaN(completedDate.getTime())) return false;
-    const completedKey = dateKeyAtTimeZone(completedDate);
+    const completedKey = dateKeyAtTimeZone(completedDate, timeZone);
     return completedKey >= weekStartKey && completedKey <= weekEndKey;
   }).length;
   const weekOpenCount = weekTasks.length - weekDoneCount;
@@ -99,10 +113,10 @@ export function HomePage({
       <header className="page-heading home-heading">
         <div>
           <p className="eyebrow">
-            {formatCalendarDate(now, { weekday: "long", day: "numeric", month: "long" })}
+            {formatCalendarDate(now, { weekday: "long", day: "numeric", month: "long" }, timeZone)}
           </p>
-          <h1>{getGreeting(now)}, {displayName}</h1>
-          <p className="heading-subtitle">Ton cursus d’ingénierie énergétique est prêt.</p>
+          <h1>{getGreeting(now, timeZone)}, {displayName}</h1>
+          <p className="heading-subtitle">Ta formation « {manifest.shortName} » est prête.</p>
         </div>
         <button className="primary-button" onClick={onOpenAi}>
           <Sparkles />
@@ -110,16 +124,20 @@ export function HomePage({
         </button>
       </header>
 
-      <section className="academic-banner" aria-label="Cursus académique">
+      <section
+        className={`academic-banner ${formation.storageKind === "legacy-energy-year1" ? "" : "is-generic"}`}
+        aria-label="Cursus académique"
+        style={{ "--formation-color": manifest.theme.color, "--formation-accent": manifest.theme.accent } as React.CSSProperties}
+      >
         <div className="academic-banner-title">
           <span><GraduationCap /></span>
           <div>
-            <p className="eyebrow">Parcours personnel · Année 1</p>
-            <strong>Ingénierie de l’énergie &amp; physique appliquée</strong>
-            <small>Comprendre · modéliser · expérimenter · concevoir · créer</small>
+            <p className="eyebrow">Parcours personnel · {manifest.yearLabel}</p>
+            <strong>{manifest.name}</strong>
+            <small>{manifest.motto ?? manifest.pedagogy.approach}</small>
           </div>
         </div>
-        <img
+        {formation.storageKind === "legacy-energy-year1" && <img
           className="academic-banner-art"
           src={energyLearningHero}
           alt=""
@@ -128,9 +146,9 @@ export function HomePage({
           height="600"
           decoding="async"
           draggable={false}
-        />
+        />}
         <div className="academic-banner-stats">
-          <span><CalendarRange /><span><strong>7 sept. 2026</strong><small>24 juil. 2027</small></span></span>
+          <span><CalendarRange /><span><strong>{academicDateLabel(manifest.academicYear.startDate, manifest.locale, timeZone)}</strong><small>{academicDateLabel(manifest.academicYear.endDate, manifest.locale, timeZone)}</small></span></span>
           <span><Layers3 /><span><strong>{subjects.length} matières</strong><small>{chapterCount} chapitres · {courseCount} cours</small></span></span>
         </div>
       </section>
@@ -156,8 +174,8 @@ export function HomePage({
                   >
                     <span className="event-color" style={{ background: event.color }} />
                     <span className="next-event-time">
-                      <strong>{event.allDay ? formatCalendarDate(start, { day: "numeric", month: "short" }) : timeLabel(event.start)}</strong>
-                      <small>{event.allDay ? "Journée" : index === 0 ? "Prochain" : formatCalendarDate(start, { weekday: "short" }).replace(".", "")}</small>
+                      <strong>{event.allDay ? formatCalendarDate(start, { day: "numeric", month: "short" }, timeZone) : timeLabel(event.start, timeZone)}</strong>
+                      <small>{event.allDay ? "Journée" : index === 0 ? "Prochain" : formatCalendarDate(start, { weekday: "short" }, timeZone).replace(".", "")}</small>
                     </span>
                     <span className="next-event-copy">
                       <strong>{event.title}</strong>
@@ -255,7 +273,7 @@ export function HomePage({
                   <span className="task-main">
                     <strong>{task.title}</strong>
                     <small>
-                      <Clock3 /> {formatCalendarDate(parseISO(task.dueAt), { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).replace(".", "")}
+                      <Clock3 /> {formatCalendarDate(parseISO(task.dueAt), { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }, timeZone).replace(".", "")}
                     </small>
                   </span>
                   {subject && (

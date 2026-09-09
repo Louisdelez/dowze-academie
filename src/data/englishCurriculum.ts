@@ -1734,6 +1734,9 @@ const CURRICULUM: Readonly<Record<CefrLevel, LevelDefinition>> = {
 
 const BASE_ENGLISH_SUBJECT = {
   id: "anglais",
+  curriculumKind: "cefr-selectable" as const,
+  languageCode: "en",
+  languageName: "anglais",
   shortName: "Anglais",
   teacher: "Tuteur IA",
   room: "Espace Langues",
@@ -1884,7 +1887,10 @@ export function hydrateEnglishSubject(subject?: Subject): Subject {
 
 /** Une matière anglais limitée au seul niveau actif pour les écrans et prompts. */
 export function projectEnglishSubject(subject: Subject, forcedLevel?: CefrLevel): Subject {
-  if (subject.id !== ENGLISH_SUBJECT_PLACEHOLDER.id) return subject;
+  if (
+    subject.id !== ENGLISH_SUBJECT_PLACEHOLDER.id ||
+    subject.curriculumKind !== "cefr-selectable"
+  ) return subject;
   const level = forcedLevel ?? subject.cefrLevel;
   if (!level) return { ...ENGLISH_SUBJECT_PLACEHOLDER, modules: [] };
   const metadata = createEnglishSubject(level);

@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
+  LibraryBig,
   PanelRightOpen,
   Settings
 } from "lucide-react";
@@ -71,6 +72,15 @@ export function Sidebar({
         >
           {aiVisible ? <Bot /> : <PanelRightOpen />}
           <span className="status-dot" />
+        </button>
+        <button
+          className={`rail-button ${pageActive && section === "formations" ? "is-active" : ""}`}
+          onClick={() => onSectionChange("formations")}
+          aria-label="Formations"
+          aria-current={pageActive && section === "formations" ? "page" : undefined}
+          data-tooltip="Formations"
+        >
+          <LibraryBig />
         </button>
         <button
           className={`rail-button ${pageActive && section === "settings" ? "is-active" : ""}`}

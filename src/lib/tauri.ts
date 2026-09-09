@@ -3,6 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import type { AiProvider, StoredAssessmentPdf } from "../types";
 import type { CalendarIcsEvent } from "./calendarIcs";
+import type { FormationPackageFiles } from "./formations";
 
 export interface AiBounds {
   x: number;
@@ -78,6 +79,8 @@ export interface CalendarTransferPayload {
   content: string;
   calendarName: string;
   filename: string;
+  timeZone?: string;
+  uidNamespace?: string;
 }
 
 function downloadCalendarIcs(content: string, filename: string) {
@@ -120,6 +123,206 @@ export async function saveTextDocument(
   return invoke<string>("save_text_document", { content, destinationPath, kind });
 }
 
+const FORMATION_BROWSER_FILENAMES = {
+  "formation.json": "formation.json",
+  "matieres.json": "matieres.json",
+  "programme.json": "programme.json",
+  "planning.json": "planning.json",
+  "evaluations.json": "evaluations.json",
+  "taches.json": "taches.json"
+} as const;
+
+const MAX_FORMATION_BROWSER_FILE_SIZE = 2 * 1024 * 1024;
+const MAX_FORMATION_BROWSER_PACKAGE_SIZE = 8 * 1024 * 1024;
+const MAX_FORMATION_KIT_SIZE = 8 * 1024 * 1024;
+
+type FormationBrowserFile = Pick<File, "name" | "size" | "webkitRelativePath" | "arrayBuffer">;
+
+interface NativeFormationPackageFiles {
+  directoryName: string;
+  formation: string;
+  subjects: string;
+  curriculum: string;
+  schedule: string;
+  assessments: string;
+  tasks: string;
+}
+
+export async function readFormationPackageBrowserFiles(
+  selected: readonly FormationBrowserFile[]
+): Promise<FormationPackageFiles> {
+  if (!selected.length) {
+    throw new Error("Le dossier de formation sélectionné est vide.");
+  }
+
+  const firstPath = selected[0]?.webkitRelativePath ?? "";
+  const firstParts = firstPath.split("/").filter(Boolean);
+  if (firstParts.length < 2) {
+    throw new Error("Le navigateur n’a pas fourni un dossier de formation complet.");
+  }
+  const directoryName = firstParts[0];
+  const values: Partial<FormationPackageFiles> = { directoryName };
+  const seen = new Set<string>();
+  let totalSize = 0;
+
+  for (const file of selected) {
+    const relative = file.webkitRelativePath;
+    const parts = relative.split("/").filter(Boolean);
+    if (parts.length < 2 || parts[0] !== directoryName || parts.at(-1) !== file.name) {
+      throw new Error("Le navigateur a fourni un dossier de formation incohérent.");
+    }
+    if (parts.length !== 2 || !file.name.toLocaleLowerCase().endsWith(".json")) continue;
+
+    const field = FORMATION_BROWSER_FILENAMES[
+      file.name as keyof typeof FORMATION_BROWSER_FILENAMES
+    ];
+    if (!field) {
+      throw new Error(`Le fichier JSON inattendu « ${file.name} » est interdit à la racine du dossier.`);
+    }
+    if (seen.has(file.name)) {
+      throw new Error(`Le fichier « ${file.name} » apparaît plusieurs fois à la racine du dossier.`);
+    }
+    if (!Number.isSafeInteger(file.size) || file.size < 0 || file.size > MAX_FORMATION_BROWSER_FILE_SIZE) {
+      throw new Error(`Le fichier « ${file.name} » dépasse la limite de 2 Mio.`);
+    }
+
+    const bytes = await file.arrayBuffer();
+    if (bytes.byteLength > MAX_FORMATION_BROWSER_FILE_SIZE) {
+      throw new Error(`Le fichier « ${file.name} » dépasse la limite de 2 Mio.`);
+    }
+    totalSize += bytes.byteLength;
+    if (totalSize > MAX_FORMATION_BROWSER_PACKAGE_SIZE) {
+      throw new Error("Le dossier de formation dépasse la limite totale de 8 Mio.");
+    }
+
+    let content: string;
+    try {
+      content = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    } catch {
+      throw new Error(`Le fichier « ${file.name} » doit être encodé en UTF-8.`);
+    }
+    try {
+      JSON.parse(content);
+    } catch {
+      throw new Error(`Le fichier « ${file.name} » contient un JSON invalide.`);
+    }
+    seen.add(file.name);
+    values[field] = content;
+  }
+
+  const missing = Object.values(FORMATION_BROWSER_FILENAMES)
+    .filter((field) => typeof values[field] !== "string");
+  if (missing.length) {
+    throw new Error("Le dossier sélectionné ne contient pas les six fichiers JSON obligatoires à sa racine.");
+  }
+  return values as FormationPackageFiles;
+}
+
+async function pickFormationPackageInBrowser(): Promise<FormationPackageFiles | null> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement("input") as HTMLInputElement & { webkitdirectory: boolean };
+    input.type = "file";
+    input.multiple = true;
+    input.accept = ".json,application/json";
+    input.webkitdirectory = true;
+    input.style.display = "none";
+    let settled = false;
+    const cleanup = () => input.remove();
+    const finish = (value: FormationPackageFiles | null) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(error);
+    };
+    input.addEventListener("cancel", () => finish(null), { once: true });
+    input.addEventListener("change", async () => {
+      try {
+        const selected = Array.from(input.files ?? []);
+        if (!selected.length) {
+          finish(null);
+          return;
+        }
+        finish(await readFormationPackageBrowserFiles(selected));
+      } catch (error) {
+        fail(error);
+      }
+    }, { once: true });
+    document.body.append(input);
+    input.click();
+  });
+}
+
+export async function pickFormationPackage(accountId: string): Promise<FormationPackageFiles | null> {
+  if (!isTauri()) return pickFormationPackageInBrowser();
+  const selected = await open({
+    multiple: false,
+    directory: true,
+    title: "Choisir le dossier complet de la formation"
+  });
+  if (typeof selected !== "string") return null;
+  const files = await invoke<NativeFormationPackageFiles>("read_formation_package", {
+    accountId,
+    directoryPath: selected
+  });
+  return {
+    directoryName: files.directoryName,
+    "formation.json": files.formation,
+    "matieres.json": files.subjects,
+    "programme.json": files.curriculum,
+    "planning.json": files.schedule,
+    "evaluations.json": files.assessments,
+    "taches.json": files.tasks
+  };
+}
+
+export async function saveFormationKitArchive(
+  accountId: string,
+  archiveBytes: Uint8Array,
+  filename: string
+): Promise<string | null> {
+  if (archiveBytes.byteLength > MAX_FORMATION_KIT_SIZE) {
+    throw new Error("Le kit dépasse la limite de 8 Mio.");
+  }
+  if (
+    archiveBytes.byteLength < 4 ||
+    archiveBytes[0] !== 0x50 ||
+    archiveBytes[1] !== 0x4b ||
+    archiveBytes[2] !== 0x03 ||
+    archiveBytes[3] !== 0x04
+  ) {
+    throw new Error("Le kit généré ne possède pas une signature ZIP reconnue.");
+  }
+  const safeFilename = filename.toLocaleLowerCase().endsWith(".zip") ? filename : `${filename}.zip`;
+  if (!isTauri()) {
+    const bytes = new Uint8Array(archiveBytes);
+    const url = URL.createObjectURL(new Blob([bytes.buffer], { type: "application/zip" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = safeFilename;
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    return safeFilename;
+  }
+  const selected = await save({
+    title: "Enregistrer le kit de formation Dowze",
+    defaultPath: safeFilename,
+    filters: [{ name: "Archive ZIP", extensions: ["zip"] }]
+  });
+  if (!selected) return null;
+  const destinationPath = selected.toLocaleLowerCase().endsWith(".zip") ? selected : `${selected}.zip`;
+  return invoke<string>("save_formation_kit", {
+    accountId,
+    archiveBytes: Array.from(archiveBytes),
+    destinationPath
+  });
+}
+
 export async function openCalendarInSystem(payload: CalendarTransferPayload): Promise<string> {
   if (!isTauri()) {
     downloadCalendarIcs(payload.content, payload.filename);
@@ -127,7 +330,10 @@ export async function openCalendarInSystem(payload: CalendarTransferPayload): Pr
   }
   return invoke<string>("open_calendar_in_apple", {
     events: payload.events,
-    calendarName: payload.calendarName
+    calendarName: payload.calendarName,
+    filename: payload.filename,
+    timeZone: payload.timeZone ?? "Europe/Zurich",
+    uidNamespace: payload.uidNamespace ?? null
   });
 }
 
@@ -146,7 +352,9 @@ export async function saveCalendarIcs(payload: CalendarTransferPayload): Promise
   await invoke("save_calendar_ics", {
     events: payload.events,
     calendarName: payload.calendarName,
-    destinationPath
+    destinationPath,
+    timeZone: payload.timeZone ?? "Europe/Zurich",
+    uidNamespace: payload.uidNamespace ?? null
   });
   return destinationPath;
 }

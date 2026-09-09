@@ -5,7 +5,10 @@ import {
   applyPendingProfileReset,
   beginProfileReset,
   clearLegacyWorkspaceData,
+  clearWorkspaceRecoveryData,
   completeProfileReset,
+  formationRecoveryKeys,
+  formationStorageFor,
   isValidLocalAccountId,
   pendingProfileReset,
   profileRecoveryKeys,
@@ -92,6 +95,48 @@ test("énumère uniquement les copies recovery du profil demandé", () => {
     profileRecoveryKeys(profileA, storage).sort(),
     [`${keysA.subjects}.recovery`, `${keysA.tasks}.recovery`].sort()
   );
+});
+
+test("l’export d’une formation ne voit aucune récupération d’une autre année", () => {
+  const storage = new MemoryStorage();
+  const formationA = {
+    instanceId: "af013bdb-cce7-4a3f-baf5-46fe28226429",
+    storageKind: "formation-v1" as const
+  };
+  const formationB = {
+    instanceId: "91978d84-4eec-49dc-b67c-859edbba19e4",
+    storageKind: "formation-v1" as const
+  };
+  const keysA = formationStorageFor(profileA, formationA);
+  const keysB = formationStorageFor(profileA, formationB);
+  storage.setItem(`${keysA.tasks}.recovery`, "tâches A");
+  storage.setItem(`${keysA.subjects}.abc123.recovery`, "matières A versionnées");
+  storage.setItem(`${keysB.tasks}.recovery`, "tâches B");
+  storage.setItem(`${profileStoragePrefix(profileA)}formations.registry.v1.recovery`, "registre");
+
+  assert.deepEqual(
+    formationRecoveryKeys(profileA, formationA, storage).sort(),
+    [`${keysA.subjects}.abc123.recovery`, `${keysA.tasks}.recovery`].sort()
+  );
+});
+
+test("le nettoyage du reset historique préserve les recovery des formations UUID", () => {
+  const storage = new MemoryStorage();
+  const legacy = workspaceStorageFor(profileA);
+  const custom = formationStorageFor(profileA, {
+    instanceId: "af013bdb-cce7-4a3f-baf5-46fe28226429",
+    storageKind: "formation-v1"
+  });
+  storage.setItem(`${legacy.events}.recovery`, "planning historique");
+  storage.setItem(`${legacy.assessments}.recovery`, "notes historiques");
+  storage.setItem(`${custom.events}.recovery`, "planning formation UUID");
+  storage.setItem(`${custom.assessments}.recovery`, "notes formation UUID");
+
+  assert.equal(clearWorkspaceRecoveryData(profileA, storage), 2);
+  assert.equal(storage.getItem(`${legacy.events}.recovery`), null);
+  assert.equal(storage.getItem(`${legacy.assessments}.recovery`), null);
+  assert.equal(storage.getItem(`${custom.events}.recovery`), "planning formation UUID");
+  assert.equal(storage.getItem(`${custom.assessments}.recovery`), "notes formation UUID");
 });
 
 test("applique un reset par intention puis supprime le journal à la finalisation", () => {

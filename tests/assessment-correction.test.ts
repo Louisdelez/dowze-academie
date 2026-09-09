@@ -14,6 +14,7 @@ import {
   UNIVERSAL_ASSESSMENT_CORRECTION_PROMPT
 } from "../src/lib/assessmentCorrection.ts";
 import type { Conversation, Subject } from "../src/types.ts";
+import { SIX_POINT_FORMATION } from "./fixtures/formations/manifest.ts";
 
 const subject: Subject = {
   id: "analyse",
@@ -31,6 +32,7 @@ const subject: Subject = {
 const englishSubject: Subject = {
   ...subject,
   id: "anglais",
+  curriculumKind: "cefr-selectable",
   name: "Anglais",
   shortName: "Anglais",
   icon: "languages",
@@ -162,15 +164,30 @@ test("le contrôle du scan interdit toute supposition et distingue blanc et illi
   assert.match(prompt, /n’émets aucune ligne destinée à l’enregistrement/);
 });
 
-test("la notation est sur 20, accepte le crédit partiel et évite la double peine", () => {
+test("la notation suit l’échelle du contexte, accepte le crédit partiel et évite la double peine", () => {
   const prompt = buildAssessmentCorrectionPrompt(subject, conversationFixture());
 
   assert.match(prompt, /Applique le barème officiel question par question/);
-  assert.match(prompt, /maximum total vaut 20/);
+  assert.match(prompt, /maximum total correspond exactement à l’échelle indiquée dans le contexte/);
+  assert.match(prompt, /Échelle de notation : 0 à 20/);
   assert.match(prompt, /Accorde le crédit partiel/);
   assert.match(prompt, /évite de pénaliser deux fois la même erreur propagée/);
-  assert.match(prompt, /méthode alternative.*valide/);
-  assert.match(prompt, /note finale doit être comprise entre 0 et 20/);
+  assert.match(prompt, /méthode alternative exacte.*conforme à l’énoncé/);
+  assert.match(prompt, /note finale doit être comprise entre zéro et le maximum indiqué/);
+  assert.match(prompt, /Ligne exacte de note finale : NOTE À ENREGISTRER : x \/ 20/);
+});
+
+test("une formation notée sur 6 impose exactement l’échelle et la ligne sur 6", () => {
+  const prompt = buildAssessmentCorrectionPrompt(
+    subject,
+    conversationFixture(),
+    SIX_POINT_FORMATION
+  );
+
+  assert.match(prompt, /Échelle de notation : 0 à 6/);
+  assert.match(prompt, /Seuil de réussite : 4/);
+  assert.match(prompt, /Ligne exacte de note finale : NOTE À ENREGISTRER : x \/ 6/);
+  assert.doesNotMatch(prompt, /Échelle de notation : 0 à 20/);
 });
 
 test("la correction anglaise conserve le niveau historique et les limites d’une copie papier", () => {
@@ -197,6 +214,89 @@ test("la correction anglaise conserve le niveau historique et les limites d’un
     startedAt: "2026-09-11T09:15:00.000Z"
   });
   assert.equal(active.curriculumScope, "cefr:A2");
+});
+
+test("la correction reconnaît la langue et le CECRL explicites d’une matière importée", () => {
+  const importedSubject: Subject = {
+    ...englishSubject,
+    id: "allemand-soins",
+    name: "Allemand des soins",
+    shortName: "Allemand soins",
+    curriculumKind: undefined,
+    cefrLevel: "B1",
+    languageCode: "de",
+    languageName: "allemand",
+    modules: englishSubject.modules.map((courseModule) => ({
+      ...courseModule,
+      cefrLevel: undefined
+    }))
+  };
+  const source = conversationFixture({
+    id: "english-imported-test",
+    subjectId: importedSubject.id,
+    moduleId: importedSubject.modules[0].id
+  });
+  const prompt = buildAssessmentCorrectionPrompt(importedSubject, source);
+
+  assert.match(prompt, /Cursus : Allemand — parcours CECRL B1/);
+  assert.doesNotMatch(prompt, /Cursus : Anglais/);
+  assert.equal(
+    createActiveAssessmentCorrection(importedSubject, source, {
+      startedAt: "2026-09-11T09:15:00.000Z"
+    }).curriculumScope,
+    "cefr:B1"
+  );
+});
+
+test("la correction conserve un périmètre CECRL couvrant plusieurs modules", () => {
+  const multiLevelSubject: Subject = {
+    ...englishSubject,
+    id: "allemand",
+    name: "Allemand",
+    shortName: "Allemand",
+    curriculumKind: undefined,
+    cefrLevel: undefined,
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [
+      {
+        id: "allemand-a2",
+        period: "Semestre 1",
+        title: "A2",
+        cefrLevel: "A2",
+        items: [{ id: "allemand-a2-ch1", title: "A2", completed: false }]
+      },
+      {
+        id: "allemand-b1",
+        period: "Semestre 2",
+        title: "B1",
+        cefrLevel: "B1",
+        items: [{ id: "allemand-b1-ch1", title: "B1", completed: false }]
+      }
+    ]
+  };
+  const source = conversationFixture({
+    id: "allemand-a2-b1-exam",
+    subjectId: multiLevelSubject.id,
+    lessonMode: "paper-assessment",
+    curriculumScope: "cefr:A2+B1",
+    assessment: {
+      eventId: "allemand-a2-b1-exam",
+      kind: "exam",
+      title: "Examen A2–B1",
+      scheduledAt: "2026-12-10T08:30:00.000Z",
+      durationMinutes: 90,
+      chapterIds: ["allemand-a2-ch1", "allemand-b1-ch1"],
+      allowedMaterials: "Aucun"
+    }
+  });
+  const active = createActiveAssessmentCorrection(multiLevelSubject, source, {
+    startedAt: "2026-12-11T09:15:00.000Z"
+  });
+
+  assert.equal(active.curriculumScope, "cefr:A2+B1");
+  assert.match(active.prompt, /Cursus : Allemand — parcours CECRL A2–B1/);
+  assert.doesNotMatch(active.prompt, /Cursus : Anglais/);
 });
 
 test("toutes les questions reçoivent des points mais seules les erreurs sont expliquées", () => {

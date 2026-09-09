@@ -3,10 +3,10 @@ import { EMPTY_SUBJECT_NOTES_STORE } from "./subjectNotes";
 import {
   applyPendingProfileReset,
   beginProfileReset,
+  clearWorkspaceRecoveryData,
   completeProfileReset,
   pendingProfileReset,
   PROFILE_RESET_RECORD_IDS,
-  profileStoragePrefix,
   type ProfileResetEntry,
   type ProfileResetRecordId,
   workspaceStorageFor
@@ -97,21 +97,6 @@ async function deleteManagedAssessmentDocuments(accountId: string, recordIds: st
   }
 }
 
-function deleteProfileRecoveries(accountId: string): void {
-  const prefix = profileStoragePrefix(accountId);
-  const recoveryKeys: string[] = [];
-  for (let index = 0; index < window.localStorage.length; index += 1) {
-    const key = window.localStorage.key(index);
-    if (key?.startsWith(prefix) && key.endsWith(".recovery")) recoveryKeys.push(key);
-  }
-  for (const recoveryKey of recoveryKeys) {
-    window.localStorage.removeItem(recoveryKey);
-    if (window.localStorage.getItem(recoveryKey) !== null) {
-      throw new Error("Une ancienne copie de récupération n’a pas pu être supprimée.");
-    }
-  }
-}
-
 /**
  * Termine un reset déjà journalisé, avant le montage des hooks du profil.
  */
@@ -123,7 +108,7 @@ export async function resumeInterruptedProfileReset(accountId: string): Promise<
   // à la migration/suppression des anciens PDF globaux.
   await deleteManagedAssessmentDocuments(accountId, persistedAssessmentRecordIds(accountId));
   applyPendingProfileReset(accountId, freshProfileEntries());
-  deleteProfileRecoveries(accountId);
+  clearWorkspaceRecoveryData(accountId);
   completeProfileReset(accountId);
   return true;
 }
@@ -143,7 +128,7 @@ export async function resetLocalProfile(
     assessmentRecordIds.map((id) => ({ id }))
   ));
   applyPendingProfileReset(accountId, freshProfileEntries());
-  deleteProfileRecoveries(accountId);
+  clearWorkspaceRecoveryData(accountId);
   completeProfileReset(accountId);
   // L'interface ne redevient interactive qu'une fois le journal finalisé :
   // une reprise ne pourra donc jamais effacer du travail créé après le reset.

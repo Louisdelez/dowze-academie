@@ -78,6 +78,17 @@ const CALENDAR_EXPORTS_DIRECTORY: &str = "calendar-exports";
 const MAX_CALENDAR_EVENTS: usize = 5_000;
 const MAX_CALENDAR_ICS_SIZE: usize = 4 * 1024 * 1024;
 const MAX_TEXT_DOCUMENT_SIZE: usize = 32 * 1024 * 1024;
+const MAX_FORMATION_FILE_SIZE: u64 = 2 * 1024 * 1024;
+const MAX_FORMATION_PACKAGE_SIZE: u64 = 8 * 1024 * 1024;
+const MAX_FORMATION_KIT_SIZE: usize = 8 * 1024 * 1024;
+const FORMATION_PACKAGE_FILENAMES: [&str; 6] = [
+    "formation.json",
+    "matieres.json",
+    "programme.json",
+    "planning.json",
+    "evaluations.json",
+    "taches.json",
+];
 const GOOGLE_CALENDAR_IMPORT_URL: &str =
     "https://calendar.google.com/calendar/u/0/r/settings/export";
 static ASSESSMENT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -194,6 +205,18 @@ enum AiProvider {
 enum TextDocumentKind {
     Json,
     Markdown,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct FormationPackageFiles {
+    directory_name: String,
+    formation: String,
+    subjects: String,
+    curriculum: String,
+    schedule: String,
+    assessments: String,
+    tasks: String,
 }
 
 impl TextDocumentKind {
@@ -1112,31 +1135,33 @@ fn remove_account_assessment_documents(
     let Some(root) = existing_assessment_documents_root(app_data_dir)? else {
         return Ok(false);
     };
+    if let Some(profiles_root) = existing_assessment_profile_documents_root(&root)? {
+        // Même un reset vide doit refuser un compte redirigé par lien symbolique,
+        // sans créer de dossier et sans élargir la cible de suppression.
+        existing_assessment_account_directory(&profiles_root, account_id)?;
+    }
 
-    // Un profil migré depuis l’ancienne version peut encore référencer des PDF
-    // globaux qui n’ont jamais été ouverts. Résoudre chaque identifiant connu
-    // les rattache d’abord au profil actif. Si une copie legacy en doublon
-    // subsiste, elle est elle aussi retirée avant la suppression du profil.
+    // Le reset historique ne concerne que ses identifiants connus. Depuis que
+    // plusieurs formations partagent un compte, supprimer tout le dossier du
+    // compte effacerait aussi les PDF préfixés d’autres formations.
+    let mut removed = false;
     for record_id in record_ids {
-        let _ = resolve_profile_assessment_record_directory(&root, account_id, record_id)?;
+        if let Some(record_directory) =
+            resolve_profile_assessment_record_directory(&root, account_id, record_id)?
+        {
+            fs::remove_dir_all(&record_directory).map_err(|error| {
+                format!("Impossible de supprimer les PDF demandés de ce compte: {error}")
+            })?;
+            removed = true;
+        }
         if let Some(legacy_directory) = existing_assessment_record_directory(&root, record_id)? {
             fs::remove_dir_all(&legacy_directory).map_err(|error| {
                 format!("Impossible de supprimer les anciens PDF de ce compte: {error}")
             })?;
+            removed = true;
         }
     }
-
-    let Some(profiles_root) = existing_assessment_profile_documents_root(&root)? else {
-        return Ok(false);
-    };
-    let Some(account_directory) =
-        existing_assessment_account_directory(&profiles_root, account_id)?
-    else {
-        return Ok(false);
-    };
-    fs::remove_dir_all(&account_directory)
-        .map_err(|error| format!("Impossible de supprimer les PDF de ce compte: {error}"))?;
-    Ok(true)
+    Ok(removed)
 }
 
 #[cfg(test)]
@@ -1517,25 +1542,46 @@ fn fold_calendar_ics_line(line: &str) -> String {
     result
 }
 
-fn calendar_event_uid(id: &str) -> String {
-    let hexadecimal = id
+fn calendar_identity_hex(value: &str) -> String {
+    value
         .as_bytes()
         .iter()
         .map(|byte| format!("{byte:02x}"))
-        .collect::<String>();
-    format!("etude-{hexadecimal}@com.etude.desktop")
+        .collect::<String>()
+}
+
+fn calendar_event_uid(id: &str, uid_namespace: Option<&str>) -> String {
+    let event_hexadecimal = calendar_identity_hex(id);
+    match uid_namespace {
+        Some(namespace) => format!(
+            "etude-{}-{event_hexadecimal}@com.etude.desktop",
+            calendar_identity_hex(namespace)
+        ),
+        None => format!("etude-{event_hexadecimal}@com.etude.desktop"),
+    }
 }
 
 fn format_calendar_utc(date: DateTime<Utc>) -> String {
     date.format("%Y%m%dT%H%M%SZ").to_string()
 }
 
-fn build_calendar_ics(
+fn build_calendar_ics_with_options(
     mut events: Vec<CalendarIcsEvent>,
     calendar_name: &str,
     generated_at: DateTime<Utc>,
+    time_zone: &str,
+    uid_namespace: Option<&str>,
 ) -> CommandResult<String> {
     validate_calendar_events(&events, calendar_name)?;
+    validate_calendar_time_zone(time_zone)?;
+    if let Some(namespace) = uid_namespace {
+        validate_calendar_text(namespace, "L’espace UID du calendrier", 128)?;
+        if namespace.chars().any(char::is_control) {
+            return Err(
+                "L’espace UID du calendrier contient un caractère de contrôle interdit.".into(),
+            );
+        }
+    }
     events.sort_by(|left, right| {
         left.start
             .cmp(&right.start)
@@ -1550,12 +1596,15 @@ fn build_calendar_ics(
         "CALSCALE:GREGORIAN".to_string(),
         "METHOD:PUBLISH".to_string(),
         format!("X-WR-CALNAME:{}", escape_calendar_ics_text(calendar_name)),
-        "X-WR-TIMEZONE:Europe/Zurich".to_string(),
+        format!("X-WR-TIMEZONE:{}", escape_calendar_ics_text(time_zone)),
     ];
 
     for event in events {
         lines.push("BEGIN:VEVENT".to_string());
-        lines.push(format!("UID:{}", calendar_event_uid(&event.id)));
+        lines.push(format!(
+            "UID:{}",
+            calendar_event_uid(&event.id, uid_namespace)
+        ));
         lines.push(format!("DTSTAMP:{timestamp}"));
         if event.all_day {
             lines.push(format!(
@@ -1611,6 +1660,29 @@ fn build_calendar_ics(
         ));
     }
     Ok(content)
+}
+
+fn validate_calendar_time_zone(time_zone: &str) -> CommandResult<()> {
+    validate_calendar_text(time_zone, "Le fuseau du calendrier", 80)?;
+    if !time_zone
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'/' | b'_' | b'-' | b'+'))
+        || time_zone
+            .split('/')
+            .any(|component| component.is_empty() || matches!(component, "." | ".."))
+    {
+        return Err("Le fuseau du calendrier contient des caractères interdits.".into());
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+fn build_calendar_ics(
+    events: Vec<CalendarIcsEvent>,
+    calendar_name: &str,
+    generated_at: DateTime<Utc>,
+) -> CommandResult<String> {
+    build_calendar_ics_with_options(events, calendar_name, generated_at, "Europe/Zurich", None)
 }
 
 fn validate_calendar_destination(destination: &Path) -> CommandResult<PathBuf> {
@@ -1749,6 +1821,184 @@ fn write_text_document_file(
     Ok(destination)
 }
 
+fn read_formation_json_file(path: &Path, total_size: &mut u64) -> CommandResult<String> {
+    let metadata = fs::symlink_metadata(path)
+        .map_err(|error| format!("Le fichier {} est introuvable: {error}", path.display()))?;
+    if metadata.file_type().is_symlink() || !metadata.file_type().is_file() {
+        return Err(format!(
+            "{} doit être un fichier régulier, pas un lien symbolique.",
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("Le fichier")
+        ));
+    }
+    if metadata.len() > MAX_FORMATION_FILE_SIZE {
+        return Err(format!(
+            "{} dépasse la limite de {} Mio.",
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("Le fichier"),
+            MAX_FORMATION_FILE_SIZE / (1024 * 1024)
+        ));
+    }
+    let file = File::open(path)
+        .map_err(|error| format!("Impossible de lire {}: {error}", path.display()))?;
+    let opened_metadata = file
+        .metadata()
+        .map_err(|error| format!("Impossible d’inspecter {}: {error}", path.display()))?;
+    if !opened_metadata.file_type().is_file() || opened_metadata.len() > MAX_FORMATION_FILE_SIZE {
+        return Err(format!(
+            "{} dépasse la limite de {} Mio ou n’est pas un fichier régulier.",
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("Le fichier"),
+            MAX_FORMATION_FILE_SIZE / (1024 * 1024)
+        ));
+    }
+    let mut bytes = Vec::with_capacity(opened_metadata.len() as usize);
+    file.take(MAX_FORMATION_FILE_SIZE + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| format!("Impossible de lire {}: {error}", path.display()))?;
+    if bytes.len() as u64 > MAX_FORMATION_FILE_SIZE {
+        return Err(format!(
+            "{} dépasse la limite de {} Mio.",
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("Le fichier"),
+            MAX_FORMATION_FILE_SIZE / (1024 * 1024)
+        ));
+    }
+    *total_size = total_size
+        .checked_add(bytes.len() as u64)
+        .ok_or_else(|| "La taille du dossier de formation est invalide.".to_string())?;
+    if *total_size > MAX_FORMATION_PACKAGE_SIZE {
+        return Err(format!(
+            "Le dossier de formation dépasse la limite totale de {} Mio.",
+            MAX_FORMATION_PACKAGE_SIZE / (1024 * 1024)
+        ));
+    }
+    let content = String::from_utf8(bytes)
+        .map_err(|_| format!("{} doit être encodé en UTF-8.", path.display()))?;
+    serde_json::from_str::<serde_json::Value>(&content)
+        .map_err(|error| format!("{} contient un JSON invalide: {error}", path.display()))?;
+    Ok(content)
+}
+
+fn read_formation_package_directory(directory: &Path) -> CommandResult<FormationPackageFiles> {
+    if !directory.is_absolute() {
+        return Err("Le chemin du dossier de formation doit être absolu.".into());
+    }
+    let original_metadata = fs::symlink_metadata(directory)
+        .map_err(|error| format!("Le dossier de formation est introuvable: {error}"))?;
+    if original_metadata.file_type().is_symlink() || !original_metadata.file_type().is_dir() {
+        return Err(
+            "La formation doit être importée depuis un dossier réel, pas un lien symbolique."
+                .into(),
+        );
+    }
+    let directory = fs::canonicalize(directory)
+        .map_err(|error| format!("Impossible de sécuriser le dossier de formation: {error}"))?;
+    let directory_name = directory
+        .file_name()
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.is_empty())
+        .ok_or_else(|| "Le nom du dossier de formation est invalide.".to_string())?
+        .to_owned();
+
+    for entry in fs::read_dir(&directory)
+        .map_err(|error| format!("Impossible d’inspecter le dossier de formation: {error}"))?
+    {
+        let entry = entry.map_err(|error| format!("Entrée de dossier illisible: {error}"))?;
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else {
+            return Err("Le dossier contient un nom de fichier non UTF-8.".into());
+        };
+        if name.to_ascii_lowercase().ends_with(".json")
+            && !FORMATION_PACKAGE_FILENAMES.contains(&name)
+        {
+            return Err(format!(
+                "Le fichier JSON inattendu « {name} » est interdit à la racine du dossier."
+            ));
+        }
+    }
+
+    let mut total_size = 0_u64;
+    let mut read =
+        |filename: &str| read_formation_json_file(&directory.join(filename), &mut total_size);
+    Ok(FormationPackageFiles {
+        directory_name,
+        formation: read("formation.json")?,
+        subjects: read("matieres.json")?,
+        curriculum: read("programme.json")?,
+        schedule: read("planning.json")?,
+        assessments: read("evaluations.json")?,
+        tasks: read("taches.json")?,
+    })
+}
+
+fn write_formation_kit_file(destination: &Path, content: &[u8]) -> CommandResult<PathBuf> {
+    if content.len() > MAX_FORMATION_KIT_SIZE {
+        return Err(format!(
+            "Le kit dépasse la limite de {} Mio.",
+            MAX_FORMATION_KIT_SIZE / (1024 * 1024)
+        ));
+    }
+    if !content.starts_with(b"PK\x03\x04") {
+        return Err("Le kit généré ne possède pas une signature ZIP reconnue.".into());
+    }
+    if !destination.is_absolute() {
+        return Err("Le chemin du kit doit être absolu.".into());
+    }
+    if !destination
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("zip"))
+    {
+        return Err("Le kit doit utiliser l’extension .zip.".into());
+    }
+    let filename = destination
+        .file_name()
+        .ok_or_else(|| "Le nom du kit est absent.".to_string())?;
+    let parent = destination
+        .parent()
+        .ok_or_else(|| "Le dossier du kit est absent.".to_string())?;
+    let canonical_parent = fs::canonicalize(parent)
+        .map_err(|error| format!("Impossible de sécuriser le dossier de destination: {error}"))?;
+    let destination = canonical_parent.join(filename);
+    match fs::symlink_metadata(&destination) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.file_type().is_file() => {
+            return Err("La destination doit être un fichier régulier, pas un lien.".into())
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(format!("Impossible de vérifier le kit: {error}")),
+    }
+
+    let sequence = ASSESSMENT_TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let staging = canonical_parent.join(format!(
+        ".dowze-formation-kit-{}-{sequence}.tmp",
+        std::process::id()
+    ));
+    let write_result = (|| -> CommandResult<()> {
+        let mut file = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&staging)
+            .map_err(|error| format!("Impossible de préparer le kit: {error}"))?;
+        file.write_all(content)
+            .and_then(|_| file.sync_all())
+            .map_err(|error| format!("Impossible d’enregistrer le kit: {error}"))?;
+        replace_file_atomically(&staging, &destination)
+            .map_err(|error| format!("Impossible de finaliser le kit: {error}"))?;
+        Ok(())
+    })();
+    if write_result.is_err() {
+        let _ = fs::remove_file(&staging);
+    }
+    write_result?;
+    Ok(destination)
+}
+
 fn calendar_export_cache_directory(caller: &Webview) -> CommandResult<PathBuf> {
     let cache = caller
         .app_handle()
@@ -1761,6 +2011,23 @@ fn calendar_export_cache_directory(caller: &Webview) -> CommandResult<PathBuf> {
     fs::create_dir_all(&directory)
         .map_err(|error| format!("Impossible de préparer les exports calendrier: {error}"))?;
     Ok(directory)
+}
+
+fn validate_calendar_filename(filename: &str) -> CommandResult<&str> {
+    validate_calendar_text(filename, "Le nom du fichier calendrier", 240)?;
+    if filename.chars().any(char::is_control) {
+        return Err("Le nom du calendrier contient un caractère de contrôle interdit.".into());
+    }
+    let path = Path::new(filename);
+    if path.file_name().and_then(|name| name.to_str()) != Some(filename)
+        || !path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("ics"))
+    {
+        return Err("Le nom du calendrier doit être un simple fichier .ics.".into());
+    }
+    Ok(filename)
 }
 
 fn ai_panel(caller: &Webview) -> Option<Webview> {
@@ -3005,11 +3272,20 @@ fn open_calendar_in_apple(
     caller: Webview,
     events: Vec<CalendarIcsEvent>,
     calendar_name: String,
+    filename: String,
+    time_zone: String,
+    uid_namespace: Option<String>,
 ) -> CommandResult<String> {
     require_main_caller(&caller)?;
-    let content = build_calendar_ics(events, &calendar_name, Utc::now())?;
-    let destination =
-        calendar_export_cache_directory(&caller)?.join("Dowze-Academie-Planning-2026-2027.ics");
+    let content = build_calendar_ics_with_options(
+        events,
+        &calendar_name,
+        Utc::now(),
+        &time_zone,
+        uid_namespace.as_deref(),
+    )?;
+    let filename = validate_calendar_filename(&filename)?;
+    let destination = calendar_export_cache_directory(&caller)?.join(filename);
     let destination = write_calendar_ics_file(&destination, &content)?;
     #[cfg(target_os = "macos")]
     let open_result = open::with_detached(&destination, "Calendar");
@@ -3025,6 +3301,8 @@ fn save_calendar_ics(
     events: Vec<CalendarIcsEvent>,
     calendar_name: String,
     destination_path: String,
+    time_zone: String,
+    uid_namespace: Option<String>,
 ) -> CommandResult<String> {
     require_main_caller(&caller)?;
     if destination_path.is_empty()
@@ -3033,7 +3311,13 @@ fn save_calendar_ics(
     {
         return Err("Le chemin du calendrier est vide, trop long ou mal formé.".into());
     }
-    let content = build_calendar_ics(events, &calendar_name, Utc::now())?;
+    let content = build_calendar_ics_with_options(
+        events,
+        &calendar_name,
+        Utc::now(),
+        &time_zone,
+        uid_namespace.as_deref(),
+    )?;
     let destination = write_calendar_ics_file(Path::new(&destination_path), &content)?;
     Ok(destination.to_string_lossy().into_owned())
 }
@@ -3059,6 +3343,54 @@ async fn save_text_document(
     })
     .await
     .map_err(|error| format!("La tâche d’export du document s’est interrompue: {error}"))?
+}
+
+#[tauri::command]
+async fn read_formation_package(
+    caller: Webview,
+    auth_state: State<'_, local_auth::LocalAuthState>,
+    account_id: String,
+    directory_path: String,
+) -> CommandResult<FormationPackageFiles> {
+    require_main_caller(&caller)?;
+    auth_state.require_active_account(&account_id)?;
+    if directory_path.is_empty()
+        || directory_path.len() > 32_768
+        || directory_path.trim() != directory_path
+    {
+        return Err("Le chemin du dossier de formation est vide, trop long ou mal formé.".into());
+    }
+    drop(caller);
+    tauri::async_runtime::spawn_blocking(move || {
+        read_formation_package_directory(Path::new(&directory_path))
+    })
+    .await
+    .map_err(|error| format!("La lecture du dossier de formation s’est interrompue: {error}"))?
+}
+
+#[tauri::command]
+async fn save_formation_kit(
+    caller: Webview,
+    auth_state: State<'_, local_auth::LocalAuthState>,
+    account_id: String,
+    archive_bytes: Vec<u8>,
+    destination_path: String,
+) -> CommandResult<String> {
+    require_main_caller(&caller)?;
+    auth_state.require_active_account(&account_id)?;
+    if destination_path.is_empty()
+        || destination_path.len() > 32_768
+        || destination_path.trim() != destination_path
+    {
+        return Err("Le chemin du kit est vide, trop long ou mal formé.".into());
+    }
+    drop(caller);
+    tauri::async_runtime::spawn_blocking(move || {
+        write_formation_kit_file(Path::new(&destination_path), &archive_bytes)
+            .map(|path| path.to_string_lossy().into_owned())
+    })
+    .await
+    .map_err(|error| format!("L’enregistrement du kit s’est interrompu: {error}"))?
 }
 
 #[tauri::command]
@@ -3215,6 +3547,8 @@ pub fn run() {
             open_calendar_in_apple,
             save_calendar_ics,
             save_text_document,
+            read_formation_package,
+            save_formation_kit,
             open_google_calendar_import,
             free_chat::free_chat_key_status,
             free_chat::save_free_chat_api_key,
@@ -4190,16 +4524,16 @@ mod tests {
     #[test]
     fn calendar_ics_uids_are_stable_and_long_utf8_lines_are_folded_safely() {
         assert_eq!(
-            calendar_event_uid("cours-42"),
+            calendar_event_uid("cours-42", None),
             "etude-636f7572732d3432@com.etude.desktop"
         );
         assert_eq!(
-            calendar_event_uid("cours-42"),
-            calendar_event_uid("cours-42")
+            calendar_event_uid("cours-42", None),
+            calendar_event_uid("cours-42", None)
         );
         assert_ne!(
-            calendar_event_uid("cours-42"),
-            calendar_event_uid("cours-43")
+            calendar_event_uid("cours-42", None),
+            calendar_event_uid("cours-43", None)
         );
 
         let original = format!("DESCRIPTION:{}", "énergie ".repeat(24));
@@ -4227,6 +4561,73 @@ mod tests {
         )
         .unwrap();
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn calendar_ics_namespaces_formations_and_preserves_the_legacy_uid() {
+        let legacy = build_calendar_ics(
+            vec![calendar_test_event()],
+            "Dowze Academie",
+            calendar_generated_at(),
+        )
+        .unwrap();
+        let custom = build_calendar_ics_with_options(
+            vec![calendar_test_event()],
+            "Lycée Seconde",
+            calendar_generated_at(),
+            "Asia/Tokyo",
+            Some("formation-a"),
+        )
+        .unwrap();
+
+        assert!(legacy.contains("UID:etude-636f7572732d3432@com.etude.desktop\r\n"));
+        assert!(legacy.contains("X-WR-TIMEZONE:Europe/Zurich\r\n"));
+        assert!(custom
+            .contains("UID:etude-666f726d6174696f6e2d61-636f7572732d3432@com.etude.desktop\r\n"));
+        assert!(custom.contains("X-WR-TIMEZONE:Asia/Tokyo\r\n"));
+        assert_ne!(legacy, custom);
+    }
+
+    #[test]
+    fn calendar_options_reject_unsafe_timezones_namespaces_and_filenames() {
+        for time_zone in [
+            "",
+            " Europe/Zurich",
+            "Europe//Zurich",
+            "../Zurich",
+            "Europe Zurich",
+        ] {
+            assert!(build_calendar_ics_with_options(
+                vec![calendar_test_event()],
+                "Dowze Academie",
+                calendar_generated_at(),
+                time_zone,
+                None,
+            )
+            .is_err());
+        }
+        assert!(build_calendar_ics_with_options(
+            vec![calendar_test_event()],
+            "Dowze Academie",
+            calendar_generated_at(),
+            "UTC",
+            Some("\n"),
+        )
+        .is_err());
+
+        assert!(validate_calendar_filename("Planning.ics").is_ok());
+        for filename in [
+            "",
+            "Planning.txt",
+            "../Planning.ics",
+            "dossier/Planning.ics",
+            "Plan\nning.ics",
+        ] {
+            assert!(
+                validate_calendar_filename(filename).is_err(),
+                "{filename:?}"
+            );
+        }
     }
 
     #[test]
@@ -4859,7 +5260,7 @@ mod tests {
     }
 
     #[test]
-    fn deleting_an_accounts_pdf_root_keeps_every_other_account() {
+    fn deleting_selected_account_pdfs_keeps_other_records_and_accounts() {
         let directory = TestDirectory::new("pdf-account-root-delete");
         let app_data = directory.path().join("app-data");
         let source = directory.path().join("source.pdf");
@@ -4885,7 +5286,12 @@ mod tests {
         )
         .unwrap();
 
-        assert!(remove_account_assessment_documents(&app_data, TEST_ACCOUNT_A, &[]).unwrap());
+        assert!(remove_account_assessment_documents(
+            &app_data,
+            TEST_ACCOUNT_A,
+            &["first-record".to_string()],
+        )
+        .unwrap());
         assert!(!expected_managed_pdf(
             &app_data,
             TEST_ACCOUNT_A,
@@ -4893,13 +5299,14 @@ mod tests {
             AssessmentPdfVariant::Blank,
         )
         .exists());
-        assert!(!expected_managed_pdf(
+        assert!(expected_managed_pdf(
             &app_data,
             TEST_ACCOUNT_A,
             "orphaned-record",
             AssessmentPdfVariant::Blank,
         )
         .exists());
+        assert!(!remove_account_assessment_documents(&app_data, TEST_ACCOUNT_A, &[]).unwrap());
         assert!(managed_assessment_pdf_path(
             &app_data,
             TEST_ACCOUNT_B,
@@ -5152,6 +5559,128 @@ mod tests {
             "https://www.tiktok.com:8443/search?q=thermodynamique",
         ] {
             assert!(parse_allowed_url(raw).is_err(), "{raw} should be rejected");
+        }
+    }
+
+    #[test]
+    fn formation_package_reader_requires_the_six_exact_json_files() {
+        let directory = TestDirectory::new("formation-package-valid");
+        let package = directory
+            .path()
+            .join("dowze-formation-lycee-seconde-2026-2027");
+        fs::create_dir_all(&package).unwrap();
+        for filename in FORMATION_PACKAGE_FILENAMES {
+            fs::write(
+                package.join(filename),
+                br#"{"schemaVersion":"dowze-formation@1"}"#,
+            )
+            .unwrap();
+        }
+
+        let read = read_formation_package_directory(&package).unwrap();
+        assert_eq!(
+            read.directory_name,
+            "dowze-formation-lycee-seconde-2026-2027"
+        );
+        assert!(read.formation.contains("schemaVersion"));
+        assert!(read.subjects.contains("schemaVersion"));
+
+        fs::write(package.join("bonus.json"), b"{}").unwrap();
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("inattendu"));
+    }
+
+    #[test]
+    fn formation_package_reader_rejects_missing_invalid_and_oversized_files() {
+        let directory = TestDirectory::new("formation-package-invalid");
+        let package = directory.path().join("dowze-formation-test");
+        fs::create_dir_all(&package).unwrap();
+        for filename in FORMATION_PACKAGE_FILENAMES {
+            fs::write(package.join(filename), b"{}").unwrap();
+        }
+        fs::remove_file(package.join("planning.json")).unwrap();
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("planning.json"));
+
+        fs::write(package.join("planning.json"), b"not-json").unwrap();
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("JSON invalide"));
+
+        fs::write(package.join("planning.json"), b"\xef\xbb\xbf{}").unwrap();
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("JSON invalide"));
+
+        fs::write(
+            package.join("planning.json"),
+            vec![b' '; MAX_FORMATION_FILE_SIZE as usize + 1],
+        )
+        .unwrap();
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("dépasse"));
+    }
+
+    #[test]
+    fn formation_package_reader_applies_the_total_size_limit() {
+        let directory = TestDirectory::new("formation-package-total-size");
+        let package = directory.path().join("dowze-formation-test");
+        fs::create_dir_all(&package).unwrap();
+        let large_json = format!(r#"{{"padding":"{}"}}"#, "x".repeat(1_400_000));
+        for filename in FORMATION_PACKAGE_FILENAMES {
+            fs::write(package.join(filename), large_json.as_bytes()).unwrap();
+        }
+
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("limite totale"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn formation_package_reader_rejects_symbolic_files() {
+        use std::os::unix::fs::symlink;
+
+        let directory = TestDirectory::new("formation-package-symlink");
+        let package = directory.path().join("dowze-formation-test");
+        fs::create_dir_all(&package).unwrap();
+        let outside = directory.path().join("outside.json");
+        fs::write(&outside, b"{}").unwrap();
+        for filename in FORMATION_PACKAGE_FILENAMES {
+            fs::write(package.join(filename), b"{}").unwrap();
+        }
+        fs::remove_file(package.join("taches.json")).unwrap();
+        symlink(&outside, package.join("taches.json")).unwrap();
+
+        assert!(read_formation_package_directory(&package)
+            .unwrap_err()
+            .contains("lien symbolique"));
+    }
+
+    #[test]
+    fn formation_kit_writer_is_atomic_and_zip_only() {
+        let directory = TestDirectory::new("formation-kit");
+        let destination = directory.path().join("kit.zip");
+        let first = b"PK\x03\x04first";
+        let second = b"PK\x03\x04second";
+
+        write_formation_kit_file(&destination, first).unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), first);
+        write_formation_kit_file(&destination, second).unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), second);
+        assert!(write_formation_kit_file(&destination, b"not-a-zip").is_err());
+        assert_eq!(fs::read(&destination).unwrap(), second);
+        assert!(write_formation_kit_file(&directory.path().join("kit.txt"), second).is_err());
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+            let link = directory.path().join("kit-link.zip");
+            symlink(&destination, &link).unwrap();
+            assert!(write_formation_kit_file(&link, second).is_err());
         }
     }
 }

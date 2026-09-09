@@ -17,6 +17,7 @@ import type {
   ProgramModule,
   Subject
 } from "../src/types.ts";
+import { SIX_POINT_FORMATION } from "./fixtures/formations/manifest.ts";
 
 const lessons: LessonUnit[] = [
   {
@@ -111,6 +112,7 @@ const englishA1Module: ProgramModule = {
 const englishSubject: Subject = {
   ...subject,
   id: "anglais",
+  curriculumKind: "cefr-selectable",
   name: "Anglais",
   shortName: "Anglais",
   icon: "languages",
@@ -411,6 +413,57 @@ test("createActiveLesson mémorise le scope CECRL du module anglais", () => {
   );
 });
 
+test("une matière allemande importée active son contexte CECRL sans fuite anglaise", () => {
+  const importedModule = { ...englishA1Module, cefrLevel: "B1" as const };
+  const importedSubject: Subject = {
+    ...englishSubject,
+    id: "allemand-professionnel",
+    name: "Allemand professionnel",
+    shortName: "Allemand pro",
+    curriculumKind: undefined,
+    cefrLevel: undefined,
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [importedModule]
+  };
+  const active = createActiveLesson(
+    importedSubject,
+    importedModule,
+    englishItem,
+    englishItem.lessons?.[0],
+    { startedAt: "2026-09-07T08:30:00.000Z" }
+  );
+
+  assert.equal(active.curriculumScope, "cefr:B1");
+  assert.match(active.prompt, /Cursus : Allemand — parcours CECRL B1/);
+  assert.match(active.prompt, /principalement en allemand/);
+  assert.doesNotMatch(active.prompt, /principalement en anglais|Cursus : Anglais/);
+  assert.doesNotMatch(active.prompt, /scientifique et ingénierie/);
+});
+
+test("une séance générale de langue conserve tous les niveaux annuels de ses modules", () => {
+  const a2Module = { ...englishA1Module, id: "allemand-a2", cefrLevel: "A2" as const };
+  const b1Module = { ...englishA1Module, id: "allemand-b1", cefrLevel: "B1" as const };
+  const importedSubject: Subject = {
+    ...englishSubject,
+    id: "allemand",
+    name: "Allemand",
+    shortName: "Allemand",
+    curriculumKind: undefined,
+    cefrLevel: undefined,
+    languageCode: "de",
+    languageName: "allemand",
+    modules: [a2Module, b1Module]
+  };
+  const active = createActiveLesson(importedSubject, undefined, undefined, {
+    startedAt: "2026-09-07T08:30:00.000Z"
+  });
+
+  assert.equal(active.curriculumScope, "cefr:A2+B1");
+  assert.match(active.prompt, /Cursus : Allemand — parcours CECRL A2–B1/);
+  assert.doesNotMatch(active.prompt, /Cursus : Anglais/);
+});
+
 test("le mode cours impose un enseignement interactif sans feuille d’exercices", () => {
   const prompt = buildLessonPrompt(subject, courseModule, item, lessons[0]);
 
@@ -422,6 +475,29 @@ test("le mode cours impose un enseignement interactif sans feuille d’exercices
   assert.match(prompt, /question diagnostique/);
   assert.match(prompt, /\[ATTENTE_DE_TA_RÉPONSE\]/);
   assert.match(prompt, /Termine le cours lorsque tous les acquis annoncés/);
+});
+
+test("le prompt complet d’une formation importée ne suppose jamais l’ingénierie énergétique", () => {
+  const historySubject: Subject = {
+    ...subject,
+    id: "histoire-contemporaine",
+    name: "Histoire contemporaine",
+    shortName: "Histoire",
+    domain: "Sciences humaines",
+    modules: [courseModule]
+  };
+  const prompt = buildLessonPrompt(
+    historySubject,
+    courseModule,
+    item,
+    lessons[0],
+    "course",
+    SIX_POINT_FORMATION
+  );
+
+  assert.match(prompt, /domaine de la formation ou de la matière/);
+  assert.match(prompt, /Cursus : Année préparatoire — Maturité fédérale/);
+  assert.doesNotMatch(prompt, /ingénierie énergétique|Ingénierie de l’énergie|scientifique et ingénierie/i);
 });
 
 test("le mode exercices impose tentative, correction et remédiation ciblée", () => {
@@ -442,7 +518,7 @@ test("le mode exercices impose tentative, correction et remédiation ciblée", (
   assert.match(prompt, /\[ATTENTE_DE_TA_RÉPONSE\]/);
 });
 
-test("le mini-test exige deux véritables PDF séparés et non une passation interactive", () => {
+test("le mini-test exige deux PDF séparés et le barème fourni par le contexte", () => {
   const prompt = buildLessonPrompt(
     subject,
     courseModule,
@@ -455,7 +531,8 @@ test("le mini-test exige deux véritables PDF séparés et non une passation int
   assert.match(prompt, /texte simplement renommé avec l’extension \.pdf n’est pas un livrable PDF/);
   assert.match(prompt, /le sujet élève.*le corrigé enseignant/s);
   assert.match(prompt, /6 à 10 questions au total/);
-  assert.match(prompt, /totalise exactement 20 points/);
+  assert.match(prompt, /totalise exactement le maximum indiqué dans le contexte/);
+  assert.match(prompt, /Barème total obligatoire : 20 points/);
   assert.match(prompt, /espace de réponse proportionné/);
   assert.match(prompt, /Le sujet élève ne contient aucune réponse/);
   assert.match(prompt, /second PDF A4 distinct/);
@@ -463,6 +540,22 @@ test("le mini-test exige deux véritables PDF séparés et non une passation int
   assert.doesNotMatch(prompt, /\[ATTENTE_DE_TA_RÉPONSE\]/);
   assert.doesNotMatch(prompt, /Réponse enregistrée/);
   assert.doesNotMatch(prompt, /\[ASSISTÉE\]/);
+});
+
+test("le mini-test applique aussi une échelle annuelle différente de 20", () => {
+  const prompt = buildLessonPrompt(
+    subject,
+    courseModule,
+    item,
+    undefined,
+    "chapter-test",
+    SIX_POINT_FORMATION
+  );
+
+  assert.match(prompt, /Cursus : Année préparatoire — Maturité fédérale/);
+  assert.match(prompt, /Barème total obligatoire : 6 points/);
+  assert.match(prompt, /Seuil de réussite de référence : 4 points/);
+  assert.doesNotMatch(prompt, /Barème total obligatoire : 20 points/);
 });
 
 test("le mini-test impose une mise en page A4 et une vérification du rendu", () => {

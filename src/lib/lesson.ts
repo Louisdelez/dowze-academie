@@ -6,6 +6,16 @@ import type {
   ProgramModule,
   Subject
 } from "../types";
+import type { FormationManifest } from "./formations";
+import {
+  isNativeAiPromptWithinLimit,
+  nativeAiSessionId,
+  NATIVE_AI_PROMPT_MAX_BYTES
+} from "./aiSessionContract.ts";
+import {
+  resolveGeneralLanguageCurriculum,
+  resolveLanguageCurriculumRange
+} from "./languageCurriculum.ts";
 
 export type { ActiveLesson } from "../types";
 
@@ -17,7 +27,7 @@ export const UNIVERSAL_COURSE_TEACHER_PROMPT = [
   "# PROFESSEUR IA — MODE COURS",
   "",
   "## Rôle",
-  "Tu es mon professeur universitaire personnel dans une école pilotée par l’IA. Tu conduis en français un cours particulier rigoureux, progressif et interactif sur le seul cours ciblé dans le contexte final.",
+  "Tu es mon professeur personnel dans une école pilotée par l’IA. Tu conduis dans la langue et au niveau indiqués dans le contexte final un cours particulier rigoureux, progressif et interactif sur le seul cours ciblé.",
   "La rubrique parente situe ce cours dans le programme : elle ne doit pas être traitée entièrement pendant cette séance.",
   "",
   "## Résultat attendu",
@@ -34,7 +44,7 @@ export const UNIVERSAL_COURSE_TEACHER_PROMPT = [
   "- Enseigne réellement avant de m’interroger. Ne remplace pas le cours par un quiz.",
   "- Progresse par segments courts : intuition pertinente, définition ou principe exact, raisonnement, puis exemple entièrement guidé.",
   "- Explique chaque symbole à sa première apparition et distingue définition, résultat, hypothèse, approximation, convention et exemple.",
-  "- Lorsque cela aide, utilise une représentation verbale, géométrique, physique ou un lien naturel avec l’ingénierie énergétique.",
+  "- Lorsque cela aide, utilise une représentation verbale, géométrique, physique ou un lien naturel avec le domaine de la formation ou de la matière.",
   "- Après un segment, vérifie une seule idée importante par une question de compréhension ou de reformulation, jamais par un exercice d’entraînement.",
   "- Cette conversation est réservée au cours : ne propose pas de série d’exercices non résolus, de devoir ou de problème d’entraînement. Les exercices auront leur propre conversation.",
   "- Un exemple du cours doit être résolu et commenté par toi ; il ne doit pas devenir une liste de questions laissées sans correction.",
@@ -60,7 +70,7 @@ export const UNIVERSAL_EXERCISE_COACH_PROMPT = [
   "# PROFESSEUR IA — MODE EXERCICES",
   "",
   "## Rôle",
-  "Tu es mon professeur universitaire chargé de l’entraînement, de la correction et de la remédiation sur le seul cours ciblé dans le contexte final. Tu travailles en français et tu considères que le cours conceptuel existe dans une conversation séparée.",
+  "Tu es mon professeur chargé de l’entraînement, de la correction et de la remédiation sur le seul cours ciblé dans le contexte final. Tu travailles dans la langue et au niveau indiqués et tu considères que le cours conceptuel existe dans une conversation séparée.",
   "La rubrique parente situe le cours dans le programme : elle n’élargit pas le périmètre de l’entraînement.",
   "",
   "## Résultat attendu",
@@ -106,7 +116,7 @@ export const UNIVERSAL_CHAPTER_TEST_PROMPT = [
   "# PROFESSEUR IA — MINI-TEST PDF DE FIN DE CHAPITRE",
   "",
   "## Rôle",
-  "Tu es mon professeur universitaire et concepteur d’évaluations. À partir du contexte final, crée immédiatement en français un véritable sujet écrit de fin de chapitre et son corrigé officiel.",
+  "Tu es mon professeur et concepteur d’évaluations. À partir du contexte final, crée immédiatement dans la langue demandée un véritable sujet écrit de fin de chapitre et son corrigé officiel.",
   "",
   "## Résultat attendu — livrables obligatoires",
   "Fournis dès cette réponse deux fichiers binaires PDF distincts et téléchargeables :",
@@ -118,26 +128,26 @@ export const UNIVERSAL_CHAPTER_TEST_PROMPT = [
   "- Chaque cours répertorié dans « Cours du chapitre à couvrir » est évalué par au moins une question ou sous-question identifiable. Construis d’abord une matrice interne cours → questions ; reproduis cette matrice seulement dans le corrigé pour rendre la couverture vérifiable.",
   "- Le sujet comporte 6 à 10 questions au total, adaptées à la taille du chapitre. Si nécessaire, regroupe plusieurs objectifs dans une question intégratrice sans omettre de cours.",
   "- Les tâches évaluent un mélange pertinent de compréhension, application, raisonnement, calcul, interprétation et transfert selon la matière et le niveau indiqué.",
-  "- Le barème est visible question par question, totalise exactement 20 points et correspond à la difficulté ainsi qu’au temps de travail demandé.",
+  "- Le barème est visible question par question, totalise exactement le maximum indiqué dans le contexte et correspond à la difficulté ainsi qu’au temps de travail demandé.",
   "- Le corrigé contient, pour chaque question, la réponse attendue, un raisonnement détaillé, les étapes du barème et les erreurs typiques pertinentes. Il permet de corriger le sujet sans autre document.",
   "",
   "## Invariants du PDF sujet",
   "- Le sujet est un document A4 portrait imprimable, sobre, à fort contraste et lisible en noir et blanc, avec marges de 18 à 22 mm, police de corps de 10,5 à 12 pt et numéros de page.",
-  "- La première page indique clairement la matière, le chapitre, « Mini-test de fin de chapitre », la durée conseillée, le total /20, les consignes et des champs Nom, Prénom et Date.",
+  "- La première page indique clairement la matière, le chapitre, « Mini-test de fin de chapitre », la durée conseillée, le total selon le barème du contexte, les consignes et des champs Nom, Prénom et Date.",
   "- Chaque question affiche ses points et réserve un espace de réponse proportionné au travail attendu : lignes, zones blanches, tableaux, grilles ou cadres de schéma selon le besoin. Ajoute des pages plutôt que de comprimer ces espaces.",
   "- Le sujet élève ne contient aucune réponse, solution, méthode suggérée, indice, correction, matrice de couverture ou élément de barème autre que les points attribués.",
   "- Les formules, symboles, accents, unités, figures et tableaux sont nets ; aucun contenu ne déborde, ne se chevauche ou n’est coupé entre deux pages de façon illisible.",
   "",
   "## Invariants du PDF corrigé",
   "- Le corrigé est un second PDF A4 distinct, explicitement marqué « Corrigé enseignant — ne pas distribuer avec le sujet » sur sa première page.",
-  "- Il reprend les numéros et énoncés du sujet dans le même ordre, ajoute les solutions détaillées et décompose les 20 points en critères observables. Sa dernière section contient la matrice cours → questions et confirme que tous les cours ont été couverts.",
+  "- Il reprend les numéros et énoncés du sujet dans le même ordre, ajoute les solutions détaillées et décompose le total en critères observables. Sa dernière section contient la matrice cours → questions et confirme que tous les cours ont été couverts.",
   "- Aucune page du corrigé ne doit être incorporée au fichier du sujet et les deux fichiers ne doivent jamais être fusionnés.",
   "",
   "## Vérification avant livraison",
   "Vérifie les raisonnements, calculs, signes, unités, dimensions, données et la somme du barème. Ouvre ou rends visuellement chaque page des deux PDF avec les outils disponibles, puis inspecte : format A4, pagination, lisibilité, espaces de réponse, glyphes manquants, débordements, chevauchements, pages vides, coupures, absence de solutions dans le sujet, concordance sujet–corrigé et couverture de tous les cours. Corrige puis régénère tout fichier qui échoue à un contrôle.",
   "",
   "## Règle d’arrêt et réponse finale",
-  "Ne pose aucune question et n’attends aucune réponse de ma part. Termine seulement lorsque les deux PDF valides ont été créés et vérifiés. Ta réponse finale contient uniquement les deux liens ou pièces jointes téléchargeables, chacun clairement identifié, puis une ligne confirmant le nombre de questions, le total /20, le nombre de pages de chaque fichier et la réussite des contrôles. Ne reproduis pas le sujet ou le corrigé en Markdown dans la conversation."
+  "Ne pose aucune question et n’attends aucune réponse de ma part. Termine seulement lorsque les deux PDF valides ont été créés et vérifiés. Ta réponse finale contient uniquement les deux liens ou pièces jointes téléchargeables, chacun clairement identifié, puis une ligne confirmant le nombre de questions, le total du barème, le nombre de pages de chaque fichier et la réussite des contrôles. Ne reproduis pas le sujet ou le corrigé en Markdown dans la conversation."
 ].join("\n");
 
 export const UNIVERSAL_LESSON_PROMPTS: Readonly<Record<LessonMode, string>> = {
@@ -191,40 +201,34 @@ function chapterCourseList(item: ProgramItem | undefined): string[] {
   ];
 }
 
-function englishCefrLevel(
-  subject: Subject,
-  courseModule: ProgramModule | undefined
-): string | undefined {
-  if (subject.id !== "anglais") return undefined;
-  return courseModule?.cefrLevel ?? subject.cefrLevel;
-}
-
-function englishLanguageGuidance(
+function languageGuidance(
   level: string,
-  lessonMode: LessonMode
+  lessonMode: LessonMode,
+  languageName: string,
+  teachingLanguage: string
 ): string[] {
   const beginner = level === "A1" || level === "A2" || level === "non sélectionné";
   const lines = [
     "Cadre de compétences langagières : travailler de façon équilibrée la réception/compréhension, la production, l’interaction et la médiation, à l’écrit comme à l’oral lorsque le support le permet.",
     "Composantes linguistiques : intégrer grammaire, vocabulaire, prononciation et intelligibilité, registre, adéquation sociolinguistique, pragmatique, cohérence et stratégies de communication.",
     beginner
-      ? "Langue de conduite : utiliser un soutien ciblé en français pour débloquer ou expliquer avec précision, tout en donnant les modèles, consignes, exemples et productions attendues principalement en anglais. Réduire progressivement ce soutien."
-      : "Langue de conduite : enseigner et interagir principalement en anglais ; réserver le français à une clarification brève lorsqu’elle est réellement nécessaire, sans traduire systématiquement.",
+      ? `Langue de conduite : utiliser un soutien ciblé en ${teachingLanguage} pour débloquer ou expliquer avec précision, tout en donnant les modèles, consignes, exemples et productions attendues principalement en ${languageName}. Réduire progressivement ce soutien.`
+      : `Langue de conduite : enseigner et interagir principalement en ${languageName} ; réserver ${teachingLanguage} à une clarification brève lorsqu’elle est réellement nécessaire, sans traduire systématiquement.`,
     "Preuves audio et orales : ne jamais déclarer acquises la compréhension orale, la production orale, l’interaction orale ou la prononciation sans média sonore ou protocole oral réel permettant de les observer."
   ];
 
   if (lessonMode === "course") {
     lines.push(
-      "Méthode de cours d’anglais : partir d’un document ou échange contextualisé, faire remarquer le sens et les formes, guider leur réemploi, puis vérifier une production ou interaction courte adaptée au niveau."
+      `Méthode de cours de ${languageName} : partir d’un document ou échange contextualisé, faire remarquer le sens et les formes, guider leur réemploi, puis vérifier une production ou interaction courte adaptée au niveau.`
     );
   } else if (lessonMode === "exercises") {
     lines.push(
-      "Méthode d’entraînement d’anglais : alterner compréhension, production, interaction et médiation avec des tâches communicatives réalistes ; corriger séparément l’accomplissement de la tâche, la clarté, la grammaire, le lexique, le registre et la pragmatique."
+      `Méthode d’entraînement de ${languageName} : alterner compréhension, production, interaction et médiation avec des tâches communicatives réalistes ; corriger séparément l’accomplissement de la tâche, la clarté, la grammaire, le lexique, le registre et la pragmatique.`
     );
   } else {
     lines.push(
       "Périmètre du mini-test PDF : cette épreuve papier mesure uniquement la compréhension écrite, la production écrite, la médiation écrite et l’usage de la langue. Elle ne mesure ni l’écoute, ni l’oral, ni la prononciation sans protocole séparé et média audio.",
-      "Barème écrit d’anglais : répartir les points selon les tâches entre compréhension, accomplissement et pertinence, organisation/cohésion, étendue et correction grammaticales et lexicales, registre/pragmatique et médiation ; ne jamais attribuer de points de prononciation à une copie papier."
+      `Barème écrit de ${languageName} : répartir les points selon les tâches entre compréhension, accomplissement et pertinence, organisation/cohésion, étendue et correction grammaticales et lexicales, registre/pragmatique et médiation ; ne jamais attribuer de points de prononciation à une copie papier.`
     );
   }
 
@@ -237,7 +241,8 @@ export function buildLessonContextBlock(
   courseModule?: ProgramModule,
   item?: ProgramItem,
   lessonUnit?: LessonUnit,
-  lessonMode: LessonMode = "course"
+  lessonMode: LessonMode = "course",
+  formation?: FormationManifest
 ): string {
   const hasAtomicCourse = Boolean(lessonUnit);
   const courseTitle = hasAtomicCourse
@@ -247,7 +252,7 @@ export function buildLessonContextBlock(
     ? lessonUnit?.objective
     : item?.description ??
       subject.objective ??
-      "Construire une maîtrise universitaire solide et applicable de ce cours.";
+      "Construire une maîtrise solide et applicable de ce cours.";
 
   const previousCourse = hasAtomicCourse
     ? adjacentLabel(
@@ -285,17 +290,34 @@ export function buildLessonContextBlock(
       ? "non fournis ; inférer puis vérifier les bases nécessaires"
       : `acquis pertinents du cours précédent « ${previousCourse} » ; inférer puis vérifier les autres bases nécessaires`;
 
-  const cefrLevel = englishCefrLevel(subject, courseModule);
-  const isEnglish = subject.id === "anglais";
-  const curriculumLines = isEnglish
+  const language = courseModule
+    ? resolveLanguageCurriculumRange(subject, [courseModule])
+    : resolveGeneralLanguageCurriculum(subject);
+  const cefrLabel = language?.cefrLabel;
+  const isCefrLanguage = Boolean(language && (language.selectable || cefrLabel));
+  const languageName = contextValue(language?.languageName, "langue cible");
+  const displayLanguageName = contextValue(language?.displayLanguageName, "Langue cible");
+  const teachingLanguage = contextValue(
+    formation?.pedagogy.teachingLanguage,
+    "français"
+  );
+  const curriculumLines = isCefrLanguage
     ? [
-        `Cursus : Anglais — parcours CECRL ${cefrLevel ?? "non sélectionné"} sur une année`,
-        `Niveau attendu : CECRL ${cefrLevel ?? "non sélectionné"} — parcours pédagogique aligné, non certification officielle`
+        `Cursus : ${displayLanguageName} — parcours CECRL ${cefrLabel ?? "non sélectionné"} sur une année`,
+        `Niveau attendu : CECRL ${cefrLabel ?? "non sélectionné"} — parcours pédagogique aligné, non certification officielle`
       ]
-    : [
+    : formation
+      ? [
+          `Cursus : ${contextValue(`${formation.yearLabel} — ${formation.name}`, "Formation non précisée")}`,
+          `Niveau attendu : ${contextValue(`${formation.level.label} — ${formation.pedagogy.instructionLevel}`, "Niveau non précisé")}`,
+          `Langue d’enseignement : ${contextValue(formation.pedagogy.teachingLanguage, "Non précisée")}`,
+          `Approche pédagogique : ${contextValue(formation.pedagogy.approach, "Non précisée")}`,
+          `Barème de référence : ${formation.grading.scaleMax} points ; seuil de réussite ${formation.grading.passMark}`
+        ]
+      : [
         "Cursus : Année 1 — Ingénierie de l’énergie & physique appliquée",
         "Niveau attendu : universitaire, scientifique et ingénierie"
-      ];
+        ];
 
   const contextLines = [
     LESSON_CONTEXT_START,
@@ -317,7 +339,7 @@ export function buildLessonContextBlock(
     "Objectif global de la matière : " +
       contextValue(
         subject.objective,
-        "Construire une maîtrise universitaire solide et applicable de cette matière."
+        "Construire une maîtrise solide et applicable de cette matière."
       ),
     "Prérequis curriculaires : " +
       contextValue(curricularPrerequisites, "À inférer puis vérifier par diagnostic"),
@@ -330,14 +352,23 @@ export function buildLessonContextBlock(
     "Cours suivant : " + contextValue(nextCourse, "non déterminé")
   ];
 
-  if (isEnglish) {
+  if (isCefrLanguage) {
     contextLines.push(
-      ...englishLanguageGuidance(cefrLevel ?? "non sélectionné", lessonMode)
+      ...languageGuidance(
+        cefrLabel ?? "non sélectionné",
+        lessonMode,
+        languageName,
+        teachingLanguage
+      )
     );
   }
 
   if (lessonMode === "chapter-test") {
-    contextLines.push(...chapterCourseList(item));
+    contextLines.push(
+      `Barème total obligatoire : ${formation?.grading.scaleMax ?? 20} points`,
+      `Seuil de réussite de référence : ${formation?.grading.passMark ?? 10} points`,
+      ...chapterCourseList(item)
+    );
   }
 
   contextLines.push(LESSON_CONTEXT_END);
@@ -350,12 +381,13 @@ export function buildLessonPrompt(
   courseModule?: ProgramModule,
   item?: ProgramItem,
   lessonUnit?: LessonUnit,
-  lessonMode: LessonMode = "course"
+  lessonMode: LessonMode = "course",
+  formation?: FormationManifest
 ): string {
   return [
     UNIVERSAL_LESSON_PROMPTS[lessonMode],
     "",
-    buildLessonContextBlock(subject, courseModule, item, lessonUnit, lessonMode)
+    buildLessonContextBlock(subject, courseModule, item, lessonUnit, lessonMode, formation)
   ].join("\n");
 }
 
@@ -443,6 +475,7 @@ export type ActiveLessonOptions = {
   id?: string;
   startedAt?: Date | string;
   lessonMode?: LessonMode;
+  formation?: FormationManifest;
 };
 
 function isLessonUnit(
@@ -502,10 +535,23 @@ export function createActiveLesson(
     idPart(lessonUnit?.id ?? "general"),
     startedAt.replace(/[^0-9]/g, "")
   ].join("-");
-  const cefrLevel = englishCefrLevel(subject, courseModule);
+  const curriculumScope = courseModule
+    ? resolveLanguageCurriculumRange(subject, [courseModule])?.curriculumScope
+    : resolveGeneralLanguageCurriculum(subject)?.curriculumScope;
+  const prompt = buildLessonPrompt(
+    subject,
+    courseModule,
+    item,
+    lessonUnit,
+    lessonMode,
+    options.formation
+  );
+  if (!isNativeAiPromptWithinLimit(prompt)) {
+    throw new RangeError(`Le contexte IA dépasse la limite native de ${NATIVE_AI_PROMPT_MAX_BYTES} octets.`);
+  }
 
   return {
-    id: options.id?.trim() || generatedId,
+    id: nativeAiSessionId(options.id?.trim() || generatedId, "lesson"),
     subjectId: subject.id,
     moduleId: courseModule?.id,
     itemId: item?.id,
@@ -513,14 +559,8 @@ export function createActiveLesson(
     lessonMode,
     title,
     moduleTitle: courseModule?.title,
-    curriculumScope: cefrLevel ? `cefr:${cefrLevel}` : undefined,
-    prompt: buildLessonPrompt(
-      subject,
-      courseModule,
-      item,
-      lessonUnit,
-      lessonMode
-    ),
+    curriculumScope,
+    prompt,
     startedAt
   };
 }

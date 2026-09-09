@@ -75,9 +75,9 @@ export function AuthPage({
       <div className="auth-window-drag" data-tauri-drag-region />
       <section className="auth-access" aria-labelledby="auth-title">
         <div className="auth-shell">
-          <header className="auth-brand" aria-label="Dowze Academie, école personnelle d’ingénierie">
+          <header className="auth-brand" aria-label="Dowze Academie, espace personnel de formation">
             <img src={etudeAppMark} alt="" aria-hidden="true" />
-            <div><strong>Dowze Academie</strong><small>École personnelle d’ingénierie</small></div>
+            <div><strong>Dowze Academie</strong><small>Espace personnel de formation</small></div>
           </header>
 
           <div className="auth-card">

@@ -79,6 +79,7 @@ interface CoursesPageProps {
   conversations: Conversation[];
   notes: readonly SubjectNoteDocument[];
   sidebarStorageKey: string;
+  academicYearLabel?: string;
   provider: AiProvider;
   selectedSubjectId: string | null;
   pendingSubjectId: string | null;
@@ -153,6 +154,7 @@ export function CoursesPage({
   conversations,
   notes,
   sidebarStorageKey,
+  academicYearLabel = "Année académique 2026–2027",
   provider,
   selectedSubjectId,
   pendingSubjectId,
@@ -184,7 +186,7 @@ export function CoursesPage({
   const [levelDialogOpen, setLevelDialogOpen] = useState(false);
   const [pendingEnglishLevel, setPendingEnglishLevel] = useState<CefrLevel | null>(null);
   const selected = subjects.find((subject) => subject.id === selectedSubjectId) ?? subjects[0];
-  const isEnglish = selected?.id === "anglais";
+  const isEnglish = selected?.curriculumKind === "cefr-selectable";
   const isEnglishUnconfigured = isEnglish && !selected?.cefrLevel;
   const selectedCurriculumScope = isEnglish && selected?.cefrLevel
     ? `cefr:${selected.cefrLevel}`
@@ -339,12 +341,12 @@ export function CoursesPage({
         </label>
         <div className="subject-list">
           {filteredSubjects.map((subject) => {
-            const curriculumScope = subject.id === "anglais" && subject.cefrLevel
+            const curriculumScope = subject.curriculumKind === "cefr-selectable" && subject.cefrLevel
               ? `cefr:${subject.cefrLevel}`
               : undefined;
             const conversationCount = conversations.filter((item) =>
               item.subjectId === subject.id &&
-              (subject.id !== "anglais" || item.curriculumScope === curriculumScope)
+              (subject.curriculumKind !== "cefr-selectable" || item.curriculumScope === curriculumScope)
             ).length;
             const curriculumLabel = [subject.domain, subject.period].filter(Boolean).join(" · ");
             return (
@@ -399,7 +401,7 @@ export function CoursesPage({
               </div>
               {hasCurriculumMetadata ? (
                 <p className="course-subtitle">
-                  {selected.period || "Année académique 2026–2027"}
+                  {selected.period || academicYearLabel}
                   {selected.nextClass && <><span>•</span> Prochain cours {selected.nextClass}</>}
                 </p>
               ) : (
