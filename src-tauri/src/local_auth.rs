@@ -51,6 +51,10 @@ struct LocalAccountRecord {
     username: String,
     password_hash: String,
     created_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    server_account_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    server_email: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -122,10 +126,15 @@ struct KeychainRememberedCredentialsStore;
 
 impl KeychainRememberedCredentialsStore {
     fn entry() -> AuthResult<Entry> {
-        Entry::new(
-            REMEMBERED_CREDENTIALS_KEYCHAIN_SERVICE,
-            REMEMBERED_CREDENTIALS_KEYCHAIN_ACCOUNT,
-        )
+        // Native automation must never overwrite the user's remembered login.
+        let service = if std::env::var("TAURI_WEBVIEW_AUTOMATION").as_deref() == Ok("true") {
+            use sha2::{Digest, Sha256};
+            let profile = std::env::var("XDG_DATA_HOME").unwrap_or_default();
+            format!("{}.automation.{:x}", REMEMBERED_CREDENTIALS_KEYCHAIN_SERVICE, Sha256::digest(profile.as_bytes()))
+        } else {
+            REMEMBERED_CREDENTIALS_KEYCHAIN_SERVICE.to_owned()
+        };
+        Entry::new(&service, REMEMBERED_CREDENTIALS_KEYCHAIN_ACCOUNT)
         .map_err(|error| format!("Impossible d’accéder au coffre sécurisé du système : {error}"))
     }
 }
@@ -163,6 +172,8 @@ pub struct LocalAuthState {
     active_account_id: Arc<Mutex<Option<String>>>,
     store_lock: Arc<Mutex<()>>,
     remembered_credentials: Arc<dyn RememberedCredentialsStore>,
+    managed_epoch: Arc<AtomicU64>,
+    managed_transitions: Arc<AtomicU64>,
 }
 
 impl Default for LocalAuthState {
@@ -171,11 +182,55 @@ impl Default for LocalAuthState {
             active_account_id: Arc::new(Mutex::new(None)),
             store_lock: Arc::new(Mutex::new(())),
             remembered_credentials: Arc::new(KeychainRememberedCredentialsStore),
+            managed_epoch: Arc::new(AtomicU64::new(1)),
+            managed_transitions: Arc::new(AtomicU64::new(0)),
         }
     }
 }
 
+fn advance_managed_epoch(epoch: &AtomicU64) {
+    let _ = epoch.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| Some(value.saturating_add(1)));
+}
+/// New raw handles only. Persistent local-account/keyring formats stay intact.
+pub(crate) struct ManagedAccountLease {
+    account: String, epoch: u64, active: Arc<Mutex<Option<String>>>,
+    generation: Arc<AtomicU64>, transitions: Arc<AtomicU64>,
+}
+impl ManagedAccountLease {
+    pub(crate) fn current(&self) -> bool {
+        self.epoch != u64::MAX && self.transitions.load(Ordering::SeqCst) == 0
+            && self.generation.load(Ordering::SeqCst) == self.epoch
+            && self.active.lock().map(|value| value.as_deref() == Some(self.account.as_str())).unwrap_or(false)
+            && self.transitions.load(Ordering::SeqCst) == 0
+            && self.generation.load(Ordering::SeqCst) == self.epoch
+    }
+}
+struct ManagedAuthTransition { generation: Arc<AtomicU64>, transitions: Arc<AtomicU64> }
+impl Drop for ManagedAuthTransition {
+    fn drop(&mut self) { advance_managed_epoch(&self.generation); self.transitions.fetch_sub(1, Ordering::SeqCst); }
+}
+
 impl LocalAuthState {
+    fn begin_managed_auth_transition(&self) -> AuthResult<ManagedAuthTransition> {
+        self.managed_transitions.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_add(1))
+            .map_err(|_| "La génération de session locale est épuisée.".to_string())?;
+        advance_managed_epoch(&self.managed_epoch);
+        Ok(ManagedAuthTransition { generation: Arc::clone(&self.managed_epoch), transitions: Arc::clone(&self.managed_transitions) })
+    }
+    pub(crate) fn capture_managed_server_link(&self, caller: &Webview, profile: &str, actor: &str) -> AuthResult<ManagedAccountLease> {
+        self.require_active_account(profile)?;
+        let lease = ManagedAccountLease { account: profile.to_owned(), epoch: self.managed_epoch.load(Ordering::SeqCst), active: Arc::clone(&self.active_account_id), generation: Arc::clone(&self.managed_epoch), transitions: Arc::clone(&self.managed_transitions) };
+        if !lease.current() { return Err("La session locale a changé.".into()); }
+        let root = app_data_directory(caller)?;
+        let _guard = self.store_lock.lock().map_err(|_| "Stockage des comptes indisponible.")?;
+        let registry = read_accounts_file(&root)?;
+        let record = registry.accounts.iter().find(|record| record.id == profile).ok_or("Compte local introuvable.")?;
+        if record.server_account_id.as_deref() != Some(actor) || !lease.current() { return Err("Le compte serveur lié a changé.".into()); }
+        Ok(lease)
+    }
+    pub(crate) fn active_account_handle(&self) -> Arc<Mutex<Option<String>>> {
+        Arc::clone(&self.active_account_id)
+    }
     pub(crate) fn require_active_account(&self, account_id: &str) -> AuthResult<()> {
         validate_account_id(account_id)?;
         let active_account_id = self
@@ -289,7 +344,21 @@ fn validate_accounts_file(accounts_file: &LocalAccountsFile) -> AuthResult<()> {
 
     let mut account_ids = HashSet::new();
     let mut usernames = HashSet::new();
+    let mut server_ids = HashSet::new();
     for account in &accounts_file.accounts {
+        if let Some(id) = &account.server_account_id {
+            validate_account_id(id)?;
+            if !server_ids.insert(id)
+                || account
+                    .server_email
+                    .as_ref()
+                    .is_none_or(|email| email.len() > 254 || !email.contains('@'))
+            {
+                return Err("Identité du compte synchronisé invalide.".into());
+            }
+        } else if account.server_email.is_some() {
+            return Err("Compte synchronisé incomplet.".into());
+        }
         validate_account_id(&account.id)?;
         if !account_ids.insert(account.id.as_str()) {
             return Err("Deux comptes locaux utilisent le même identifiant.".into());
@@ -502,6 +571,8 @@ fn register_account(
         .map_err(|_| "Impossible de protéger le mot de passe local.".to_string())?
         .to_string();
     let account = LocalAccountRecord {
+        server_account_id: None,
+        server_email: None,
         id: random_account_id()?,
         display_name,
         username,
@@ -762,17 +833,18 @@ pub async fn local_account_status(
     let active_account_id = Arc::clone(&state.active_account_id);
     let store_lock = Arc::clone(&state.store_lock);
     let remembered_credentials = Arc::clone(&state.remembered_credentials);
+    let managed_epoch = Arc::clone(&state.managed_epoch);
     drop(caller);
 
     tauri::async_runtime::spawn_blocking(move || {
         let _store_guard = store_lock
             .lock()
             .map_err(|_| "Le stockage des comptes locaux est indisponible.".to_string())?;
-        local_account_status_inner(
-            &app_data_dir,
-            &active_account_id,
-            remembered_credentials.as_ref(),
-        )
+        let before = active_account_id.lock().map_err(|_| "Session locale indisponible.")?.clone();
+        let result = local_account_status_inner(&app_data_dir, &active_account_id, remembered_credentials.as_ref());
+        let after = active_account_id.lock().map_err(|_| "Session locale indisponible.")?.clone();
+        if before != after { advance_managed_epoch(&managed_epoch); }
+        result
     })
     .await
     .map_err(|error| format!("La consultation des comptes s’est interrompue : {error}"))?
@@ -787,6 +859,7 @@ pub async fn register_local_account(
     mut password: String,
 ) -> AuthResult<LocalAccountSummary> {
     super::require_main_caller(&caller)?;
+    let managed_transition = state.begin_managed_auth_transition()?;
     let app_data_dir = app_data_directory(&caller)?;
     let active_account_id = Arc::clone(&state.active_account_id);
     let store_lock = Arc::clone(&state.store_lock);
@@ -794,6 +867,7 @@ pub async fn register_local_account(
     drop(caller);
 
     tauri::async_runtime::spawn_blocking(move || {
+        let _managed_transition = managed_transition;
         let result = (|| {
             let _store_guard = store_lock
                 .lock()
@@ -823,6 +897,7 @@ pub async fn login_local_account(
     remember_me: bool,
 ) -> AuthResult<LocalAccountSummary> {
     super::require_main_caller(&caller)?;
+    let managed_transition = state.begin_managed_auth_transition()?;
     let app_data_dir = app_data_directory(&caller)?;
     let active_account_id = Arc::clone(&state.active_account_id);
     let store_lock = Arc::clone(&state.store_lock);
@@ -830,6 +905,7 @@ pub async fn login_local_account(
     drop(caller);
 
     tauri::async_runtime::spawn_blocking(move || {
+        let _managed_transition = managed_transition;
         let result = (|| {
             let _store_guard = store_lock
                 .lock()
@@ -850,18 +926,147 @@ pub async fn login_local_account(
     .map_err(|error| format!("La connexion s’est interrompue : {error}"))?
 }
 
+fn prepare_server_account(
+    root: &Path,
+    server_id: &str,
+    email: &str,
+    password: &str,
+) -> AuthResult<LocalAccountSummary> {
+    validate_account_id(server_id)?;
+    validate_password(password)?;
+    if email.len() > 254 || !email.contains('@') {
+        return Err("Adresse du compte invalide.".into());
+    }
+    let mut registry = read_accounts_file(root)?;
+    let salt = SaltString::generate(&mut OsRng);
+    let hash = local_argon2()
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|_| "Protection locale impossible.")?
+        .to_string();
+    let index = if let Some(index) = registry
+        .accounts
+        .iter()
+        .position(|item| item.server_account_id.as_deref() == Some(server_id))
+    {
+        index
+    } else {
+        if registry.accounts.len() >= MAX_ACCOUNTS {
+            return Err("Nombre maximal de comptes sur cet appareil atteint.".into());
+        }
+        let id = random_account_id()?;
+        registry.accounts.push(LocalAccountRecord {
+            username: format!("sync-{id}"),
+            id,
+            display_name: email
+                .split('@')
+                .next()
+                .unwrap_or("Étudiant")
+                .chars()
+                .take(60)
+                .collect(),
+            password_hash: hash.clone(),
+            created_at: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+            server_account_id: Some(server_id.into()),
+            server_email: Some(email.into()),
+        });
+        registry.accounts.len() - 1
+    };
+    registry.accounts[index].password_hash = hash;
+    registry.accounts[index].server_email = Some(email.into());
+    let summary = LocalAccountSummary::from(&registry.accounts[index]);
+    write_accounts_file(root, &registry)?;
+    Ok(summary)
+}
+
+#[tauri::command]
+pub async fn login_synchronized_account(
+    caller: Webview,
+    state: State<'_, LocalAuthState>,
+    email: String,
+    mut password: String,
+    register: bool,
+    remember_me: bool,
+    offline: bool,
+) -> AuthResult<serde_json::Value> {
+    super::require_main_caller(&caller)?;
+    let managed_transition = state.begin_managed_auth_transition()?;
+    let root = app_data_directory(&caller)?;
+    let email = email.trim().to_lowercase();
+    let remote = if offline {
+        if register {
+            password.zeroize();
+            return Err("Une connexion Internet est nécessaire pour créer le compte.".into());
+        }
+        None
+    } else {
+        match super::server_link::authenticate_remote(&email, &password, register).await {
+            Ok(result) => Some(result),
+            Err(error) => {
+                password.zeroize();
+                return Err(error);
+            }
+        }
+    };
+    let active = Arc::clone(&state.active_account_id);
+    let store = Arc::clone(&state.store_lock);
+    let remembered = Arc::clone(&state.remembered_credentials);
+    tauri::async_runtime::spawn_blocking(move || {
+        let _managed_transition = managed_transition;
+        let result = (|| {
+            let _guard = store
+                .lock()
+                .map_err(|_| "Stockage des comptes indisponible.")?;
+            let (summary, server) = if let Some((server, session)) = remote {
+                let id = server["id"].as_str().ok_or("Identité serveur invalide.")?;
+                let verified_email = server["email"]
+                    .as_str()
+                    .ok_or("Adresse serveur invalide.")?;
+                let summary = prepare_server_account(&root, id, verified_email, &password)?;
+                super::server_link::store_session(&summary.id, &session)?;
+                (summary, server)
+            } else {
+                let registry = read_accounts_file(&root)?;
+                let record = registry
+                    .accounts
+                    .iter()
+                    .find(|record| record.server_email.as_deref() == Some(email.as_str()))
+                    .ok_or("Ce compte doit être connecté une première fois avec Internet.")?;
+                let summary = authenticate_account(&registry, &record.username, &password)?;
+                let server =
+                    serde_json::json!({"id":record.server_account_id,"email":record.server_email});
+                (summary, server)
+            };
+            let summary = login_local_account_inner(
+                &root,
+                &active,
+                remembered.as_ref(),
+                &summary.username,
+                &password,
+                remember_me,
+            )?;
+            Ok(serde_json::json!({"account": summary, "server": server}))
+        })();
+        password.zeroize();
+        result
+    })
+    .await
+    .map_err(|_| "Connexion interrompue.")?
+}
+
 #[tauri::command]
 pub async fn logout_local_account(
     caller: Webview,
     state: State<'_, LocalAuthState>,
 ) -> AuthResult<()> {
     super::require_main_caller(&caller)?;
+    let managed_transition = state.begin_managed_auth_transition()?;
     let active_account_id = Arc::clone(&state.active_account_id);
     let store_lock = Arc::clone(&state.store_lock);
     let remembered_credentials = Arc::clone(&state.remembered_credentials);
     drop(caller);
 
     tauri::async_runtime::spawn_blocking(move || {
+        let _managed_transition = managed_transition;
         let _store_guard = store_lock
             .lock()
             .map_err(|_| "Le stockage des comptes locaux est indisponible.".to_string())?;
@@ -1011,6 +1216,43 @@ mod tests {
         assert!(validate_account_id("ABCDEF0123456789abcdef0123456789").is_err());
         assert!(validate_account_id("01234567-89ab-3cde-8fab-0123456789ab").is_err());
         assert!(validate_account_id("01234567-89ab-4cde-7fab-0123456789ab").is_err());
+    }
+    #[test]
+    fn verified_server_identity_reuses_its_local_workspace_and_updates_offline_password() {
+        let directory = TestDirectory::new("server-identity");
+        let first = prepare_server_account(
+            directory.path(),
+            &"a".repeat(32),
+            "synthetic@example.com",
+            "Synthetic-first-password!",
+        )
+        .unwrap();
+        let again = prepare_server_account(
+            directory.path(),
+            &"a".repeat(32),
+            "synthetic@example.com",
+            "Synthetic-second-password!",
+        )
+        .unwrap();
+        assert_eq!(first.id, again.id);
+        let other = prepare_server_account(
+            directory.path(),
+            &"b".repeat(32),
+            "other@example.com",
+            "Synthetic-other-password!",
+        )
+        .unwrap();
+        assert_ne!(other.id, first.id);
+        let registry = read_accounts_file(directory.path()).unwrap();
+        assert_eq!(registry.accounts.len(), 2);
+        assert!(
+            authenticate_account(&registry, &first.username, "Synthetic-first-password!").is_err()
+        );
+        assert!(
+            authenticate_account(&registry, &first.username, "Synthetic-second-password!").is_ok()
+        );
+        let serialized = serde_json::to_string(&registry).unwrap();
+        assert!(!serialized.contains("Synthetic-second-password!"));
     }
 
     #[test]
@@ -1411,6 +1653,8 @@ mod tests {
         let accounts_file = LocalAccountsFile {
             schema_version: ACCOUNTS_SCHEMA_VERSION,
             accounts: vec![LocalAccountRecord {
+                server_account_id: None,
+                server_email: None,
                 id: "a".repeat(32),
                 display_name: "Louis".into(),
                 username: "louis".into(),
@@ -1450,5 +1694,22 @@ mod tests {
         .unwrap();
         assert!(read_accounts_file(regular_directory.path()).is_err());
         assert_eq!(fs::read(protected).unwrap(), b"protected");
+    }
+}
+
+#[cfg(test)]
+mod managed_raw_authority_tests {
+    use super::*;
+    #[test]
+    fn raw_lease_never_reactivates_after_a_b_a_or_same_account_transition() {
+        let state = LocalAuthState::default();
+        *state.active_account_id.lock().unwrap() = Some("profile-a".into());
+        let lease = || ManagedAccountLease { account: "profile-a".into(), epoch: state.managed_epoch.load(Ordering::SeqCst), active: Arc::clone(&state.active_account_id), generation: Arc::clone(&state.managed_epoch), transitions: Arc::clone(&state.managed_transitions) };
+        let old = lease(); assert!(old.current());
+        { let _transition = state.begin_managed_auth_transition().unwrap(); assert!(!old.current()); assert!(!lease().current()); *state.active_account_id.lock().unwrap() = Some("profile-b".into()); }
+        { let _transition = state.begin_managed_auth_transition().unwrap(); *state.active_account_id.lock().unwrap() = Some("profile-a".into()); }
+        assert!(!old.current()); let fresh = lease(); assert!(fresh.current());
+        { let _transition = state.begin_managed_auth_transition().unwrap(); }
+        assert!(!fresh.current()); assert!(lease().current());
     }
 }

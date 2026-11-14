@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Dowze Academie",
+  "version": "0.12.8",
+  "identifier": "com.etude.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Dowze Academie",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "capabilities": [
+        "main-local",
+        "ai-capture-remote"
+      ],
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ipc: http://ipc.localhost; media-src 'self' blob:",
+      "devCsp": "default-src 'self' http://localhost:1420; img-src 'self' http://localhost:1420 asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline' http://localhost:1420; script-src 'self' 'unsafe-eval' http://localhost:1420; worker-src 'self' http://localhost:1420; connect-src 'self' ipc: http://ipc.localhost http://localhost:1420 ws://localhost:1421; media-src 'self' blob:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "Louis Délez",
+    "homepage": "https://github.com/Louisdelez/dowze-academie",
+    "copyright": "Copyright © 2026 Louis Délez",
+    "license": "MIT",
+    "licenseFile": "../LICENSE",
+    "category": "Education",
+    "shortDescription": "Cursus, planning, notes et apprentissage assisté par IA sur ordinateur.",
+    "longDescription": "Application de bureau local-first pour organiser un cursus structuré, suivre sa progression et travailler avec plusieurs assistants IA contextuels.",
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "13.0",
+      "entitlements": "./Entitlements.plist"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {},
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwQTNBOTI1OUFCNEQ5RDYKUldUVzJiU2FKYW1qNEJ3c05veUMvYWxYWFFOTS9pZTRvRkZUZFBmbnNWMm1uK2pqR0REdWNpVXkK",
+      "endpoints": [
+        "https://academie.dowze.ch/updates/v2/{{target}}-{{arch}}.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      },
+      "requireSignedVersion": true
+    }
+  }
+}

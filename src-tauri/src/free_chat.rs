@@ -149,7 +149,7 @@ fn parse_backend(raw: &str) -> Result<FreeChatBackend, String> {
     match raw {
         "openai" => Ok(FreeChatBackend::Openai),
         "mistral" => Ok(FreeChatBackend::Mistral),
-        "deepseek" => Ok(FreeChatBackend::Deepseek),
+        "deepseek" => Err("Ce fournisseur a été retiré de cette application.".into()),
         "kimi" => Ok(FreeChatBackend::Kimi),
         "compatible" => Ok(FreeChatBackend::Compatible),
         "ollama" => Ok(FreeChatBackend::Ollama),
@@ -200,7 +200,10 @@ fn normalize_api_key(raw: &str) -> Result<String, String> {
     Ok(api_key.to_owned())
 }
 
-fn read_api_key(backend: FreeChatBackend, endpoint: Option<&Url>) -> Result<String, String> {
+pub(crate) fn read_api_key(
+    backend: FreeChatBackend,
+    endpoint: Option<&Url>,
+) -> Result<String, String> {
     keychain_entry(backend, endpoint)?
         .get_password()
         .map_err(|error| match error {

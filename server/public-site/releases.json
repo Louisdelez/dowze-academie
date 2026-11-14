@@ -1,0 +1,33 @@
+{
+  "version": "0.12.7",
+  "artifacts": [
+    {
+      "platform": "macos",
+      "filename": "DowzeAcademie-0.6.0-macOS-Intel.dmg",
+      "bytes": 1012577906,
+      "sha256": "ca289ee8bb463345dd8168bd6a7d3a8ed8b8df027f3159ae5851760f1d100f82",
+      "version": "0.6.0"
+    },
+    {
+      "platform": "windows",
+      "filename": "DowzeAcademie-0.6.0-Windows-x64.exe",
+      "bytes": 850899651,
+      "sha256": "485d87865ed87dc37f040a403b1e3386e63bcba2eb4388d254267014fc4e527c",
+      "version": "0.6.0"
+    },
+    {
+      "platform": "fedora",
+      "filename": "DowzeAcademie-0.6.0-Fedora44-x86_64.rpm",
+      "bytes": 900939064,
+      "sha256": "29446357f63d562a074d90cf51e9c8eb4f5a8f6a11ad59a26216b58f6e4fc1dd",
+      "version": "0.6.0"
+    },
+    {
+      "platform": "linux-appimage",
+      "filename": "DowzeAcademie-0.12.7-Linux-x86_64.AppImage",
+      "version": "0.12.7",
+      "bytes": 196758008,
+      "sha256": "a1597ce495e9f7d7ab0f5dc1cce06451e9f18d309fa088df5dfb28f1af891450"
+    }
+  ]
+}

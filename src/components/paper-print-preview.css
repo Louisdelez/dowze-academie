@@ -1,0 +1,22 @@
+.paper-print-preview{position:fixed;inset:0;z-index:20000;box-sizing:border-box;width:min(1100px,100vw);max-width:100vw;height:min(1000px,100dvh);max-height:100dvh;margin:auto;padding:16px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#20343b;overflow:auto}
+.paper-print-preview::backdrop{background:#101722e6}
+.paper-print-preview header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.paper-print-preview h2{margin:0;font-size:20px}
+.paper-print-preview p{margin:10px 0;line-height:1.45;overflow-wrap:anywhere}
+.paper-print-preview header p{font-size:14px;color:#526575}
+.paper-print-preview button{box-sizing:border-box;min-width:44px;min-height:44px;padding:8px 12px;border:1px solid #9fb2ca;border-radius:7px;background:#edf3fd;color:inherit;font:inherit;cursor:pointer}
+.paper-print-preview button:disabled{opacity:.55;cursor:default}
+.paper-print-preview :focus-visible{outline:3px solid #2855ce;outline-offset:2px}
+.paper-print-controls{display:flex;flex-wrap:wrap;gap:8px}
+.paper-print-viewport{min-height:250px;height:max(300px,55dvh);border:1px solid #cbd5e1;border-radius:7px;background:#edf1f6;overflow:hidden}
+.paper-print-viewport iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+.paper-print-viewport>p{padding:16px}
+.paper-print-parent-warning{font-size:13px;color:#526575}
+@media(max-width:600px){.paper-print-preview{width:100vw;height:100dvh;border-radius:0;padding:12px}.paper-print-preview h2{font-size:18px}.paper-print-controls button{flex:1 1 100%}.paper-print-viewport{height:50dvh}}
+/* Browser-menu/Ctrl+P on the parent must never include another private pane.
+   The owned PDF iframe is printed through its own window, outside this shell. */
+@media print{body.paper-print-preview-active>*:not(.paper-print-preview){display:none!important}body.paper-print-preview-active .paper-print-preview{position:static;width:100%;height:auto;max-height:none;border:0;background:#fff;color:#000}body.paper-print-preview-active .paper-print-preview header,body.paper-print-preview-active .paper-print-preview .paper-print-controls,body.paper-print-preview-active .paper-print-preview .paper-print-status,body.paper-print-preview-active .paper-print-preview .paper-print-viewport{display:none!important}}
+
+.paper-print-preparing{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;padding:10px 14px;border-top:1px solid #d8e0eb;background:#f4f7fc;color:#20343b;font-size:14px}.paper-notebook .paper-print-preparing button{min-width:44px;min-height:44px;padding:8px 12px;border:1px solid #b4c3d5;background:white}
+
+@media print{body.paper-print-preview-active:not(:has(.paper-print-preview))::before{display:block;color:#000;background:#fff;content:"Le carnet est en cours de préparation. Utilisez son aperçu PDF complet pour l’imprimer."}}

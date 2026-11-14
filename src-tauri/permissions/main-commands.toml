@@ -1,0 +1,25 @@
+[[set]]
+identifier = "main-commands"
+description = "Commandes applicatives réservées à la webview locale principale."
+permissions = [
+  "allow-startup-workspace-ready",
+  "allow-workspace-cache-flushed",
+  "allow-automatic-update-probe", "allow-automatic-update-stage", "allow-automatic-update-apply", "allow-automatic-update-boot",
+  "allow-native-archive-list", "allow-native-asset-read", "allow-native-asset-import", "allow-native-asset-delete",
+  "allow-local-account-status", "allow-register-local-account", "allow-login-local-account",
+  "allow-logout-local-account", "allow-login-synchronized-account", "allow-native-capabilities", "allow-hermes-request", "allow-prepare-runtime-update",
+  "allow-server-request", "allow-server-blob-request", "allow-request-microphone-access", "allow-open-google-web-profile",
+  "allow-managed-native-capture", "allow-managed-native-begin", "allow-managed-native-append",
+  "allow-managed-native-execute", "allow-managed-native-read", "allow-managed-native-retire",
+  "allow-remove-google-web-profile", "allow-configure-ai-capture", "allow-poll-ai-capture",
+  "allow-sync-ai-panel", "allow-navigate-ai", "allow-secure-ai-panel-for-account-transition",
+  "allow-start-ai-lesson", "allow-current-ai-url", "allow-reload-ai", "allow-open-in-browser",
+  "allow-open-calendar-in-apple", "allow-save-calendar-ics", "allow-save-text-document", "allow-save-notebook-export",
+  "allow-begin-notebook-export", "allow-push-notebook-export", "allow-finish-notebook-export", "allow-abort-notebook-export",
+  "allow-read-formation-package", "allow-save-formation-kit", "allow-open-google-calendar-import",
+  "allow-free-chat-key-status", "allow-save-free-chat-api-key", "allow-delete-free-chat-api-key",
+  "allow-send-free-chat-message", "allow-list-ollama-models", "allow-persist-conversation-capture",
+  "allow-read-conversation-archive", "allow-delete-conversation-archive",
+  "allow-import-assessment-pdfs", "allow-open-assessment-pdf",
+  "allow-delete-assessment-documents", "allow-delete-account-assessment-documents"
+]

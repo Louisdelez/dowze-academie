@@ -1,0 +1,27 @@
+/* A single colour/type source for the native study desk and its mobile companion. */
+@font-face { font-family: 'Dowze'; src: url('./assets/fonts/Manrope.ttf') format('truetype'); font-weight: 200 800; font-style: normal; font-display: swap; }
+:root {
+  font-family: 'Dowze', 'Segoe UI', sans-serif;
+  --ink: #18243f; --text: var(--ink); --navy: var(--ink);
+  --muted: #56637c; --soft-muted: #627089;
+  --canvas: #f4f6fa; --surface: #fff; --paper: var(--surface);
+  --line: #e0e5ef; --border: var(--line); --line-strong: #bcc7dc;
+  --primary: #3154b8; --primary-deep: #254396; --primary-soft: #eaf0ff;
+  --success: #21735a; --success-soft: #eaf6f0;
+  --danger: #b33248; --danger-soft: #fff0f2;
+  --warning: #94621b; --warning-soft: #fff4de;
+  --radius-sm: 7px; --radius-md: 12px; --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgb(24 36 63 / 4%);
+  --shadow-md: 0 8px 32px rgb(24 36 63 / 12%);
+  --desk-space: 8px; --reading-measure: 70ch;
+  color: var(--ink); background: var(--canvas); color-scheme: light;
+  accent-color: var(--primary); caret-color: var(--primary); scrollbar-color: #bac5d9 transparent;
+  -webkit-font-smoothing: antialiased;
+}
+::selection {color:#18243f;background:#d6e2ff;}
+:where(button,input,select,textarea,a,summary,[tabindex]):focus-visible {outline:2px solid var(--primary);outline-offset:3px;}
+:where(button,input,textarea,select) {font-family:inherit;}
+:where(input,textarea)::placeholder {color:var(--soft-muted);opacity:1;}
+:where(h1,h2,h3,h4) {text-wrap:balance;}
+:where(button) {touch-action:manipulation;}
+:where(progress) {accent-color:var(--primary);}

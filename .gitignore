@@ -26,3 +26,24 @@ learning-data/
 pro-exemplars/
 refinement-sessions/
 voxel-flow/
+
+# Consolidation : données et sorties locales hors du dépôt
+/local/
+/pwa-dist/
+**/__pycache__/
+**/.venv/
+*.pyc
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.dump
+*.bak
+/server/api/data/
+/server/api/packages/
+/src-tauri/gen/
+/src-tauri/runtime/
+/src-tauri/hermes-runtime/
+/src-tauri/memory-runtime/
+
+/node_modules

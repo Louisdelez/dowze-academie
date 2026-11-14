@@ -1,0 +1,30 @@
+import {useLayoutEffect,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
+import {PaperObjectVisual} from './PaperObjectVisual';
+import type {PaperDocument,PaperObject,PaperImageCrop} from '../lib/notebookDocument';
+import type {NotebookMediaScope} from './NotebookEditor';
+import {copyPaperImageCrop,fullPaperImageCrop,movePaperImageCrop,paperImageCropIsFull,type PaperCropHandle} from '../lib/paperImageCrop';
+import './paper-image-crop.css';
+type Props={source:object;object:PaperObject;document:PaperDocument;media:NotebookMediaScope;current:()=>boolean;onApply:(crop:PaperImageCrop|undefined)=>boolean;onCancel:()=>void};
+type Drag={id:number;node:HTMLButtonElement;handle:PaperCropHandle;crop:PaperImageCrop;x:number;y:number;width:number;height:number};
+const labels={move:'Déplacer le cadre',nw:'Coin supérieur gauche',ne:'Coin supérieur droit',se:'Coin inférieur droit',sw:'Coin inférieur gauche'};
+/** A local preview only: the ordinary writer receives one patch on Validate. */
+export function PaperImageCropEditor(props:Props){
+ const [crop,setCrop]=useState(()=>copyPaperImageCrop(props.object.crop)),[ratio,setRatio]=useState(1),[ready,setReady]=useState(false),[viewReady,setViewReady]=useState(false),[error,setError]=useState('');
+ const stage=useRef<HTMLDivElement>(null),drag=useRef<Drag|null>(null),alive=useRef(false),revoked=useRef(false),latest=useRef(props);latest.current=props;
+ const current=()=>{if(!alive.current||revoked.current)return false;try{if(latest.current.source!==props.source||latest.current.object!==props.object||latest.current.media.api!==props.media.api||!props.current()){revoked.current=true;return false;}return true;}catch{revoked.current=true;return false;}};
+ const cancelDrag=()=>{const held=drag.current;drag.current=null;if(held)try{if(held.node.hasPointerCapture(held.id))held.node.releasePointerCapture(held.id);}catch{}};
+ useLayoutEffect(()=>{alive.current=true;setViewReady(true);const win=stage.current?.ownerDocument.defaultView,doc=stage.current?.ownerDocument;const hidden=()=>{if(doc?.visibilityState==='hidden')cancelDrag();};win?.addEventListener('blur',cancelDrag);doc?.addEventListener('visibilitychange',hidden);return()=>{alive.current=false;cancelDrag();win?.removeEventListener('blur',cancelDrag);doc?.removeEventListener('visibilitychange',hidden);};},[]);
+ const down=(event:ReactPointerEvent<HTMLButtonElement>,handle:PaperCropHandle)=>{event.stopPropagation();if(!current()||!ready||event.button!==0||event.isPrimary===false){cancelDrag();return;}const box=stage.current?.getBoundingClientRect();if(!box||box.width<=0||box.height<=0)return;event.preventDefault();cancelDrag();try{event.currentTarget.setPointerCapture(event.pointerId);}catch{return;}drag.current={id:event.pointerId,node:event.currentTarget,handle,crop:copyPaperImageCrop(crop),x:event.clientX,y:event.clientY,width:box.width,height:box.height};};
+ const move=(event:ReactPointerEvent<HTMLButtonElement>)=>{const held=drag.current;if(!held||held.id!==event.pointerId)return;event.preventDefault();event.stopPropagation();if(!current()||!held.node.hasPointerCapture(held.id)){cancelDrag();return;}setCrop(movePaperImageCrop(held.crop,held.handle,(event.clientX-held.x)/held.width,(event.clientY-held.y)/held.height));};
+ const end=(event:ReactPointerEvent<HTMLButtonElement>)=>{if(drag.current?.id===event.pointerId){move(event);cancelDrag();}};
+ const preview={...props.object,crop:undefined,rotation:0,mirrorX:false,mirrorY:false};
+ return <section className="paper-crop-editor" role="group" aria-label="Recadrer l’image" onPointerDownCapture={event=>{if(!current()){event.preventDefault();event.stopPropagation();}}} onKeyDown={event=>{if(event.key==='Escape'&&current()){event.preventDefault();event.stopPropagation();cancelDrag();props.onCancel();}}}>
+  <header><strong>Recadrer l’image</strong><span>Déplacez le cadre ou ses coins. Les flèches affinent le réglage.</span></header>
+  <div ref={stage} className="paper-crop-stage" style={{aspectRatio:ratio,width:`min(100%,${Math.min(420,340*ratio)}px)`}} onLoadCapture={event=>{if(!current()||!(event.target instanceof HTMLImageElement)||!event.target.naturalWidth||!event.target.naturalHeight)return;setRatio(event.target.naturalWidth/event.target.naturalHeight);setReady(true);}}>
+   <div className="paper-crop-original">{viewReady&&<PaperObjectVisual object={preview} document={props.document} media={props.media} current={current} onError={message=>{if(current())setError(message);}}/>}</div>
+   {ready&&<div className="paper-crop-frame" style={{left:crop.x*100+'%',top:crop.y*100+'%',width:crop.width*100+'%',height:crop.height*100+'%'}}>{(['move','nw','ne','se','sw'] as const).map(handle=><button key={handle} type="button" className={'paper-crop-handle paper-crop-'+handle} aria-label={labels[handle]} onPointerDown={event=>down(event,handle)} onPointerMove={move} onPointerUp={end} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} onKeyDown={event=>{if(!current()||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();event.stopPropagation();cancelDrag();const step=event.shiftKey ? .05 : .01;setCrop(movePaperImageCrop(crop,handle,event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0,event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0));}}>{handle==='move'?'Déplacer':<span aria-hidden="true"/>}</button>)}</div>}
+  </div>
+  <p>Le fichier original, la position et la rotation de l’image restent conservés.</p>{error&&<p role="alert">{error}</p>}
+  <footer><button type="button" onClick={()=>{if(current()){cancelDrag();props.onCancel();}}}>Annuler le recadrage</button><button type="button" disabled={!ready} onClick={()=>{if(current()){cancelDrag();setCrop(fullPaperImageCrop());}}}>Image entière</button><button type="button" disabled={!ready||!!error} onClick={()=>{if(!current())return;cancelDrag();if(props.onApply(paperImageCropIsFull(crop)?undefined:copyPaperImageCrop(crop)))props.onCancel();}}>Valider le recadrage</button></footer>
+ </section>;
+}

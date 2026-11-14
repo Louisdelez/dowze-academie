@@ -1,0 +1,39 @@
+/* One56px row reserves44px action targets + padding + an8px native scrollbar.
+ * Palette/actions scroll independently; undo/redo stay in their own92px slot.
+ * The already-docked reset is a no-op; floating reset and Home remain present. */
+.paper-notebook>.paper-movable-toolbox{position:relative;display:block;overflow:visible;box-sizing:border-box;border:0;padding:0!important;z-index:510;min-width:0;flex-shrink:0}
+.paper-notebook>.paper-toolbar.paper-movable-toolbox>.paper-movable-toolbox-body{position:relative;display:grid;grid-template-columns:44px minmax(52px,1fr) 92px clamp(88px,20%,180px);grid-template-rows:56px;grid-template-areas:"move primary history actions";align-items:stretch;gap:4px;box-sizing:border-box;max-width:var(--paper-toolbox-width);max-height:var(--paper-toolbox-height);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:4px;background:#fff;color:inherit;border:.5px solid #cdd3df;border-radius:10px}
+.paper-movable-toolbox[data-toolbox-floating=true]>.paper-movable-toolbox-body{box-shadow:0 6px 20px #17223a24;z-index:520}
+.paper-movable-toolbox-body>.paper-toolbox-move-controls{grid-area:move;display:flex;flex-direction:row;align-items:center;align-self:center;gap:4px;position:static;width:44px;min-width:0;margin:0;background:#fff;border-radius:8px}
+.paper-notebook .paper-toolbox-move-controls>button{box-sizing:border-box;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:2px}
+.paper-movable-toolbox[data-toolbox-floating=false]>.paper-movable-toolbox-body>.paper-toolbox-move-controls>button:last-child{display:none}
+.paper-notebook>.paper-toolbar.paper-movable-toolbox[data-toolbox-floating=true]>.paper-movable-toolbox-body{grid-template-columns:92px minmax(52px,1fr) 92px clamp(88px,20%,180px)}
+.paper-movable-toolbox[data-toolbox-floating=true]>.paper-movable-toolbox-body>.paper-toolbox-move-controls{width:92px}
+.paper-movable-toolbox-body>.paper-toolbox-history-actions{grid-area:history;display:flex;align-items:center;justify-content:center;gap:4px;width:92px;min-width:92px;height:56px;min-height:0;margin:0;padding:0}
+.paper-notebook .paper-toolbox-history-actions>button{box-sizing:border-box;flex:0 0 44px;width:44px;min-width:44px!important;height:44px;min-height:44px;margin:0;padding:2px 8px}
+.paper-toolbox-move-handle{cursor:grab!important;touch-action:none;user-select:none;-webkit-user-select:none}
+.paper-toolbox-move-handle:active{cursor:grabbing!important}
+/* This scope outranks the old phone/container flex-wrap rules. Each group
+ * scrolls independently; native focus scrolling keeps every control reachable. */
+.paper-notebook>.paper-toolbar.paper-movable-toolbox>.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbar-actions){display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:4px;box-sizing:border-box;flex:none;width:auto;min-width:0;max-width:100%;height:56px;min-height:0;margin:0;padding:2px 4px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:thin;scroll-padding-inline:4px;touch-action:pan-x}
+.paper-movable-toolbox-body>.paper-primary-tools{grid-area:primary}
+.paper-movable-toolbox-body>.paper-toolbar-actions{grid-area:actions}
+.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbar-actions)::-webkit-scrollbar{height:8px}
+.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbar-actions)::-webkit-scrollbar-thumb{background:#b6bfce;border-radius:4px}
+.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbar-actions)>*{flex-shrink:0}
+.paper-movable-toolbox-body>.paper-primary-tools>button,.paper-movable-toolbox-body>.paper-toolbar-actions>button,.paper-movable-toolbox-body>.paper-toolbar-actions>:is(.paper-read-aloud,.paper-tool-settings,.paper-command-menu)>button,.paper-movable-toolbox-body>.paper-toolbar-actions>details.paper-tool-menu>summary{box-sizing:border-box;min-width:44px!important;min-height:44px;height:44px;margin:0;padding:2px 8px;white-space:nowrap}
+.paper-movable-toolbox-body>.paper-primary-tools>button{width:44px;flex:0 0 44px}
+.paper-movable-toolbox-body>.paper-primary-tools>label{display:flex;align-items:center;flex:0 0 auto;gap:4px;height:44px;min-height:44px;margin:0;padding:0;white-space:nowrap}
+.paper-movable-toolbox-body>.paper-primary-tools select{box-sizing:border-box;width:auto;height:44px;min-height:44px;max-height:44px;padding:4px 8px}
+.paper-movable-toolbox-body>.paper-primary-tools input[type=color]{box-sizing:border-box;width:44px;height:44px;min-height:44px;max-height:44px;padding:4px}
+.paper-movable-toolbox-body>.paper-primary-tools input[type=range]{box-sizing:border-box;flex:0 0 64px;width:64px;height:44px;min-height:44px;max-height:44px;padding:4px 0}
+.paper-movable-toolbox-body>.paper-primary-tools input[type=checkbox]{box-sizing:border-box;flex:0 0 20px;width:20px;height:20px;min-height:20px;margin:0;padding:0}
+/* Neutralize generic PWA details spacing only on the two toolbar triggers.
+ * Their existing panels are still portalled into the owning note. */
+.paper-movable-toolbox-body>.paper-toolbar-actions>details.paper-tool-menu{align-self:center;box-sizing:border-box;height:44px;min-height:44px;margin:0;padding:0;border:0;background:transparent}
+.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbox-history-actions,.paper-toolbar-actions) :is(button,input,select,summary):focus-visible{outline-offset:-2px}
+.paper-toolbox-screen-reader{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.paper-notebook.is-left-handed>.paper-toolbar.paper-movable-toolbox>.paper-movable-toolbox-body{grid-template-columns:clamp(88px,20%,180px) 92px minmax(52px,1fr) 44px;grid-template-areas:"actions history primary move"}
+.paper-notebook.is-left-handed>.paper-toolbar.paper-movable-toolbox[data-toolbox-floating=true]>.paper-movable-toolbox-body{grid-template-columns:clamp(88px,20%,180px) 92px minmax(52px,1fr) 92px}
+.paper-notebook.is-left-handed .paper-toolbox-move-controls,.paper-notebook.is-left-handed .paper-toolbox-history-actions{flex-direction:row-reverse}
+.paper-notebook.is-left-handed>.paper-toolbar.paper-movable-toolbox>.paper-movable-toolbox-body>:is(.paper-primary-tools,.paper-toolbar-actions){flex-direction:row-reverse}

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "date": "2026-11-14",
+  "upstreamCommit": "be57d5e128e0cd68beea716778804cc48dbc77e8",
+  "sources": [
+    {
+      "component": "desktop/pwa",
+      "origin": "Dell collections-060",
+      "version": "0.12.7"
+    },
+    {
+      "component": "api33",
+      "origin": "preuve de livraison conservée du 2026-10-16",
+      "qualification": "historique ; serveur actif non inspecté"
+    },
+    {
+      "component": "public-site",
+      "origin": "Epic-01 répertoire public",
+      "observedAt": "2026-11-14"
+    },
+    {
+      "component": "notes-overlay",
+      "origin": "qualification locale du 2026-10-17",
+      "files": 53,
+      "targetFiles": 619,
+      "released": false
+    },
+    {
+      "component": "api37",
+      "origin": "qualification locale du 2026-10-17",
+      "released": false
+    }
+  ],
+  "consolidationChanges": [
+    {
+      "path": "vite.pwa.config.ts",
+      "change": "sortie absolue historique remplacée par pwa-dist relatif dans les sources principales"
+    }
+  ],
+  "excluded": [
+    "secrets et sessions",
+    "bases et données privées",
+    "caches et dépendances",
+    "anciens runtimes Hermes non embarqués",
+    "gros paquets historiques",
+    "binaires tiers Notability"
+  ]
+}

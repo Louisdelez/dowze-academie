@@ -1,0 +1,8 @@
+.paper-grid-alignment{flex:1 0 100%;min-width:0;margin:4px 0;padding:10px;border:1px solid #cbd5e1;border-radius:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;color:#20343b}
+.paper-grid-alignment legend{font-weight:600}
+.paper-grid-alignment label{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
+.paper-selection-tools .paper-grid-alignment button,.paper-selection-tools .paper-grid-alignment select{min-width:44px;min-height:44px;max-width:100%}
+.paper-grid-alignment :is(button,select):focus-visible{outline:2px solid #2463eb;outline-offset:2px}
+.paper-grid-alignment p{flex-basis:100%;margin:0;white-space:normal}
+.paper-grid-alignment-preview{position:relative;flex:none;max-width:100%;overflow:hidden;border:1px solid #94a3b8;background:#fff}
+.paper-grid-alignment .paper-grid-alignment-preview>svg{position:absolute;inset:0;width:100%!important;height:100%!important;pointer-events:none}

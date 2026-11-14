@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-login-local-account"
+description = "Enables the login_local_account command without any pre-configured scope."
+commands.allow = ["login_local_account"]
+
+[[permission]]
+identifier = "deny-login-local-account"
+description = "Denies the login_local_account command without any pre-configured scope."
+commands.deny = ["login_local_account"]

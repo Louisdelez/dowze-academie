@@ -1,0 +1,2 @@
+/* Standalone responsive recipe: the desktop shell is not mounted here. */
+html,body,#root{min-width:0;width:100%;}

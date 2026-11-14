@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-07",
+  "scope": "Recherche documentaire UI UX ergonomie design : dépôts et README consultés sur web. Pas audit intégral du code, pas installation ni essai runtime. Inventaire large non exhaustif.",
+  "repositories": [
+    {
+      "repository": "anthropics/skills",
+      "url": "https://github.com/anthropics/skills"
+    },
+    {
+      "repository": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
+    },
+    {
+      "repository": "pbakaus/impeccable",
+      "url": "https://github.com/pbakaus/impeccable"
+    },
+    {
+      "repository": "Dammyjay93/interface-design",
+      "url": "https://github.com/Dammyjay93/interface-design"
+    },
+    {
+      "repository": "hueyexe/frontend-agent-skills",
+      "url": "https://github.com/hueyexe/frontend-agent-skills"
+    },
+    {
+      "repository": "emilkowalski/skills",
+      "url": "https://github.com/emilkowalski/skills"
+    },
+    {
+      "repository": "Leonxlnx/taste-skill",
+      "url": "https://github.com/Leonxlnx/taste-skill"
+    },
+    {
+      "repository": "vercel-labs/agent-skills",
+      "url": "https://github.com/vercel-labs/agent-skills"
+    },
+    {
+      "repository": "msitarzewski/agency-agents",
+      "url": "https://github.com/msitarzewski/agency-agents"
+    },
+    {
+      "repository": "dragonoasis/open-design-agent",
+      "url": "https://github.com/dragonoasis/open-design-agent"
+    },
+    {
+      "repository": "penpot/penpot-ai-kit",
+      "url": "https://github.com/penpot/penpot-ai-kit"
+    },
+    {
+      "repository": "penpot/penpot-mcp",
+      "url": "https://github.com/penpot/penpot-mcp"
+    },
+    {
+      "repository": "figma/mcp-server-guide",
+      "url": "https://github.com/figma/mcp-server-guide"
+    },
+    {
+      "repository": "figma/code-connect",
+      "url": "https://github.com/figma/code-connect"
+    },
+    {
+      "repository": "superdesigndev/superdesign-skill",
+      "url": "https://github.com/superdesigndev/superdesign-skill"
+    },
+    {
+      "repository": "smukh/a11y-agent-skills",
+      "url": "https://github.com/smukh/a11y-agent-skills"
+    },
+    {
+      "repository": "dequelabs/axe-accessibility",
+      "url": "https://github.com/dequelabs/axe-accessibility"
+    },
+    {
+      "repository": "matthiasroder/UXAgent",
+      "url": "https://github.com/matthiasroder/UXAgent"
+    },
+    {
+      "repository": "podo/design-agent-skills",
+      "url": "https://github.com/podo/design-agent-skills"
+    },
+    {
+      "repository": "frankxai/awesome-design-agent-skills",
+      "url": "https://github.com/frankxai/awesome-design-agent-skills"
+    },
+    {
+      "repository": "radix-ui/primitives",
+      "url": "https://github.com/radix-ui/primitives"
+    },
+    {
+      "repository": "adobe/react-spectrum",
+      "url": "https://github.com/adobe/react-spectrum"
+    },
+    {
+      "repository": "storybookjs/storybook",
+      "url": "https://github.com/storybookjs/storybook"
+    }
+  ]
+}

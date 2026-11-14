@@ -1,0 +1,15 @@
+.notebook-shared-collection{min-width:0;padding:clamp(16px,3vw,32px);color:var(--text,#1d2638)}
+.notebook-shared-collection>header,.notebook-shared-reader>header,.notebook-shared-reader>nav{display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between}
+.notebook-shared-collection h1,.notebook-shared-collection h2{margin:0;font-size:1.15rem;overflow-wrap:anywhere}
+.notebook-shared-collection button{min-width:44px;min-height:44px;border:1px solid #d5dce7;border-radius:12px;background:#fff;padding:10px 14px;font:inherit;color:inherit}
+.notebook-shared-collection button:focus-visible{outline:3px solid #426bdf;outline-offset:3px}
+.notebook-shared-collection button:disabled{opacity:.55}
+.notebook-shared-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+.notebook-shared-cards>article{display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid #dfe5ee;border-radius:18px;background:#fff;min-width:0}
+.notebook-shared-cards>article p{margin:0}.notebook-shared-cards time,.notebook-shared-cards small{color:#526078}
+.notebook-shared-page-host{width:100%;min-width:0;margin-top:16px;overflow:hidden}
+.notebook-library>.note-library-main[hidden]{display:none}
+.notebook-library:has(>.notebook-shared-collection){grid-template-columns:minmax(190px,240px) minmax(0,1fr)}
+@media(max-width:650px){.notebook-library:has(>.notebook-shared-collection){display:block}.notebook-shared-collection{padding:16px}}
+
+.note-library-shared-navigation button{min-height:44px;min-width:44px;white-space:normal;text-align:left}

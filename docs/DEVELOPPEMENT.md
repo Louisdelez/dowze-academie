@@ -1,108 +1,47 @@
-# Développement et validation
+# Développement et contrôles
 
-## Environnement requis
+## Prérequis
 
-- macOS, Windows ou Linux ;
-- Node.js `^20.19.0` ou `>=22.12.0` ;
-- npm ;
-- Rust stable avec Cargo ;
-- les [prérequis système de Tauri 2](https://v2.tauri.app/start/prerequisites/) pour la plateforme ciblée.
+Node et npm compatibles avec `package.json`, Rust/Cargo, et prérequis système Tauri 2 pour la plateforme visée. Le manifeste npm annonce `^20.19.0 || >=22.12.0` ; vérifier également les exigences de la version verrouillée de Vite avant de choisir le runtime. Les versions effectivement verrouillées sont dans `package-lock.json` et `src-tauri/Cargo.lock`. macOS est configuré pour 13.0 minimum.
 
-macOS demande les Xcode Command Line Tools. Windows demande les outils de build C++ Microsoft et WebView2. Sur Ubuntu 22.04, installez notamment WebKitGTK 4.1, libayatana-appindicator, librsvg, `libdbus-1-dev`, `pkg-config` et `patchelf` ; le workflow de release contient la liste reproductible utilisée en CI. À l’exécution sous Linux, les comptes locaux exigent aussi une session D-Bus et un service compatible Secret Service accessible et déverrouillé.
+## Installer les dépendances
 
-Vérifiez l’environnement :
+Depuis la racine du dépôt : `npm ci`. Les dépendances ne sont pas vendoriées. La copie locale Dell peut utiliser un lien `node_modules` vers le cache de travail existant ; ce lien est ignoré par Git et n’est pas requis par les autres machines.
 
-```bash
-node --version
-npm --version
-rustc --version
-cargo --version
-```
+## Commandes
 
-## Installation reproductible
-
-```bash
-npm ci
-```
-
-Le fichier `package-lock.json` est la référence des dépendances JavaScript. `src-tauri/Cargo.lock` joue le même rôle pour Rust.
-
-## Commandes utiles
-
-| Commande | Usage |
+| Commande | Résultat |
 | --- | --- |
-| `npm run dev` | Prévisualisation web sur le port 1420 |
-| `npm run tauri -- dev` | Application native en développement |
-| `npm run build` | Vérification TypeScript puis bundle Vite |
-| `npm run test:unit` | Tests unitaires TypeScript |
-| `npm run test:ui` | Parcours Playwright avec serveur isolé sur le port 1421 |
-| `npm run test:all` | Tests unitaires puis UI |
-| `npm run tauri -- build --bundles dmg` | DMG de production sur macOS |
-| `npm run tauri -- build --bundles nsis` | Installateur NSIS de production sur Windows |
-| `npm run tauri -- build --bundles appimage,deb` | AppImage et paquet Debian de production sur Linux |
+| `npm run dev` | Frontend bureau dans le navigateur, port 1420 |
+| `npm run tauri -- dev` | Application native de développement |
+| `npm run build` | Vérification TS puis bundle bureau |
+| `npx tsc --noEmit -p tsconfig.pwa.json` | Vérification des types PWA |
+| `npx vite build --config vite.pwa.config.ts` | Bundle PWA dans `pwa-dist/` |
+| `npm run test:unit` | Suite des fichiers `tests/*.test.ts` présents |
+| `npm run test:ui` | Parcours UI historiques ; vérifier les prérequis du pilote |
+| `cargo test --manifest-path src-tauri/Cargo.toml` | Tests Rust |
+| `python3 tools/verify_repository.py` | Intégrité légère de la consolidation |
 
-## Validation complète
+Certains pilotes de qualification historiques contiennent des chemins absolus ou attendent des fixtures externes. Leur présence n’implique pas qu’une seule commande valide toute la refonte. Les tests de consolidation ne remplacent pas les recettes fonctionnelles, réseau, appareil et stylet.
+
+## Protection du Dell
+
+Ne pas lancer Vite, TypeScript, Cargo ou les suites de tests directement sur cette machine. Employer le garde-fou conservé :
 
 ```bash
-npm run build
-npm run test:unit
-npm run test:ui
-cargo test --manifest-path src-tauri/Cargo.toml
-cargo fmt --manifest-path src-tauri/Cargo.toml --check
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-npm audit --audit-level=low
+bash scripts/run-dell-safe-check.sh -- npm run build
 ```
 
-Pour un changement ciblé, commencez par les tests concernés, puis exécutez la suite complète avant livraison.
+Ce lanceur borne mémoire, CPU, swap et durée, et refuse un démarrage si la mémoire disponible est insuffisante. Exécuter un seul contrôle lourd à la fois. Une compilation isolée distante doit disposer de ses propres limites. La consolidation du 14 novembre n’a lancé aucun build ni installé de paquet.
 
-### Référence validée le 9 septembre 2026
+## Reconstituer la branche Notes préparatoire
 
-- build frontend réussi, avec 3 851 modules transformés ;
-- 155/155 tests unitaires TypeScript réussis ;
-- 16/16 parcours UI Playwright réussis ;
-- 72/72 tests Rust réussis ;
-- formatage Rust et Clippy strict réussis ;
-- audit npm : 0 vulnérabilité connue.
+```bash
+python3 tools/materialize_notes.py /chemin/vers/nouveau-dossier-vide
+```
 
-Vite signale encore deux chunks supérieurs à 500 ko : le cœur de l’interface et l’éditeur Markdown chargé à la demande. Cet avertissement de taille n’empêche pas le build.
+L’outil écrit uniquement dans une destination inexistante, vérifie les empreintes des 619 fichiers attendus, et n’installe rien. Il restaure les octets historiques exacts du fichier Vite de qualification ; adapter sa sortie absolue avant un futur build portable. La version principale garde sa correction de portabilité `pwa-dist/`.
 
-## Builds de bureau
+## Publication
 
-Exécutez sur le système concerné la commande `--bundles` du tableau ci-dessus. Les sorties se trouvent sous `src-tauri/target/release/bundle/`. Pour macOS, l’architecture correspond à celle de la cible Rust choisie ; la matrice CI fixe explicitement ARM64 ou x64. Les sommes de contrôle des bundles publics sont publiées avec chaque release plutôt que consignées dans le dépôt.
-
-Sur macOS, le support du microphone comporte trois couches suivies dans le dépôt : `src-tauri/Info.plist` fournit `NSMicrophoneUsageDescription`, `src-tauri/Entitlements.plist` fournit `com.apple.security.device.audio-input`, et `objc2-av-foundation` permet à la commande locale `request_microphone_access` de consulter l’état AVFoundation puis de déclencher le consentement TCC sur le thread principal. Wry 0.55.1 accorde ensuite la demande média de l’origine web. `tauri.conf.json` fixe macOS 10.14 au minimum, version d’apparition des API utilisées. Le test `macos-media-permissions.test.ts` protège les déclarations de packaging, la dépendance native, la consultation, la demande, le pont frontend et sa disponibilité dans le panneau. Après packaging, le workflow macOS contrôle aussi la clé fusionnée avec `plutil`, la version minimale, la liaison AVFoundation avec `otool`, l’entitlement réellement signé avec `codesign -d --entitlements :-` et la validité profonde du bundle.
-
-La fenêtre principale utilise `titleBarStyle: "Overlay"` avec un titre masqué. La capacité locale `core:window:allow-start-dragging` et les régions `data-tauri-drag-region` du rail, de la barre d’onglets et du panneau IA doivent rester coordonnées. Le test `window-dragging.test.ts` protège ce contrat ; cette capacité reste réservée à la WebView locale `main`.
-
-Sur un checkout ayant servi avant le renommage, arrêtez toutes les anciennes instances et ouvrez explicitement `src-tauri/target/release/bundle/macos/Dowze Academie.app`. Tout artefact historique `src-tauri/target/release/bundle/macos/Étude.app` doit être retiré avant la validation : macOS peut sinon relancer l’ancien exécutable et fausser les contrôles de code, de signature et de consentement TCC.
-
-## Release GitHub multiplateforme
-
-Le workflow [`.github/workflows/desktop-release.yml`](../.github/workflows/desktop-release.yml) possède deux modes :
-
-- `workflow_dispatch` construit les quatre cibles et conserve les bundles comme artefacts Actions sans créer de release ;
-- un tag `vX.Y.Z`, strictement égal à la version Tauri, construit les mêmes cibles dans une release brouillon.
-
-La release n’est rendue publique qu’après la réussite complète de la matrice, la présence des artefacts attendus et la génération de `SHA256SUMS.txt`. Les cibles 0.1.0 sont macOS Apple Silicon, macOS Intel, Windows x64 et Linux x64. Linux produit volontairement AppImage et `.deb`, pas RPM, afin d’éviter le chemin de bundling RPM instable avec la version actuelle de Tauri CLI. Les builds macOS publient uniquement leur DMG respectif.
-
-Les applications macOS reçoivent une signature ad hoc (`-`) mais ne sont pas signées Developer ID ni notarisées. L’installateur Windows n’est pas signé. Il faut ajouter les certificats et secrets de CI appropriés avant de présenter ces artefacts comme une distribution vérifiée par les éditeurs des systèmes.
-
-## Règles de compatibilité
-
-Le nom public est **Dowze Academie**, mais plusieurs identifiants `etude` sont une couche de compatibilité : clés de stockage, services Trousseau, UID iCalendar et bundle ID. Leur remplacement direct ferait perdre l’accès apparent à des données ou créerait des doublons d’agenda.
-
-Toute évolution de ces identifiants doit inclure :
-
-1. un schéma de migration versionné ;
-2. un retour arrière en cas d’échec ;
-3. des tests avec plusieurs profils ;
-4. une vérification des PDF, secrets et sessions existants ;
-5. une note de migration publique.
-
-## Style de contribution
-
-- Gardez les textes d’interface en français.
-- Préservez les états d’erreur explicites et les contrôles d’accessibilité.
-- Ne journalisez jamais de secret, de contenu OAuth ou de données utilisateur.
-- Ne présentez pas une simulation navigateur comme une validation native.
-- Mettez la documentation à jour avec le comportement réellement vérifié.
+Le workflow GitHub Actions existant est conservé comme historique de release. Son contrôle macOS doit être réconcilié avec la valeur 13.0 avant une nouvelle livraison. Aucun tag ni exécution de release n’est créé par la consolidation. Les clés de signature ne sont jamais commitées.

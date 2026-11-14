@@ -1,0 +1,5 @@
+.paper-canonical-text-host{position:absolute;transform:translateX(-50%);overflow:hidden;pointer-events:none;isolation:isolate}
+.paper-canonical-text-page{position:relative;transform-origin:0 0;overflow:hidden;box-shadow:none!important;background:transparent!important;pointer-events:none}
+.paper-canonical-text-object{position:absolute;box-sizing:border-box;overflow:visible;font-size:16px;line-height:1.6;overflow-wrap:anywhere}
+.paper-canonical-text-object.paper-sticky{padding:16px;box-shadow:0 4px 8px #0001}
+.paper-canonical-text-host[data-text-host-parked=true],.paper-canonical-text-host[data-text-host-revoked=true]{opacity:0;pointer-events:none}

@@ -1,0 +1,98 @@
+/* Dowze study workspace: readable navigation, calm content, explicit interaction states.
+   This layer shares the existing semantic tokens and leaves course colours and drawing tools intact. */
+:root {
+  --ink: #252b3d;
+  --muted: #576078;
+  --soft-muted: #606a80;
+  --canvas: #f5f6fa;
+  --line: #e0e4ed;
+  --line-strong: #cbd1df;
+  --primary: #495cc8;
+  --primary-deep: #3548b4;
+  --primary-soft: #eef1fc;
+  --shadow-sm: 0 2px 8px rgb(28 38 70 / 3%);
+  --shadow-md: 0 12px 32px rgb(28 38 70 / 12%);
+  --radius-lg: 16px;
+  accent-color: var(--primary);
+  caret-color: var(--primary-deep);
+  scrollbar-color: #b2bbcf transparent;
+  scrollbar-width: thin;
+}
+::selection { color: #202d6e; background: #dbe2ff; }
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary-deep);
+  outline-offset: 3px;
+}
+:where(input, textarea)::placeholder { color: #626d84; opacity: 1; }
+:where(button):disabled { cursor: not-allowed; }
+.workspace-skip-link {
+  position: fixed; z-index: 10000; top: 12px; left: 12px;
+  padding: 12px 18px; border-radius: 8px; color: white; background: var(--primary-deep);
+  transform: translateY(-160%);
+}
+.workspace-skip-link:focus { transform: none; }
+#workspace-content:focus { outline: none; }
+.page { padding-top: 36px; }
+.page-heading { align-items: center; gap: 16px; margin-bottom: 28px; }
+.page-heading h1, .calendar-title-row h1 { font-size: clamp(28px, 2.7vw, 34px); line-height: 1.2; letter-spacing: -.035em; text-wrap: balance; }
+.page-heading > div > .eyebrow { display: none; }
+.heading-subtitle { max-width: 70ch; line-height: 1.6; }
+.primary-button { background: var(--primary); box-shadow: 0 2px 5px rgb(40 56 129 / 12%); }
+.primary-button:hover { background: var(--primary-deep); box-shadow: 0 3px 8px rgb(40 56 129 / 14%); transform: none; }
+.primary-button, .secondary-button, .soft-button, .today-button, .filter-button, .delete-button { min-height: 42px; font-size: 13px; }
+.text-button { color: var(--muted); min-height: 36px; }
+.search-field { min-height: 42px; background: #f7f8fc; color: var(--muted); }
+.search-field input { font-size: 13px; }
+.search-field input::placeholder { color: #626d84; }
+.surface-card { background: var(--surface); box-shadow: var(--shadow-sm); }
+.app-rail { color: var(--ink); background: #f0f2f8; border-right: 1px solid var(--line); box-shadow: none; }
+.rail-nav { padding-top: 26px; gap: 6px; }
+.rail-button { color: #59627a; }
+.rail-button:hover { color: var(--primary-deep); background: #e5e9f4; transform: none; }
+.rail-button.is-active { color: var(--primary-deep); background: #dfe5fa; box-shadow: none; }
+.rail-button.is-active::before { display: none; }
+.rail-label { display: none; }
+.rail-bottom { width: 100%; }
+.avatar-button { color: var(--primary-deep); background: #e0e6f7; box-shadow: none; border-color: #c8d2ed; }
+.avatar-button:hover { border-color: var(--primary); box-shadow: none; transform: none; }
+.task-list-toolbar { flex-wrap: wrap; gap: 12px; }
+.task-search { flex: 1 1 200px; min-width: 0; max-width: 400px; }
+.task-filter-row { flex-wrap: wrap; }
+.formation-editorial-disclosure { margin-block: 20px; }
+.formation-editorial-disclosure > summary, .update-release-notes > summary { cursor: pointer; padding: 12px 0; color: var(--primary-deep); font-weight: 600; }
+.formation-page-feedback { font-size: 13px; }
+.formations-library > header > span, .formation-active-meta span { color: var(--muted); font-size: 12px; }
+.formation-active-card::before { display: none; }
+.formation-active-card { background: var(--surface); }
+.formation-active-copy > p:not(.eyebrow) { color: var(--muted); font-size: 13px; }
+:where(.settings-page, .tasks-page, .grades-page, .home-page) :where(.empty-state, .muted, small) { color: var(--muted); }
+:where(.page, .modal-card) :where(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: 14px; }
+:where(.page, .modal-card) :where(input[type=checkbox], input[type=radio]) { accent-color: var(--primary); }
+@media (min-width: 1180px) and (min-height: 660px) {
+  .app-rail { width: 184px; flex-basis: 184px; align-items: stretch; padding-inline: 12px; }
+  .app-mark { margin-left: 10px; }
+  .rail-nav, .rail-bottom { align-items: stretch; }
+  .rail-button { display: flex; width: 100%; height: 44px; justify-content: flex-start; gap: 12px; padding: 0 12px; border-radius: 9px; }
+  .rail-button svg { flex: 0 0 20px; }
+  .rail-label { display: inline; text-align: left; font-size: 13px; font-weight: 550; }
+  .rail-button.is-active .rail-label { font-weight: 700; }
+  .rail-button[data-tooltip]::after { display: none; }
+  .avatar-button { margin-left: 12px; }
+}
+@container workspace (max-width: 700px) {
+  .page { padding: 26px 20px 32px; }
+  .page-heading { flex-wrap: wrap; align-items: flex-start; }
+  .page-heading .heading-subtitle { display: block; font-size: 13px; }
+  .task-search { max-width: none; }
+}
+@media (pointer: coarse) {
+  .icon-button, .rail-button { min-width: 44px; min-height: 44px; }
+  .primary-button, .secondary-button, .soft-button, .filter-button, .text-button, .today-button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+@media (forced-colors: active) {
+  .rail-button.is-active { border: 2px solid Highlight; }
+  :where(button, input, select, textarea) { forced-color-adjust: auto; }
+}

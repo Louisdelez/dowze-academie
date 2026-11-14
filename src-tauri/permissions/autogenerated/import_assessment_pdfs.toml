@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-import-assessment-pdfs"
+description = "Enables the import_assessment_pdfs command without any pre-configured scope."
+commands.allow = ["import_assessment_pdfs"]
+
+[[permission]]
+identifier = "deny-import-assessment-pdfs"
+description = "Denies the import_assessment_pdfs command without any pre-configured scope."
+commands.deny = ["import_assessment_pdfs"]

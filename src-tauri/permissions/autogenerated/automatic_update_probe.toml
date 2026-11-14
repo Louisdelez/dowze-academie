@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-automatic-update-probe"
+description = "Enables the automatic_update_probe command without any pre-configured scope."
+commands.allow = ["automatic_update_probe"]
+
+[[permission]]
+identifier = "deny-automatic-update-probe"
+description = "Denies the automatic_update_probe command without any pre-configured scope."
+commands.deny = ["automatic_update_probe"]

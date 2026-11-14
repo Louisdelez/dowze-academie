@@ -1,7 +1,11 @@
+import { appStorage } from "./lib/appStorage";
+import { startUpdateChecks } from './lib/nativeUpdates';
 import { useCallback, useEffect, useRef, useState } from "react";
+import { invoke } from '@tauri-apps/api/core';
 import App from "./App";
-import etudeAppMark from "./assets/generated/etude-app-mark-v3.webp";
+import { StartupSplash } from './components/StartupSplash';
 import { AuthPage } from "./components/AuthPage";
+import { RecoveryScreen } from "./components/RecoveryScreen";
 import {
   getLocalAuthStatus,
   loginLocalAccount,
@@ -15,17 +19,17 @@ import {
   workspaceStorageFor
 } from "./lib/profileStorage";
 import { resumeInterruptedProfileReset } from "./lib/profileReset";
-import { secureAiPanelForAccountTransition } from "./lib/tauri";
+import { secureAiPanelForAccountTransition, isTauri } from "./lib/tauri";
 import type { AiProvider, ToastMessage } from "./types";
 
 const ACCOUNT_PROVIDERS = new Set<AiProvider>([
-  "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
+  "chatgpt", "claude", "gemini", "mistral", "kimi",
   "freechat", "duolingo", "khanacademy", "youtube", "tiktok", "notebooklm"
 ]);
 
 function accountProvider(accountId: string): AiProvider {
   try {
-    const stored = JSON.parse(localStorage.getItem(workspaceStorageFor(accountId).provider) ?? "null");
+    const stored = JSON.parse(appStorage.getItem(workspaceStorageFor(accountId).provider) ?? "null");
     return typeof stored === "string" && ACCOUNT_PROVIDERS.has(stored as AiProvider)
       ? stored as AiProvider
       : "chatgpt";
@@ -34,9 +38,9 @@ function accountProvider(accountId: string): AiProvider {
   }
 }
 
-async function prepareProviderPanel(accountId: string): Promise<void> {
+async function prepareProviderPanel(accountId: string, resume = false): Promise<void> {
   const provider = accountProvider(accountId);
-  await secureAiPanelForAccountTransition(provider);
+  await secureAiPanelForAccountTransition(provider, resume ? accountId : undefined);
 }
 
 async function failClosedAfterAuthentication(message: string, cause: unknown): Promise<never> {
@@ -71,7 +75,7 @@ export default function RootApp() {
         if (status.accounts.length === 0) clearLegacyWorkspaceData();
         if (status.activeAccount) {
           try {
-            await prepareProviderPanel(status.activeAccount.id);
+            await prepareProviderPanel(status.activeAccount.id, true);
             if (await resumeInterruptedProfileReset(status.activeAccount.id)) {
               setStartupNotice({
                 title: "Réinitialisation terminée",
@@ -105,27 +109,21 @@ export default function RootApp() {
   }, []);
 
   useEffect(() => {
+    startUpdateChecks();
     void loadAuth();
   }, [loadAuth]);
 
+  useEffect(() => {
+    if (!isLoading && isTauri()) void invoke('startup_workspace_ready').catch(console.warn);
+  }, [isLoading]);
+
   if (isLoading) {
-    return (
-      <main className="auth-loading" aria-live="polite" aria-busy="true">
-        <img src={etudeAppMark} alt="" aria-hidden="true" />
-        <span className="section-loading-spinner" aria-hidden="true" />
-        <p>Ouverture de ton espace Dowze Academie…</p>
-      </main>
-    );
+    return <StartupSplash label="Ouverture de ton espace…" />;
   }
 
   if (loadError) {
     return (
-      <main className="fatal-error" role="alert">
-        <span aria-hidden="true">D</span>
-        <h1>Les comptes locaux sont indisponibles</h1>
-        <p>{loadError}</p>
-        <button onClick={() => void loadAuth()}>Réessayer</button>
-      </main>
+      <RecoveryScreen title="Votre espace ne peut pas encore s’ouvrir" message="Vos données sont conservées. Réessayez pour retrouver votre compte et vos cours." detail={loadError} onRetry={() => void loadAuth()} />
     );
   }
 
@@ -133,6 +131,18 @@ export default function RootApp() {
     return (
       <AuthPage
         hasAccounts={accountCount > 0}
+        onCloudLogin={isTauri() ? async (email, password, register, rememberMe) => {
+          const result = await invoke<{ account: LocalAccount; server: { id: string; email: string } }>('login_synchronized_account', { email, password, register, rememberMe, offline: !navigator.onLine });
+          try {
+            await prepareProviderPanel(result.account.id);
+            const key = `dowze.server.link.${result.account.id}`;
+            const value = JSON.stringify(result.server);
+            appStorage.setItem(key, value);
+            appStorage.setItem(`dowze.server.owner.${result.account.id}`, value);
+            if (appStorage.getItem(key) !== value) throw new Error('Liaison du compte non enregistrée.');
+          } catch (error) { await failClosedAfterAuthentication('Le compte a été vérifié mais son espace ne peut pas être ouvert.', error); }
+          setAccount(result.account);
+        } : undefined}
         onLogin={async (username, password, rememberMe) => {
           const loggedIn = await loginLocalAccount(username, password, rememberMe);
           try {

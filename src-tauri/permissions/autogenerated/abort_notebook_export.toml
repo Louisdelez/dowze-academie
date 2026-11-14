@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-abort-notebook-export"
+description = "Enables the abort_notebook_export command without any pre-configured scope."
+commands.allow = ["abort_notebook_export"]
+
+[[permission]]
+identifier = "deny-abort-notebook-export"
+description = "Denies the abort_notebook_export command without any pre-configured scope."
+commands.deny = ["abort_notebook_export"]

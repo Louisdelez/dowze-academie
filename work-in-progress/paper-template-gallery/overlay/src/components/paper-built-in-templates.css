@@ -1,0 +1,21 @@
+/* Built-in paper choices only; original pages, objects and export styles are unchanged. */
+.paper-page-settings .paper-built-in-templates{min-width:0;border:1px solid #ccd5e3;border-radius:8px;background:#f7f9fc;color:#20343b}
+.paper-page-settings .paper-built-in-templates>summary{display:flex;align-items:center;min-height:44px;padding:8px;box-sizing:border-box;cursor:pointer;font-size:12px;font-weight:600}
+.paper-page-settings .paper-built-in-templates>p,.paper-page-settings .paper-built-in-templates>small{display:block;margin:8px;line-height:1.5;font-size:11px;color:#42516a}
+.paper-page-settings .paper-built-in-templates fieldset{min-width:0;margin:8px;padding:0;border:0}
+.paper-page-settings .paper-built-in-templates legend{font-size:12px;font-weight:600;margin-bottom:8px}
+.paper-page-settings .paper-built-in-template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(128px,100%),1fr));gap:8px;min-width:0}
+.paper-page-settings label.paper-built-in-template-choice{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:4px 6px;position:relative;min-width:0;min-height:44px;padding:8px;border:1px solid #a8b6ca;border-radius:7px;background:#fff;box-sizing:border-box;cursor:pointer;overflow-wrap:anywhere}
+.paper-page-settings .paper-built-in-template-choice:has(input:checked){border:2px solid #315da8;padding:7px;background:#edf3ff}
+.paper-page-settings .paper-built-in-template-choice:focus-within{outline:3px solid #315da8;outline-offset:2px}
+.paper-page-settings .paper-built-in-template-choice input[type=radio]{appearance:auto;width:18px;height:18px;min-width:18px;margin:0;accent-color:#315da8;grid-column:1;grid-row:2}
+.paper-page-settings .paper-built-in-template-preview{grid-column:1/-1;display:flex;height:104px;align-items:center;justify-content:center;overflow:hidden;background:#e5eaf1;border-radius:3px;pointer-events:none}
+.paper-page-settings .paper-built-in-template-sheet{display:block;position:relative;flex:none;width:100%;box-shadow:0 0 0 1px #a8b6ca;overflow:hidden}
+.paper-page-settings .paper-built-in-template-sheet>.paper-background{position:absolute;inset:0;width:100%!important;height:100%!important;border:0;pointer-events:none}
+.paper-page-settings .paper-built-in-template-label{grid-column:2;font-size:12px;font-weight:600;line-height:1.5}
+.paper-page-settings .paper-built-in-template-choice small{grid-column:1/-1;font-size:11px;color:#42516a;line-height:1.5}
+.paper-page-settings .paper-built-in-templates fieldset:disabled .paper-built-in-template-choice{cursor:default;opacity:.65}
+.paper-page-settings .paper-built-in-template-actions{display:flex;flex-wrap:wrap;gap:8px;padding:0 8px}
+.paper-page-settings .paper-built-in-template-actions>button{min-height:44px;min-width:44px;padding:8px 10px;flex:1 1 120px;border:1px solid #899bb5;border-radius:6px;font:inherit;font-size:12px;color:#20343b;background:#fff;cursor:pointer}
+.paper-page-settings .paper-built-in-template-actions>button:focus-visible{outline:3px solid #315da8;outline-offset:2px}
+.paper-page-settings .paper-built-in-template-actions>button:disabled{cursor:default;opacity:.6}

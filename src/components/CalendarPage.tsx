@@ -1,3 +1,4 @@
+import "../planning-redesign.css";
 import {
   CalendarPlus,
   CalendarSync,
@@ -35,7 +36,7 @@ import {
   wallMinutes,
   weekDays
 } from "../lib/date";
-import { timeZoneOffsetLabel } from "../lib/zonedDate";
+import { calendarDateFromKey, dateKeyAtTimeZone, timeZoneOffsetLabel } from "../lib/zonedDate";
 import type { CalendarEvent, CalendarView, Subject } from "../types";
 
 interface CalendarPageProps {
@@ -221,7 +222,7 @@ export function CalendarPage({
         <div className="calendar-title-group">
           <p className="eyebrow">Mon planning</p>
           <div className="calendar-title-row">
-            <h1>{calendarTitle(currentDate, view, timeZone)}</h1>
+            <h1 aria-live="polite" aria-atomic="true">{calendarTitle(currentDate, view, timeZone)}</h1>
             <div className="date-stepper">
               <button
                 onClick={() => onDateChange(shiftCalendarDate(currentDate, view, -1, timeZone))}
@@ -236,6 +237,7 @@ export function CalendarPage({
                 <ChevronRight />
               </button>
             </div>
+            <label className="calendar-jump-date"><span>Aller à une date</span><input type="date" value={dateKeyAtTimeZone(currentDate, timeZone)} onChange={(event) => { if (/^\d{4}-\d{2}-\d{2}$/.test(event.target.value)) onDateChange(calendarDateFromKey(event.target.value, timeZone)); }} /></label>
             <button className="today-button" onClick={() => onDateChange(new Date())}>
               Aujourd’hui
             </button>
@@ -260,7 +262,7 @@ export function CalendarPage({
           </button>
           <button className="primary-button" onClick={() => onNewEvent(currentDate)}>
             <Plus />
-            Événement
+            Nouvel événement
           </button>
         </div>
       </header>
@@ -274,9 +276,10 @@ export function CalendarPage({
             </span>
           ))}
         </div>
-        <span className="timezone-label">Heure locale · {timeZone}</span>
+        <span className="timezone-label">Fuseau horaire · {timeZone}</span>
       </div>
 
+      <p className="calendar-interaction-hint">Ouvre un événement pour ses détails. Pour le modifier, utilise son menu contextuel ou la touche Menu.</p>
       <section className={`calendar-surface calendar-surface--${view}`}>
         {view === "year" && (
           <YearView
@@ -483,7 +486,7 @@ function MonthView({
                   </button>
                 )}
               </div>
-              <button className="day-add" onClick={() => onNewEvent(day)} aria-label="Ajouter un événement">
+              <button className="day-add" onClick={() => onNewEvent(day)} aria-label={`Ajouter un événement le ${formatCalendarDate(day, { day: "numeric", month: "long" }, timeZone)}`}>
                 <Plus />
               </button>
             </div>
@@ -646,7 +649,7 @@ function TimeGrid({
                       event.preventDefault();
                       onNewEvent(calendarTimeFor(day, hour, 0, timeZone));
                     }}
-                    aria-label={`Ajouter à ${hour} heures`}
+                    aria-label={`Ajouter un événement le ${formatCalendarDate(day, { weekday: "long", day: "numeric", month: "long" }, timeZone)} à ${hour} heures`}
                   />
                 ))}
                 {dayEvents.map((event) => {

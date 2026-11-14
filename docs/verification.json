@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-14",
+  "scope": "source-consolidation-only",
+  "status": "pass",
+  "applicationVersion": "0.12.7",
+  "filesInspected": 1325,
+  "checks": {
+    "json": 21,
+    "python": 87,
+    "sourcePins": 138,
+    "shell": 1
+  },
+  "errors": [],
+  "notRun": [
+    "application builds",
+    "functional suites",
+    "desktop GUI",
+    "production database inspection",
+    "physical Pencil/tablet tests"
+  ],
+  "notesReconstruction": {
+    "status": "pass",
+    "sourceFiles": 619,
+    "activated": false
+  },
+  "publicationScreen": {
+    "blockingCredentialPatterns": 0,
+    "literalCandidatesReviewed": "synthetic tests and browser test adapters; no production credential identified",
+    "privateDataPublished": false
+  }
+}

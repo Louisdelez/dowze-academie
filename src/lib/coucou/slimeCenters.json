@@ -1,0 +1,130 @@
+{
+  "baby/blue": [
+    95.0,
+    126.5
+  ],
+  "baby/yellow": [
+    96.0,
+    122.5
+  ],
+  "baby/red": [
+    95.5,
+    127.5
+  ],
+  "baby/green": [
+    96.0,
+    136.0
+  ],
+  "baby/white": [
+    96.0,
+    127.5
+  ],
+  "baby/black": [
+    95.0,
+    127.5
+  ],
+  "baby/orange": [
+    95.5,
+    129.0
+  ],
+  "baby/purple": [
+    95.5,
+    126.5
+  ],
+  "teen/blue": [
+    95.5,
+    146.0
+  ],
+  "teen/yellow": [
+    96.5,
+    146.5
+  ],
+  "teen/red": [
+    96.0,
+    138.5
+  ],
+  "teen/green": [
+    96.0,
+    142.5
+  ],
+  "teen/white": [
+    96.0,
+    140.0
+  ],
+  "teen/black": [
+    96.0,
+    144.0
+  ],
+  "teen/orange": [
+    95.0,
+    144.0
+  ],
+  "teen/purple": [
+    95.5,
+    141.0
+  ],
+  "adult/blue": [
+    95.5,
+    156.5
+  ],
+  "adult/yellow": [
+    95.5,
+    158.5
+  ],
+  "adult/red": [
+    96.0,
+    157.0
+  ],
+  "adult/green": [
+    95.5,
+    156.0
+  ],
+  "adult/white": [
+    95.0,
+    156.5
+  ],
+  "adult/black": [
+    95.5,
+    161.5
+  ],
+  "adult/orange": [
+    96.5,
+    165.0
+  ],
+  "adult/purple": [
+    95.5,
+    161.5
+  ],
+  "sage/blue": [
+    95.5,
+    148.5
+  ],
+  "sage/yellow": [
+    94.5,
+    152.0
+  ],
+  "sage/red": [
+    95.5,
+    150.5
+  ],
+  "sage/green": [
+    95.5,
+    148.0
+  ],
+  "sage/white": [
+    95.5,
+    154.0
+  ],
+  "sage/black": [
+    96.0,
+    155.5
+  ],
+  "sage/orange": [
+    95.0,
+    151.0
+  ],
+  "sage/purple": [
+    95.5,
+    157.5
+  ]
+}

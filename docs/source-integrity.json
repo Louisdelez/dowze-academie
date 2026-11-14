@@ -1,0 +1,696 @@
+{
+  "schema": 1,
+  "date": "2026-11-14",
+  "files": [
+    {
+      "path": "server/api/app/__init__.py",
+      "bytes": 64,
+      "sha256": "4b0f4485d330e905bd21b608c3b54c40fafd86db121d58f88a38f0f051b8bac6"
+    },
+    {
+      "path": "server/api/app/backup_bundle.py",
+      "bytes": 7666,
+      "sha256": "eff409d9dda4b95c9dd3a5f9e3efa24174697971d15889af1c85781563c090cc"
+    },
+    {
+      "path": "server/api/app/catalog.py",
+      "bytes": 7315,
+      "sha256": "7886cc5e7185c90bb9cd6eee5f1bea38e4e4a64933328da0657fb5a7e12ded9f"
+    },
+    {
+      "path": "server/api/app/config.py",
+      "bytes": 4852,
+      "sha256": "29de3bfafd7842658eeca0587575a4a77b8396f60cceccfc2acf67a2747037c4"
+    },
+    {
+      "path": "server/api/app/db.py",
+      "bytes": 12529,
+      "sha256": "250c7cacf17f25576c7771659580c1d5e9f05325b153081374fc9930636a175a"
+    },
+    {
+      "path": "server/api/app/main.py",
+      "bytes": 23618,
+      "sha256": "8b5569254bbbef926dad714aa0539f0903f5ce69aa04661290a13f03c7a97309"
+    },
+    {
+      "path": "server/api/app/manage.py",
+      "bytes": 3808,
+      "sha256": "c68f7d045fa0da7880727f928f3ba24925759af7d5af518355ffcf223cf235e8"
+    },
+    {
+      "path": "server/api/app/models.py",
+      "bytes": 953,
+      "sha256": "ed82e6b737930c03dafff191d3f3852a743a55eaba613b11aab6b1e948f8a977"
+    },
+    {
+      "path": "server/api/app/notebook_acl.py",
+      "bytes": 23861,
+      "sha256": "d9802c22d4f83c6a31ce2d91add68efee4e58f835810ee7453f4fa6c4a32404b"
+    },
+    {
+      "path": "server/api/app/notebook_acl_routes.py",
+      "bytes": 8004,
+      "sha256": "478745d41cae428e9d080dd72fabda990cc0ca46259400e93ae6a69e38f8cc50"
+    },
+    {
+      "path": "server/api/app/notebook_acl_schema.py",
+      "bytes": 2688,
+      "sha256": "00a3c2c29bd1d42a0a6b25bf8882f3b593ca55f820e7648cef46271b90a4bf9a"
+    },
+    {
+      "path": "server/api/app/notebook_blobs.py",
+      "bytes": 13237,
+      "sha256": "43ced4c5bdaf78891c2a5a41b868995077c40b483f6dda529e14a0e086a4931c"
+    },
+    {
+      "path": "server/api/app/notebook_lifecycle.py",
+      "bytes": 23012,
+      "sha256": "1f70955aee21c8fe9c9e6f371a249889383aea1dfb65c642556097569363f613"
+    },
+    {
+      "path": "server/api/app/notebook_lifecycle_routes.py",
+      "bytes": 3437,
+      "sha256": "4ab62f23d83071bcee3461b214148e23ec1aae8031db889e27c349347a8f774b"
+    },
+    {
+      "path": "server/api/app/notebook_lifecycle_schema.py",
+      "bytes": 1326,
+      "sha256": "3f36d85a9374b6585dec7000cb553dac427f17fb4cfef589a7fc5d34915dddcc"
+    },
+    {
+      "path": "server/api/app/notebook_media_types.py",
+      "bytes": 1261,
+      "sha256": "de60e6b4383f0ec7f7897949544eb4d61784088b157635fd2b220d8d44f3b561"
+    },
+    {
+      "path": "server/api/app/notebook_metadata.py",
+      "bytes": 2373,
+      "sha256": "d963352b56b032e1d00efa462c3331aaa0b15d10f8e9c3eda9d102241edc8b88"
+    },
+    {
+      "path": "server/api/app/notebook_payload.py",
+      "bytes": 11523,
+      "sha256": "8b563c46975a3ca4f9fe48724470aed9d27958db427613667b43741394d72583"
+    },
+    {
+      "path": "server/api/app/notebook_retention.py",
+      "bytes": 9847,
+      "sha256": "8b348c86c2854bed619748ed66041d49607e363e8571ed0261796fa93d0767dd"
+    },
+    {
+      "path": "server/api/app/notebook_retention_routes.py",
+      "bytes": 2715,
+      "sha256": "f335a48a6f5083f353b8b4addd9ae8b2baeb17cc622fb229131be7be61b263dd"
+    },
+    {
+      "path": "server/api/app/notebook_retention_schema.py",
+      "bytes": 1180,
+      "sha256": "7571a962e3a39cddb151667a1cc76da3c58433c817641c51d601e88867a53d08"
+    },
+    {
+      "path": "server/api/app/notebook_startup.py",
+      "bytes": 11848,
+      "sha256": "9323f348f2741b6798e1b70989b110dc111af2e7e0901c17db8deb25c9f54080"
+    },
+    {
+      "path": "server/api/app/notebook_v2.py",
+      "bytes": 18655,
+      "sha256": "15063c988cda44623ea0db2975ba143183b4b6e6c26336189e5cf34f7e7c8dd8"
+    },
+    {
+      "path": "server/api/app/notebook_v2_routes.py",
+      "bytes": 5564,
+      "sha256": "03912522aa88cf83dfd1555a765e7dcae36514951da232a0fbda8e0d81c28f8a"
+    },
+    {
+      "path": "server/api/app/notebook_v2_schema.py",
+      "bytes": 638,
+      "sha256": "79f8d8602635dde951601f86c27c1c0565d0e11d1906b65ba095bee22fecf562"
+    },
+    {
+      "path": "server/api/app/notebook_validation.py",
+      "bytes": 9689,
+      "sha256": "bb0f6cfb28a160bf8219ae805d0b5918027bfcd97f76907a68e3f3d38f91d5f3"
+    },
+    {
+      "path": "server/api/app/notebook_wire.py",
+      "bytes": 4981,
+      "sha256": "787b60803efdb2e95a43436f899c7ee15a3498927e72be8cbe59bd41e92bd650"
+    },
+    {
+      "path": "server/api/app/notebook_write_routes.py",
+      "bytes": 4800,
+      "sha256": "bd909b952d3759a776e0d0405df8aabf2d7688f54978089655b1bc980f36e174"
+    },
+    {
+      "path": "server/api/app/notebook_write_schema.py",
+      "bytes": 1927,
+      "sha256": "869188ac9e2dfa712db271ac2c4d8f446571b3ae2db0ba3a59ef2315b41ef8da"
+    },
+    {
+      "path": "server/api/app/notebook_writes.py",
+      "bytes": 25043,
+      "sha256": "699eb2b7aaf9bac67f549659a95d74cf1492616ba1f40f06a82f226e11991f73"
+    },
+    {
+      "path": "server/api/app/notebook_writes_v2.py",
+      "bytes": 10383,
+      "sha256": "8436b01c022bea0d0166eef594c19c9f1060a0c7723efa6cd56196f2876ae52e"
+    },
+    {
+      "path": "server/api/app/security.py",
+      "bytes": 5324,
+      "sha256": "3948b182f6b38333dcf82d17475144be1fc94b78c0f0855eafd9de9d4bf37584"
+    },
+    {
+      "path": "server/api/app/sync.py",
+      "bytes": 23259,
+      "sha256": "abe636130c4473aaa16752155f75a293427c8504c3ff9206071f6680d8e7e15b"
+    },
+    {
+      "path": "server/public-site/SHA256SUMS.txt",
+      "bytes": 577,
+      "sha256": "0347eea2f5e624c0136e1e5b7fdcc0a6603491bc37f35cfa76e6276989667577"
+    },
+    {
+      "path": "server/public-site/assets/Manrope-0100.ttf",
+      "bytes": 164700,
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6"
+    },
+    {
+      "path": "server/public-site/assets/mark.png",
+      "bytes": 989384,
+      "sha256": "f1ec4808ee493209fbeafa65e4dd457a3e8cfb65cb5636957dbe1452b7501f39"
+    },
+    {
+      "path": "server/public-site/assets/study-desk-0100.png",
+      "bytes": 113295,
+      "sha256": "5686ed03dcead8aa6200fd2b2126320ae975eef94f04d2709d632e7a36d09ee3"
+    },
+    {
+      "path": "server/public-site/index.html",
+      "bytes": 6938,
+      "sha256": "829124bba5c2d4eb01f034b23d5936d9d7862bcb2dc80f81e92ce0e6f5f59c3d"
+    },
+    {
+      "path": "server/public-site/releases.json",
+      "bytes": 1000,
+      "sha256": "84ade913f3dd67911baa44e599050d7f5149e682e4c75b4c97bb30275e6c79e9"
+    },
+    {
+      "path": "server/public-site/site.js",
+      "bytes": 2097,
+      "sha256": "0214b0771d724c18fc592344cba0d7fa910a51b45650369606ea30cb1773a07e"
+    },
+    {
+      "path": "server/public-site/styles.css",
+      "bytes": 8534,
+      "sha256": "b8b158f20a0c52b7c16815122a5cd384414e97ea36d541fdfb6145e62e110577"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/package-lock.json",
+      "bytes": 218475,
+      "sha256": "25c96f8a6785a226b1c04868e0eec5221cbe1dee012fc2a9c7e4826f6b1179f5"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/package.json",
+      "bytes": 2352,
+      "sha256": "84a019c97013967d543673e35b45b416f2da6f16e52f8ea95cc2be62160ce5e7"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/App.tsx",
+      "bytes": 57680,
+      "sha256": "699c19e62c98794fd6d00b077d99867b1a2c818b301f33cbc3463223ad207237"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/api.ts",
+      "bytes": 16618,
+      "sha256": "908f18660fdbb9550e71df16c70ffe9f11d5077113ad912c600f8e51f3e40363"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/managedNotebookApiPort.ts",
+      "bytes": 8934,
+      "sha256": "ae79561deb8b3b2ec7cdc553357da40f645c439eac47ca9aa2e33cce0cfb59ca"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/managedNotebookClient.ts",
+      "bytes": 30571,
+      "sha256": "934e678ea41129e947a50df15345041bbde867f2baf94eb53e628ebc06d2a8a1"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/managedNotebookCollection.ts",
+      "bytes": 5636,
+      "sha256": "3e586005b970a4d69a4720e5b80c2a8b7d31333e43d801249a91bc35eed338a4"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/pwa/src/pwa-note-chrome.css",
+      "bytes": 11299,
+      "sha256": "c02d609c6752c35fc48864767d0751f68ff75b56045837284c2e22c4cb06efe8"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/App.tsx",
+      "bytes": 128755,
+      "sha256": "b46198563e9048d61dcd747040c48b3bd666f4995995a5561e8679b4aa5d1c5c"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/assets/fonts/Noto-LICENSE.txt",
+      "bytes": 4383,
+      "sha256": "e3fe471b16339ed535432bc16ea89882a1b9765b6cfe17ae174842fdad2ca4b9"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/assets/fonts/NotoSansMonoVariable.ttf",
+      "bytes": 569204,
+      "sha256": "3c874b97ce11dc54de004c81df02c8f0974033ed1b113377130cbdd71d478f11"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/assets/fonts/NotoSerifItalicVariable.ttf",
+      "bytes": 849200,
+      "sha256": "30f1c0204b6bb16d7b6f0984ce6e355ad61d05656201b3d13a2b19bb9baa6779"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/assets/fonts/NotoSerifVariable.ttf",
+      "bytes": 811080,
+      "sha256": "9374c4d81d2e21b03ac03fbc165458e8cf63e434a44c82193aa0305d20dc1037"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/MarkdownNoteEditor.tsx",
+      "bytes": 59532,
+      "sha256": "5256444f567aeef68aa227a1c801fe5cb7cfef0a37993297d55c798b5cdc693d"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/NotebookEditor.tsx",
+      "bytes": 6549,
+      "sha256": "02ef8a35be812519b5d58fd61d214b9d25d5361993ccb03cdcc09e0b2da194c7"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/NotebookLibraryView.tsx",
+      "bytes": 30452,
+      "sha256": "f8c8d6c072687212efc8df23c5db409f5c561f3e91d69a540e48f6c6a5fbb424"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/NotebookManagedControls.tsx",
+      "bytes": 8004,
+      "sha256": "a1ed90fb3ac9af33fd6c75045855363265d24b0c94a89a7fadf677c67cc5c889"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/NotebookSharedCollectionView.tsx",
+      "bytes": 8636,
+      "sha256": "420de9819d1a32c603131c92f9771914e166076d621e73748fd69a5d9c7a6a40"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/NotesWorkspace.tsx",
+      "bytes": 6203,
+      "sha256": "cf695914eda479939fcf5fd7ca06ba244313578d179d0a90221ca2c2a130227b"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/PaperGridAlignmentControls.tsx",
+      "bytes": 4737,
+      "sha256": "c339b5a5239ba68857873dbf7325fb1bec41ac99e70f3863bd0437c6136217db"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/PaperMobileReadView.tsx",
+      "bytes": 8806,
+      "sha256": "219d121d318b782e2647f02fab20cf4a72ef1b65d70f39f60b1aacc3b9ae7a72"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/PaperObjectVisual.tsx",
+      "bytes": 14211,
+      "sha256": "c44f1bb45416ef2e1a536ab3e98473d410241487393ce2e45ce82a500907c815"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/PaperSelectionTools.tsx",
+      "bytes": 11683,
+      "sha256": "d41b050476c7a4cf0f850272f7c334203773484925ceb6215a5dfab5fa5210aa"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/notebook-shared-collection.css",
+      "bytes": 1593,
+      "sha256": "1b97183300e12418c116d7da75a3ec095d4f6dd6b936adbef55ff0d49caad59d"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/notebook.css",
+      "bytes": 24105,
+      "sha256": "53e4f13dbe747b56c313566292080e8411575f290d7e1c31cedfe9779281fd71"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/paper-grid-alignment.css",
+      "bytes": 944,
+      "sha256": "1a4b557f631d5a8e3f4981136615e48b7c398a4c0728c77e8e5313ca931c1eb1"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/paper-mobile-reading.css",
+      "bytes": 15018,
+      "sha256": "cb05d2e017fa8ac03b5b5fe9d125f50fdbba45a793f3cc285c11c96dd0dc1b4f"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/components/paper-text-style.css",
+      "bytes": 21004,
+      "sha256": "37d6172bba14a49e782cdcab007c0e07b02fbf4296157db726940bb16478382a"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/hooks/usePaperDocument.ts",
+      "bytes": 43895,
+      "sha256": "64a8af9355ea30e64fcbf2cccab1fb1520627ec047d4ad3c21b17a1a6e96203e"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/hooks/usePaperReadingTheme.ts",
+      "bytes": 4214,
+      "sha256": "33d38a8e51701e0b765c8f3a967575f91aa6a1db711c2ec33d227214a2be8572"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/hooks/useServerSync.ts",
+      "bytes": 16578,
+      "sha256": "f95ac822f44d739a038beba1be1439e09d5f63e985475fe18d66060cb8e9c929"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/nativeManagedNotebookPort.ts",
+      "bytes": 12958,
+      "sha256": "de2e194aef0de45278e679deea04aa55f67d089f60cc985d377eec2faff3357d"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/nativeServerClient.ts",
+      "bytes": 3489,
+      "sha256": "5995014db0f71d45a9bde9a290e23f85c991c6bd76e9a985dde4cbb2dca9cc75"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/notebookDocumentCodec.ts",
+      "bytes": 866,
+      "sha256": "cacf58513077d8371fe7f07b1b42ae79676ff8877385f71117e70ddcd5aeeb6e"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/notebookManagedApplication.ts",
+      "bytes": 27662,
+      "sha256": "8ab553b0f5fd9d5fae7b0d81f6632f3b917a9b8f4c609ed431e9e4858bf983d2"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/notebookSession.ts",
+      "bytes": 4698,
+      "sha256": "a5a4dd75f3ffec3ea5589db9976b31b019287a1cd44dd60f068d03a745399de4"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/notebookSharedCollection.ts",
+      "bytes": 8436,
+      "sha256": "b443da689768e745cf87e14902f78b5fdf1c3641b9bee8b47274eb3ec33e6711"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperAssets.ts",
+      "bytes": 10449,
+      "sha256": "54f91305dbe1411cfb961be0a86beb530c22b567e11ec010f0b04ca48792ca0b"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperGridAlignment.ts",
+      "bytes": 5372,
+      "sha256": "7cdd69bcf901340a6278c9967246099542b9d854e4d4148e3a7be295ef0cb2c4"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperPageCopy.ts",
+      "bytes": 6676,
+      "sha256": "04e30c486b67432e48eb2bb1ce47e332ea8e7da22c844d2f82d767cfe4ed5ee1"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperReadingTheme.ts",
+      "bytes": 4945,
+      "sha256": "eaca31de3bf2ec186cbfbbec004b5b046cfdd3cba71ac49106ff290bbacc63b9"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperSearch.ts",
+      "bytes": 12149,
+      "sha256": "ed9af6bf9e98670a3eca32664810e1a93109be88b52ea4ef7235bfecf4d52628"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperTextSourceMap.ts",
+      "bytes": 6787,
+      "sha256": "81cac9fd5f2324e6e330228de3232f97061138e3af6b8ed88e2664516e8566f6"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperTextStyle.ts",
+      "bytes": 7309,
+      "sha256": "8bf7cb0bfbfbcf8229e6458d590fd7e509e13413e69e2a704477801770d720b0"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperTextStyleEditor.ts",
+      "bytes": 16968,
+      "sha256": "daab3f2f131108c90993224d57b51a2e00d34bf9487f949d22b1b20bf786df05"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/paperTextStyleFavorites.ts",
+      "bytes": 10262,
+      "sha256": "c4ee441f6a34ed49a455dfd58b2af9ffa3bcffdeb7a46cebbf7560dd86a98108"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src/lib/server.ts",
+      "bytes": 1954,
+      "sha256": "15517b15dcd02e8e5eac1e9737c3de066cdad35e34258bb8cc78cd8819911fc5"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.lock",
+      "bytes": 148675,
+      "sha256": "20792a9ccb6b583bd0934028d53f532f2f14d2b20d16cfee6454ad17f139284e"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.toml",
+      "bytes": 2100,
+      "sha256": "14da82cbd4a959babd3d5c08696ed4522ed001790094a69c4cfb9a2af522d145"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link/managed.rs",
+      "bytes": 32702,
+      "sha256": "94cf3700844a876edf7a7f9f019b540fcb99f1c3a36135bb5c2677cbf8168f38"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link.rs",
+      "bytes": 27659,
+      "sha256": "eca231c1c781f35b5f65f58b0df17530199dd224370387aeda7b6e931fea61b7"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/tauri.conf.json",
+      "bytes": 2696,
+      "sha256": "5a9e00c4ef6ac2e7455785ce3fd851f1ab11d8decda32d53f2603b7ed5d2ee34"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/vite.pwa.config.ts",
+      "bytes": 5174,
+      "sha256": "12d164c9514edd61a72391f4b3ceae5e8ad7c45b123dbb4c68847569d6b7701b"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/__init__.py",
+      "bytes": 64,
+      "sha256": "4b0f4485d330e905bd21b608c3b54c40fafd86db121d58f88a38f0f051b8bac6"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/backup_bundle.py",
+      "bytes": 7666,
+      "sha256": "eff409d9dda4b95c9dd3a5f9e3efa24174697971d15889af1c85781563c090cc"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/catalog.py",
+      "bytes": 7315,
+      "sha256": "7886cc5e7185c90bb9cd6eee5f1bea38e4e4a64933328da0657fb5a7e12ded9f"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/config.py",
+      "bytes": 4852,
+      "sha256": "29de3bfafd7842658eeca0587575a4a77b8396f60cceccfc2acf67a2747037c4"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/db.py",
+      "bytes": 12529,
+      "sha256": "250c7cacf17f25576c7771659580c1d5e9f05325b153081374fc9930636a175a"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/main.py",
+      "bytes": 24417,
+      "sha256": "a2a591a867fef43970f671fc7b2ee74afefcb713b78e127b72401e5fdb00b3c5"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/manage.py",
+      "bytes": 3808,
+      "sha256": "c68f7d045fa0da7880727f928f3ba24925759af7d5af518355ffcf223cf235e8"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/models.py",
+      "bytes": 953,
+      "sha256": "ed82e6b737930c03dafff191d3f3852a743a55eaba613b11aab6b1e948f8a977"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_acl.py",
+      "bytes": 23861,
+      "sha256": "d9802c22d4f83c6a31ce2d91add68efee4e58f835810ee7453f4fa6c4a32404b"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_acl_routes.py",
+      "bytes": 8004,
+      "sha256": "478745d41cae428e9d080dd72fabda990cc0ca46259400e93ae6a69e38f8cc50"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_acl_schema.py",
+      "bytes": 2688,
+      "sha256": "00a3c2c29bd1d42a0a6b25bf8882f3b593ca55f820e7648cef46271b90a4bf9a"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_blobs.py",
+      "bytes": 13237,
+      "sha256": "43ced4c5bdaf78891c2a5a41b868995077c40b483f6dda529e14a0e086a4931c"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_collection.py",
+      "bytes": 13702,
+      "sha256": "65befafc42405de28f9273d14d225c2528d633da74b1032db02db6774ad4dc2a"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_lifecycle.py",
+      "bytes": 23012,
+      "sha256": "1f70955aee21c8fe9c9e6f371a249889383aea1dfb65c642556097569363f613"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_lifecycle_routes.py",
+      "bytes": 3437,
+      "sha256": "4ab62f23d83071bcee3461b214148e23ec1aae8031db889e27c349347a8f774b"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_lifecycle_schema.py",
+      "bytes": 1326,
+      "sha256": "3f36d85a9374b6585dec7000cb553dac427f17fb4cfef589a7fc5d34915dddcc"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_managed_styles.py",
+      "bytes": 3763,
+      "sha256": "1ff5ce8ddc7d83db8a50f84136602fc6a0211c9ab09efe306f19d5c8926388f0"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_media_types.py",
+      "bytes": 1261,
+      "sha256": "de60e6b4383f0ec7f7897949544eb4d61784088b157635fd2b220d8d44f3b561"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_metadata.py",
+      "bytes": 2373,
+      "sha256": "d963352b56b032e1d00efa462c3331aaa0b15d10f8e9c3eda9d102241edc8b88"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_payload.py",
+      "bytes": 11523,
+      "sha256": "8b563c46975a3ca4f9fe48724470aed9d27958db427613667b43741394d72583"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_private_styles.py",
+      "bytes": 11882,
+      "sha256": "0b48adbe16680a68ffe8b7049cdcc85e48aea5dfda8d321feeab57072b8906b2"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_retention.py",
+      "bytes": 9847,
+      "sha256": "8b348c86c2854bed619748ed66041d49607e363e8571ed0261796fa93d0767dd"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_retention_routes.py",
+      "bytes": 2715,
+      "sha256": "f335a48a6f5083f353b8b4addd9ae8b2baeb17cc622fb229131be7be61b263dd"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_retention_schema.py",
+      "bytes": 1180,
+      "sha256": "7571a962e3a39cddb151667a1cc76da3c58433c817641c51d601e88867a53d08"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_startup.py",
+      "bytes": 11848,
+      "sha256": "9323f348f2741b6798e1b70989b110dc111af2e7e0901c17db8deb25c9f54080"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_style_sources.py",
+      "bytes": 13821,
+      "sha256": "850b3adf41db5758172867e587485242001b938e61eba20ebf9f0b3b1737492c"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_v2.py",
+      "bytes": 18655,
+      "sha256": "15063c988cda44623ea0db2975ba143183b4b6e6c26336189e5cf34f7e7c8dd8"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_v2_routes.py",
+      "bytes": 5772,
+      "sha256": "4f6ee0886e70d4085b84eb03b706b8f50bb590420e2a280c2b017d50e58a790a"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_v2_schema.py",
+      "bytes": 638,
+      "sha256": "79f8d8602635dde951601f86c27c1c0565d0e11d1906b65ba095bee22fecf562"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_validation.py",
+      "bytes": 12708,
+      "sha256": "0f5d96fb50cce8ca893da996e5714744d20710adae9824a084e803086529bf9c"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_wire.py",
+      "bytes": 4981,
+      "sha256": "787b60803efdb2e95a43436f899c7ee15a3498927e72be8cbe59bd41e92bd650"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_write_routes.py",
+      "bytes": 4888,
+      "sha256": "ee1a89bc7c72dd1550d6266f5aae360ccc1bb8ef6d8118443607f5b00058b787"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_write_schema.py",
+      "bytes": 1927,
+      "sha256": "869188ac9e2dfa712db271ac2c4d8f446571b3ae2db0ba3a59ef2315b41ef8da"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_writes.py",
+      "bytes": 25720,
+      "sha256": "f01659f130484c00fb167fb0a02dca9a9b0f59ac2c71e00e0f0181eff317b227"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/notebook_writes_v2.py",
+      "bytes": 11060,
+      "sha256": "32d23696e66d408993f3ed594f89c4cf4ec821af0cfeae50ba13a0804a2393d0"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/security.py",
+      "bytes": 5324,
+      "sha256": "3948b182f6b38333dcf82d17475144be1fc94b78c0f0855eafd9de9d4bf37584"
+    },
+    {
+      "path": "work-in-progress/server-api37/app/sync.py",
+      "bytes": 23806,
+      "sha256": "cff1298908a688a24a269f9617c6443a84b5ec084ffe80e9cf2993c214867819"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperBuiltInTemplates.tsx",
+      "bytes": 3790,
+      "sha256": "56cded6690ed43fa59f092547013c9866c391a4e1ec1cbe7a11d2e0c2b79d9a4"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperPageSettings.tsx",
+      "bytes": 3399,
+      "sha256": "57eab814c26126a9125d8570604cadadef62bdfebab96b0dff6205b18baf5391"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/paper-built-in-templates.css",
+      "bytes": 3140,
+      "sha256": "5f6877ebd730ac64cde8b0ac3edc5d700fe771c66a6895f132d5f2387f57c295"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/build-paper-built-in-templates.mjs",
+      "bytes": 4340,
+      "sha256": "becb7ecbaedd1627682a4682b25481468c965ef970bf67e0368572165de6dc25"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/mounted-cleanup.mjs",
+      "bytes": 2702,
+      "sha256": "ea2f6dc642e01a6c324cf76536a68600cc624e8f6281307c0b55aeacc148bab8"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/paper-built-in-templates-entry.tsx",
+      "bytes": 439,
+      "sha256": "4e29181dd0f2e81b0bcfee5aa4fb0bba85f9c629f092aac87ccc463fe4fe20b0"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/run-paper-built-in-templates.mjs",
+      "bytes": 13676,
+      "sha256": "6d01fe3be8976a517158f4030528a20d6d868c9c9d9045848ad870d46737c4c4"
+    }
+  ]
+}

@@ -1,13 +1,6 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { clampAiPanelWidth, maxAiPanelWidth } from "../src/lib/layout.ts";
-
-test("réserve 680 px au contenu central dans la fenêtre minimale", () => {
-  assert.equal(maxAiPanelWidth(1120), 364);
-  assert.equal(clampAiPanelWidth(680, 1120), 364);
-});
-
-test("conserve la largeur maximale sur un grand écran", () => {
-  assert.equal(maxAiPanelWidth(1600), 680);
-  assert.equal(clampAiPanelWidth(520, 1600), 520);
-});
+import assert from 'node:assert/strict';
+import { maxAiPanelWidth, MIN_MAIN_WORKSPACE_WIDTH } from '../src/lib/layout.ts';
+const viewport = 1430;
+assert.ok(viewport - 184 - maxAiPanelWidth(viewport, 800) >= MIN_MAIN_WORKSPACE_WIDTH, 'Expanded navigation must leave enough width to read/edit the workspace');
+assert.ok(maxAiPanelWidth(viewport, 600) > maxAiPanelWidth(viewport, 800), 'Compact navigation gives the panel back its space');
+assert.ok(maxAiPanelWidth(3000, 800) <= 680, 'Panel should not swallow a large screen');

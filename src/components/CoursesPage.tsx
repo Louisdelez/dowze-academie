@@ -1,3 +1,4 @@
+import { appStorage } from "../lib/appStorage";
 import {
   BookOpen,
   Bot,
@@ -134,7 +135,7 @@ function noteUpdatedAt(value: string) {
 
 function readLocalFlag(key: string, fallback: boolean) {
   try {
-    const value = window.localStorage.getItem(key);
+    const value = appStorage.getItem(key);
     return value === null ? fallback : value === "true";
   } catch {
     return fallback;
@@ -143,7 +144,7 @@ function readLocalFlag(key: string, fallback: boolean) {
 
 function writeLocalFlag(key: string, value: boolean) {
   try {
-    window.localStorage.setItem(key, String(value));
+    appStorage.setItem(key, String(value));
   } catch {
     window.dispatchEvent(new CustomEvent("etude:persistence-error", { detail: { key } }));
   }
@@ -178,6 +179,16 @@ export function CoursesPage({
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<CourseTab>("program");
   const [historySearch, setHistorySearch] = useState("");
+  const [clipboardStatus, setClipboardStatus] = useState("");
+  const copyConversationLink = async (conversation: Conversation) => {
+    setClipboardStatus("");
+    try {
+      await navigator.clipboard.writeText(conversation.url);
+      setClipboardStatus("Lien copié. Tu peux le coller dans ton navigateur.");
+    } catch {
+      setClipboardStatus("Le lien n’a pas pu être copié. Ouvre la conversation pour accéder à la session.");
+    }
+  };
   const [coursesSidebarOpen, setCoursesSidebarOpen] = useState(() =>
     readLocalFlag(sidebarStorageKey, true)
   );
@@ -195,10 +206,10 @@ export function CoursesPage({
     !isEnglish || conversation.curriculumScope === selectedCurriculumScope;
 
   useEffect(() => {
-    if (selected?.modules.length) {
-      setOpenModules([selected.modules[0].id]);
-      setOpenItems(selected.modules[0].items[0] ? [selected.modules[0].items[0].id] : []);
-    }
+    setHistorySearch("");
+    setClipboardStatus("");
+    setOpenModules(selected?.modules[0] ? [selected.modules[0].id] : []);
+    setOpenItems(selected?.modules[0]?.items[0] ? [selected.modules[0].items[0].id] : []);
   }, [selected?.cefrLevel, selected?.id]);
 
   useEffect(() => {
@@ -307,6 +318,10 @@ export function CoursesPage({
   );
   const completedLessons = allLessons.filter((lesson) => lesson.completed).length;
   const progress = allLessons.length ? Math.round((completedLessons / allLessons.length) * 100) : 0;
+  type NextCourse = { moduleId: string; itemId: string; lessonId?: string; title: string };
+  const nextCourse = selected.modules.flatMap<NextCourse>((module) => module.items.flatMap<NextCourse>((item) => item.lessons?.length
+    ? item.lessons.filter((lesson) => !lesson.completed).map((lesson) => ({ moduleId: module.id, itemId: item.id, lessonId: lesson.id, title: lesson.title }))
+    : !item.completed ? [{ moduleId: module.id, itemId: item.id, lessonId: undefined, title: item.title }] : []))[0];
   const chapterCount = selected.chapterCount ?? allItems.length;
   const courseCount = allLessons.length;
   const hasCurriculumMetadata = Boolean(
@@ -545,11 +560,17 @@ export function CoursesPage({
           )}
         </section>
 
-        {!isEnglishUnconfigured && <div className="course-tabs" role="tablist" aria-label="Contenu de la matière">
-          <button role="tab" aria-selected={tab === "program"} className={tab === "program" ? "is-active" : ""} onClick={() => setTab("program")}>
+        {!isEnglishUnconfigured && <div className="course-tabs" role="tablist" aria-label="Contenu de la matière" onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const next: CourseTab = event.key === "Home" ? "program" : event.key === "End" ? "history" : tab === "program" ? "history" : "program";
+          setTab(next);
+          event.currentTarget.querySelector<HTMLButtonElement>(`[data-course-tab="${next}"]`)?.focus();
+        }}>
+          <button id="course-program-tab" data-course-tab="program" aria-controls="course-program-panel" tabIndex={tab === "program" ? 0 : -1} role="tab" aria-selected={tab === "program"} className={tab === "program" ? "is-active" : ""} onClick={() => setTab("program")}>
             <FileText /> Programme annuel
           </button>
-          <button role="tab" aria-selected={tab === "history"} className={tab === "history" ? "is-active" : ""} onClick={() => setTab("history")}>
+          <button id="course-history-tab" data-course-tab="history" aria-controls="course-history-panel" tabIndex={tab === "history" ? 0 : -1} role="tab" aria-selected={tab === "history"} className={tab === "history" ? "is-active" : ""} onClick={() => setTab("history")}>
             <History /> Historique IA
               <span>{subjectConversations.length}</span>
           </button>
@@ -598,7 +619,7 @@ export function CoursesPage({
             </div>
           </section>
         ) : tab === "program" ? (
-          <div className="program-view">
+          <div id="course-program-panel" role="tabpanel" aria-labelledby="course-program-tab" tabIndex={0} className="program-view">
             <section className="ai-teacher-card" aria-labelledby="ai-teacher-title">
               <span className="ai-teacher-art" aria-hidden="true">
                 <img
@@ -626,6 +647,10 @@ export function CoursesPage({
               </div>
             </section>
 
+            {nextCourse && <section className="course-next-step" aria-label="Prochain cours du programme">
+              <div><p className="eyebrow">Prochain cours à travailler</p><h3>{nextCourse.title}</h3><p>Ouvre une séance dédiée, puis coche le cours une fois terminé.</p></div>
+              <button className="primary-button" onClick={() => onStartLesson(selected.id, nextCourse.moduleId, nextCourse.itemId, nextCourse.lessonId, "course")}><Play aria-hidden="true" /> Étudier ce cours</button>
+            </section>}
             <div className="program-summary">
               <div>
                 <p className="eyebrow">Progression annuelle</p>
@@ -633,7 +658,7 @@ export function CoursesPage({
               </div>
               <div className="program-progress-copy">
                 <span>{progress}%</span>
-                <div><i style={{ width: `${progress}%`, background: selected.color }} /></div>
+                <div role="progressbar" aria-label="Cours terminés dans cette matière" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${progress}%`, background: selected.color }} /></div>
               </div>
             </div>
 
@@ -649,6 +674,8 @@ export function CoursesPage({
                   <article className={`program-module ${isOpen ? "is-open" : ""}`} key={courseModule.id}>
                     <button
                       className="module-heading"
+                      aria-expanded={isOpen}
+                      aria-controls={`module-items-${courseModule.id}`}
                       onClick={() => setOpenModules((current) =>
                         current.includes(courseModule.id)
                           ? current.filter((id) => id !== courseModule.id)
@@ -666,7 +693,7 @@ export function CoursesPage({
                       <ChevronDown />
                     </button>
                     {isOpen && (
-                      <div className="module-items">
+                      <div className="module-items" id={`module-items-${courseModule.id}`}>
                         {courseModule.items.map((item) => {
                           const itemLessons = item.lessons ?? [];
                           const isItemOpen = openItems.includes(item.id);
@@ -852,22 +879,25 @@ export function CoursesPage({
             </div>
           </div>
         ) : (
-          <div className="history-view">
+          <div id="course-history-panel" role="tabpanel" aria-labelledby="course-history-tab" tabIndex={0} className="history-view">
             <div className="history-toolbar">
               <label className="search-field history-search">
                 <Search />
                 <input
+                  type="search"
                   value={historySearch}
                   onChange={(event) => setHistorySearch(event.target.value)}
                   placeholder="Rechercher dans les noms et notes"
                   aria-label="Rechercher dans l’historique IA"
                 />
+                {historySearch && <button type="button" aria-label="Effacer la recherche dans l’historique" onClick={() => setHistorySearch("")}>×</button>}
               </label>
               <button className="secondary-button" onClick={() => onStartAi(selected.id)}>
                 <MessageSquarePlus /> Nouvelle conversation
               </button>
             </div>
 
+            <div role="status" aria-live="polite" className="history-feedback">{clipboardStatus && <p>{clipboardStatus}</p>}</div>
             {subjectConversations.length > 0 ? (
               <div className="conversation-list">
                 {subjectConversations.map((conversation) => {
@@ -923,12 +953,12 @@ export function CoursesPage({
                       <div>
                         {conversation.provider !== "freechat" && (
                           <button
-                            aria-label="Copier le lien"
-                            onClick={() => navigator.clipboard.writeText(conversation.url)}
+                            aria-label={`Copier le lien de ${conversation.name || "la conversation"}`}
+                            onClick={() => void copyConversationLink(conversation)}
                           ><Copy /></button>
                         )}
-                        <button aria-label="Modifier" onClick={() => onEditConversation(conversation)}><Pencil /></button>
-                        <button className="danger-icon" aria-label="Supprimer" onClick={() => onDeleteConversation(conversation)}><Trash2 /></button>
+                        <button aria-label={`Modifier ${conversation.name || "la conversation"}`} onClick={() => onEditConversation(conversation)}><Pencil /></button>
+                        <button className="danger-icon" aria-label={`Supprimer ${conversation.name || "la conversation"}`} onClick={() => onDeleteConversation(conversation)}><Trash2 /></button>
                       </div>
                     </div>
                   </article>
@@ -944,6 +974,7 @@ export function CoursesPage({
                     ? "Essayez un autre mot dans le nom ou la note."
                     : "Démarrez une session : son lien apparaîtra ici après votre premier message."}
                 </p>
+                {historySearch && <button className="secondary-button" onClick={() => setHistorySearch("")}>Effacer la recherche</button>}
                 {!historySearch && (
                   <button className="primary-button" onClick={() => onStartAi(selected.id)}>
                     <MessageSquarePlus /> Commencer une conversation
@@ -965,11 +996,20 @@ export function CoursesPage({
           setPendingEnglishLevel(null);
         }}
       >
-        <div className="english-level-dialog-options" role="radiogroup" aria-label="Nouveau niveau d’anglais">
+        <div className="english-level-dialog-options" role="radiogroup" aria-label="Nouveau niveau d’anglais" onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const currentIndex = Math.max(0, ENGLISH_LEVEL_OPTIONS.findIndex((option) => option.value === pendingEnglishLevel));
+          const index = event.key === "Home" ? 0 : event.key === "End" ? ENGLISH_LEVEL_OPTIONS.length - 1
+            : (currentIndex + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1) + ENGLISH_LEVEL_OPTIONS.length) % ENGLISH_LEVEL_OPTIONS.length;
+          setPendingEnglishLevel(ENGLISH_LEVEL_OPTIONS[index].value);
+          event.currentTarget.querySelectorAll<HTMLButtonElement>("[role=radio]")[index]?.focus();
+        }}>
           {ENGLISH_LEVEL_OPTIONS.map((option) => (
             <button
               type="button"
               role="radio"
+              tabIndex={pendingEnglishLevel === option.value || (!pendingEnglishLevel && option.value === ENGLISH_LEVEL_OPTIONS[0].value) ? 0 : -1}
               aria-checked={pendingEnglishLevel === option.value}
               className={pendingEnglishLevel === option.value ? "is-selected" : ""}
               key={option.value}

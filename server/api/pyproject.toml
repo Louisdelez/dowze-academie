@@ -1,0 +1,21 @@
+[project]
+name = "dowze-nas-api"
+version = "0.1.0"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "argon2-cffi==25.1.0",
+  "fastapi==0.116.1",
+  "pydantic[email]==2.11.7",
+  "uvicorn[standard]==0.35.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "httpx==0.28.1",
+  "pyyaml==6.0.2",
+  "pytest==8.4.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reload-ai"
+description = "Enables the reload_ai command without any pre-configured scope."
+commands.allow = ["reload_ai"]
+
+[[permission]]
+identifier = "deny-reload-ai"
+description = "Denies the reload_ai command without any pre-configured scope."
+commands.deny = ["reload_ai"]

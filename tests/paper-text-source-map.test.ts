@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {renderedMarkdownOffsets,rehypePaperSourceMap} from '../src/lib/paperTextSourceMap.ts';
+import {migratePaper,applyPaperCommand,isPaperDocument} from '../src/lib/notebookDocument.ts';
+import {textFlowFingerprint,reflowPaperText} from '../src/lib/paperTextFlow.ts';
+test('Source positions preserve escaped punctuation, decoded entities, Unicode and CRLF boundaries',()=>{
+ const raw='élève \\* &amp; &#x1F600;\r\nfin',display='élève * & 😀\nfin',map=renderedMarkdownOffsets(raw,display)!;assert.equal(map.length,display.length+1);assert.equal(map[display.indexOf('*')],raw.indexOf('\\*'));assert.equal(map[display.indexOf('&')],raw.indexOf('&amp;'));assert.equal(map[display.indexOf('😀')],raw.indexOf('&#x1F600;'));assert.equal(map[display.indexOf('\n')],raw.indexOf('\r'));assert.equal(map.at(-1),raw.length);assert.equal(renderedMarkdownOffsets('different','value'),null);
+});
+test('Fenced, inline and indented code map literal syntax without decoding code escapes or entities',()=>{
+ for(const [raw,value] of [['```ts\nconst a = "&amp;";\n```','const a = "&amp;";\n'],['` code `','code'],['`a\nb`','a b'],['    let x = 1;\n    return x;','let x = 1;\nreturn x;\n'],['    let x = 1;\r\n    return x;','let x = 1;\nreturn x;\n']]){const map=renderedMarkdownOffsets(raw,value,'code');assert.ok(map,raw);assert.equal(map.length,value.length+1);assert.ok(map.every((n,i)=>n>=0&&(i===0||n>=map[i-1])));assert.equal(raw[map[0]],value[0]);}
+});
+test('Rich source markers keep KaTeX atomic and code text intact before code highlighting',()=>{
+ const text:any={type:'text',value:'hello',position:{start:{offset:2},end:{offset:7}}},code:any={type:'element',tagName:'code',properties:{className:['language-js']},children:[{type:'text',value:'let a=1;'}],position:{start:{offset:10},end:{offset:29}}},formula:any={type:'element',tagName:'code',properties:{className:['math-inline']},children:[{type:'text',value:'x^2'}],position:{start:{offset:30},end:{offset:35}}},tree:any={type:'root',children:[text,code,formula]};rehypePaperSourceMap()(tree);assert.equal(tree.children[0].properties['data-md-from'],2);assert.equal(tree.children[1].children[0].type,'text');assert.equal(tree.children[1].properties['data-md-mode'],'code');assert.equal(tree.children[2].properties['data-md-atomic'],'true');assert.equal(tree.children[2].children[0],formula);
+});
+test('Page source ranges stay optional for legacy flows, reject malformed offsets and expire after changed layout',()=>{
+ let doc=migratePaper('source-map','abcdef',null),root=doc.objects[0],fingerprint=textFlowFingerprint(root.markdown!,root.width,root.height);doc=applyPaperCommand(doc,reflowPaperText(doc,root.id,fingerprint,[0,400,800],[0,3,6])!);assert.ok(isPaperDocument(doc));assert.deepEqual(doc.objects[0].textFlow!.sourceOffsets,[0,3,6]);assert.throws(()=>reflowPaperText(doc,root.id,fingerprint,[0,400,800],[0,5,4]));assert.equal(isPaperDocument({...doc,objects:[{...doc.objects[0],textFlow:{...doc.objects[0].textFlow,sourceOffsets:[0,-1,6]}}]}),false);assert.equal(reflowPaperText(doc,root.id,fingerprint,[0,400,800]),null);const changed=applyPaperCommand(doc,reflowPaperText(doc,root.id,fingerprint,[0,200,800])!);assert.equal(changed.objects[0].textFlow!.sourceOffsets,undefined);assert.equal(changed.objects[0].markdown,'abcdef');
+});

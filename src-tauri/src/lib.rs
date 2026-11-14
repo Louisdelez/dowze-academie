@@ -1,5 +1,13 @@
+mod asset_sync;
+mod paper_export;
+mod conversation_archive;
 mod free_chat;
 mod local_auth;
+mod panel_capture;
+mod server_link;
+mod workspace_cache;
+mod automatic_updates;
+mod startup_window;
 
 #[cfg(target_os = "macos")]
 use block2::RcBlock;
@@ -2802,14 +2810,54 @@ fn handle_pending_lesson_page_load(webview: &Webview, payload: &PageLoadPayload<
     }
 }
 
+// GTK's vertical box ignores child webview coordinates. Keep the main view
+// filling the window and place the remote widget in an aligned GTK overlay.
+#[cfg(target_os = "linux")]
+fn position_linux_panel(webview: &Webview, bounds: PanelBounds) -> CommandResult<()> {
+    webview.with_webview(move |platform| {
+        use gtk::prelude::*;
+        let panel = platform.inner();
+        if let Some(container) = panel.parent().and_then(|p| p.downcast::<gtk::Box>().ok()) {
+            container.remove(&panel);
+            let overlay = container.children().into_iter()
+                .find_map(|child| child.downcast::<gtk::Overlay>().ok())
+                .unwrap_or_else(|| {
+                    let overlay = gtk::Overlay::new();
+                    overlay.set_hexpand(true);
+                    overlay.set_vexpand(true);
+                    if let Some(main) = container.children().first() {
+                        container.remove(main);
+                        main.set_size_request(1, 1);
+                        main.set_hexpand(true);
+                        main.set_vexpand(true);
+                        overlay.add(main);
+                    }
+                    container.pack_start(&overlay, true, true, 0);
+                    overlay.show_all();
+                    overlay
+                });
+            overlay.add_overlay(&panel);
+        }
+        panel.set_halign(gtk::Align::Start);
+        panel.set_valign(gtk::Align::Start);
+        panel.set_margin_start(bounds.x.round() as i32);
+        panel.set_margin_top(bounds.y.round() as i32);
+        panel.set_size_request(bounds.width.round() as i32, bounds.height.round() as i32);
+    }).map_err(|error| format!("Positionnement GTK impossible: {error}"))
+}
+
 fn update_existing_panel(
     webview: &Webview,
     visible: bool,
     bounds: PanelBounds,
 ) -> CommandResult<()> {
+    #[cfg(target_os = "linux")]
+    position_linux_panel(webview, bounds)?;
+    #[cfg(not(target_os = "linux"))]
     webview
         .set_position(bounds.position())
         .map_err(|error| format!("Impossible de positionner le panneau IA: {error}"))?;
+    #[cfg(not(target_os = "linux"))]
     webview
         .set_size(bounds.size())
         .map_err(|error| format!("Impossible de redimensionner le panneau IA: {error}"))?;
@@ -2924,8 +2972,10 @@ async fn remove_google_web_profile(
     caller: Webview,
     pending_state: State<'_, PendingLessonState>,
     remote_state: State<'_, RemoteWebSessionState>,
+    capture_state: State<'_, panel_capture::PanelCaptureState>,
 ) -> CommandResult<GoogleWebProfileRemovalResult> {
     require_main_caller(&caller)?;
+    capture_state.invalidate("Capture arrêtée pendant la suppression de la session web Google.");
 
     #[cfg(not(target_os = "macos"))]
     {
@@ -3026,12 +3076,20 @@ async fn sync_ai_panel(
     let new_window_state = remote_state.inner().clone();
     let page_load_app = caller.app_handle().clone();
 
+    let capture_script = caller
+        .app_handle()
+        .state::<panel_capture::PanelCaptureState>()
+        .initialization_script(provider)?;
     let builder = WebviewBuilder::new(AI_PANEL_LABEL, WebviewUrl::External(initial_url))
+        .initialization_script(capture_script)
         // The default persistent data store keeps the user's provider cookies.
         .incognito(false)
         .on_navigation(move |url| {
             let navigation_allowed = validate_webview_navigation(url).is_ok();
             if navigation_allowed {
+                navigation_app
+                    .state::<panel_capture::PanelCaptureState>()
+                    .navigation_started();
                 if let Ok(provider) = provider_for_url(url) {
                     emit_navigation(&navigation_app, url, provider);
                 }
@@ -3095,6 +3153,9 @@ async fn sync_ai_panel(
         .add_child(builder, bounds.position(), bounds.size())
         .map_err(|error| format!("Impossible de créer le panneau IA: {error}"))?;
 
+    #[cfg(target_os = "linux")]
+    position_linux_panel(&webview, bounds)?;
+
     // A transition can begin while WebKit is finishing the child creation.
     // Close that late child before it can reveal a provider page over the
     // local authentication screen.
@@ -3110,13 +3171,19 @@ async fn sync_ai_panel(
 }
 
 #[tauri::command]
-fn navigate_ai(
+async fn navigate_ai(
     caller: Webview,
     state: State<'_, PendingLessonState>,
     url: String,
 ) -> CommandResult<()> {
     require_main_caller(&caller)?;
     let (url, _) = parse_allowed_url(&url)?;
+    let remote = caller.app_handle().state::<RemoteWebSessionState>();
+    let _transition_guard = remote.begin_account_transition()?;
+    let app = caller.app_handle().clone();
+    tauri::async_runtime::spawn_blocking(move || panel_capture::drain_before_transition(&app))
+        .await
+        .map_err(|_| "Sauvegarde interrompue.")??;
     // Any explicit navigation (resources, archived sessions, provider home)
     // cancels a composer injection that may still be waiting on a page load.
     let mut pending = state
@@ -3131,11 +3198,13 @@ fn navigate_ai(
 }
 
 #[tauri::command]
-fn secure_ai_panel_for_account_transition(
+async fn secure_ai_panel_for_account_transition(
     caller: Webview,
     state: State<'_, PendingLessonState>,
     remote_state: State<'_, RemoteWebSessionState>,
+    capture_state: State<'_, panel_capture::PanelCaptureState>,
     provider: AiProvider,
+    resume_account_id: Option<String>,
 ) -> CommandResult<()> {
     require_main_caller(&caller)?;
 
@@ -3144,6 +3213,20 @@ fn secure_ai_panel_for_account_transition(
     // provider's home page. Free Chat deliberately has no remote WebView.
     let _next_home = account_transition_home(provider)?;
     let _transition_guard = remote_state.begin_account_transition()?;
+    // A main-WebView reload is not an account transition. Reuse only a panel
+    // whose native capture owner matches the independently verified session.
+    if let Some(account_id) = resume_account_id.as_deref() {
+        caller.app_handle().state::<local_auth::LocalAuthState>().require_active_account(account_id)?;
+        if capture_state.belongs_to(account_id, provider) && ai_panel(&caller).is_some() {
+            return Ok(());
+        }
+    }
+
+    let app = caller.app_handle().clone();
+    tauri::async_runtime::spawn_blocking(move || panel_capture::drain_before_transition(&app))
+        .await
+        .map_err(|_| "Sauvegarde interrompue.")??;
+    capture_state.invalidate("Capture sauvegardée avant le changement de compte ou de formation.");
     let panel = ai_panel(&caller);
     let mut failures = Vec::new();
 
@@ -3252,8 +3335,14 @@ fn current_ai_url(caller: Webview) -> CommandResult<Option<String>> {
 }
 
 #[tauri::command]
-fn reload_ai(caller: Webview) -> CommandResult<()> {
+async fn reload_ai(caller: Webview) -> CommandResult<()> {
     require_main_caller(&caller)?;
+    let remote = caller.app_handle().state::<RemoteWebSessionState>();
+    let _transition_guard = remote.begin_account_transition()?;
+    let app = caller.app_handle().clone();
+    tauri::async_runtime::spawn_blocking(move || panel_capture::drain_before_transition(&app))
+        .await
+        .map_err(|_| "Sauvegarde interrompue.")??;
     required_ai_panel(&caller)?
         .reload()
         .map_err(|error| format!("Impossible de recharger le panneau IA: {error}"))
@@ -3522,21 +3611,82 @@ async fn delete_account_assessment_documents(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let exit_saved = Arc::new(AtomicBool::new(false));
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .on_window_event(|window, event| {
+            if window.label() != MAIN_WEBVIEW_LABEL {
+                return;
+            }
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let app = window.app_handle().clone();
+                let Ok(guard) = app
+                    .state::<RemoteWebSessionState>()
+                    .begin_account_transition()
+                else {
+                    return;
+                };
+                let window = window.clone();
+                std::thread::spawn(move || {
+                    let _guard = guard;
+                    match workspace_cache::flush_before_exit(&app).and_then(|_| panel_capture::drain_before_transition(&app)) {
+                        Ok(()) => {
+                            let _ = window.destroy();
+                        }
+                        Err(error) => {
+                            let _ = window.emit("capture-save-error", error);
+                            let _ = window.emit("workspace-close-cancelled", ());
+                        }
+                    }
+                });
+            }
+        })
         .manage(PendingLessonState::default())
+        .manage(server_link::ServerLinkState::default())
+        .manage(server_link::managed::ManagedTransportState::default())
+        .manage(workspace_cache::WorkspaceCacheState::default())
+        .manage(automatic_updates::AutomaticUpdates::default())
+        .manage(startup_window::StartupWindow::default())
         .manage(RemoteWebSessionState::default())
+        .manage(panel_capture::PanelCaptureState::default())
         .manage(local_auth::LocalAuthState::default())
         .manage(AssessmentDocumentsState::default())
+        .manage(conversation_archive::ConversationArchiveState::default())
+        .manage(paper_export::NotebookExportState::default())
         .invoke_handler(tauri::generate_handler![
             local_auth::local_account_status,
             local_auth::register_local_account,
             local_auth::login_local_account,
             local_auth::logout_local_account,
             native_capabilities,
+            workspace_cache::workspace_cache_flushed,
+            automatic_updates::automatic_update_probe,
+            automatic_updates::automatic_update_stage,
+            automatic_updates::automatic_update_apply,
+            automatic_updates::automatic_update_boot,
+            startup_window::startup_workspace_ready,
+            server_link::server_request,
+            server_link::server_blob_request,
+            server_link::managed::managed_native_capture,
+            server_link::managed::managed_native_begin,
+            server_link::managed::managed_native_append,
+            server_link::managed::managed_native_execute,
+            server_link::managed::managed_native_read,
+            server_link::managed::managed_native_retire,
+            local_auth::login_synchronized_account,
+            asset_sync::native_archive_list,
+            asset_sync::native_asset_read,
+            asset_sync::native_asset_import,
+            asset_sync::native_asset_delete,
             request_microphone_access,
             open_google_web_profile,
             remove_google_web_profile,
+            panel_capture::configure_ai_capture,
+            panel_capture::poll_ai_capture,
+            panel_capture::push_ai_capture,
             sync_ai_panel,
             navigate_ai,
             secure_ai_panel_for_account_transition,
@@ -3547,6 +3697,11 @@ pub fn run() {
             open_calendar_in_apple,
             save_calendar_ics,
             save_text_document,
+            paper_export::save_notebook_export,
+            paper_export::begin_notebook_export,
+            paper_export::push_notebook_export,
+            paper_export::finish_notebook_export,
+            paper_export::abort_notebook_export,
             read_formation_package,
             save_formation_kit,
             open_google_calendar_import,
@@ -3555,13 +3710,47 @@ pub fn run() {
             free_chat::delete_free_chat_api_key,
             free_chat::send_free_chat_message,
             free_chat::list_ollama_models,
+            conversation_archive::persist_conversation_capture,
+            conversation_archive::read_conversation_archive,
+            conversation_archive::delete_conversation_archive,
             import_assessment_pdfs,
             open_assessment_pdf,
             delete_assessment_documents,
             delete_account_assessment_documents
         ])
-        .run(tauri::generate_context!())
-        .expect("erreur pendant l’exécution de l’application Dowze Academie");
+        .build(tauri::generate_context!())
+        .expect("erreur pendant la construction de l’application Dowze Academie")
+        .run(move |app, event| {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if exit_saved.load(Ordering::Acquire)
+                    || app.get_webview(MAIN_WEBVIEW_LABEL).is_none()
+                {
+                    return;
+                }
+                api.prevent_exit();
+                let Ok(guard) = app
+                    .state::<RemoteWebSessionState>()
+                    .begin_account_transition()
+                else {
+                    return;
+                };
+                let app = app.clone();
+                let exit_saved = Arc::clone(&exit_saved);
+                std::thread::spawn(move || {
+                    let _guard = guard;
+                    match workspace_cache::flush_before_exit(&app).and_then(|_| panel_capture::drain_before_transition(&app)) {
+                        Ok(()) => {
+                            exit_saved.store(true, Ordering::Release);
+                            app.exit(code.unwrap_or(0));
+                        }
+                        Err(error) => {
+                            let _ = app.emit("capture-save-error", error);
+                            let _ = app.emit("workspace-close-cancelled", ());
+                        }
+                    }
+                });
+            }
+        });
 }
 
 #[cfg(test)]

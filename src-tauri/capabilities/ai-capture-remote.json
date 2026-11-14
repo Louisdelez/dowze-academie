@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "ai-capture-remote",
+  "description": "Canal IPC minimal du collecteur document-start vers la persistance native.",
+  "remote": {
+    "urls": [
+      "https://chatgpt.com/*",
+      "https://claude.ai/*"
+    ]
+  },
+  "webviews": ["ai-panel"],
+  "permissions": ["allow-push-ai-capture"]
+}

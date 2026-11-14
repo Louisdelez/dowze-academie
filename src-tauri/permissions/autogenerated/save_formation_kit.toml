@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-formation-kit"
+description = "Enables the save_formation_kit command without any pre-configured scope."
+commands.allow = ["save_formation_kit"]
+
+[[permission]]
+identifier = "deny-save-formation-kit"
+description = "Denies the save_formation_kit command without any pre-configured scope."
+commands.deny = ["save_formation_kit"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-logout-local-account"
+description = "Enables the logout_local_account command without any pre-configured scope."
+commands.allow = ["logout_local_account"]
+
+[[permission]]
+identifier = "deny-logout-local-account"
+description = "Denies the logout_local_account command without any pre-configured scope."
+commands.deny = ["logout_local_account"]

@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "kind": "SOURCE_ONLY_N025_MANAGED_STYLES_BACKEND37_NOT_DEPLOYED",
+  "files": {
+    "app/__init__.py": {
+      "sha256": "4b0f4485d330e905bd21b608c3b54c40fafd86db121d58f88a38f0f051b8bac6",
+      "bytes": 64
+    },
+    "app/backup_bundle.py": {
+      "sha256": "eff409d9dda4b95c9dd3a5f9e3efa24174697971d15889af1c85781563c090cc",
+      "bytes": 7666
+    },
+    "app/catalog.py": {
+      "sha256": "7886cc5e7185c90bb9cd6eee5f1bea38e4e4a64933328da0657fb5a7e12ded9f",
+      "bytes": 7315
+    },
+    "app/config.py": {
+      "sha256": "29de3bfafd7842658eeca0587575a4a77b8396f60cceccfc2acf67a2747037c4",
+      "bytes": 4852
+    },
+    "app/db.py": {
+      "sha256": "250c7cacf17f25576c7771659580c1d5e9f05325b153081374fc9930636a175a",
+      "bytes": 12529
+    },
+    "app/main.py": {
+      "sha256": "a2a591a867fef43970f671fc7b2ee74afefcb713b78e127b72401e5fdb00b3c5",
+      "bytes": 24417
+    },
+    "app/manage.py": {
+      "sha256": "c68f7d045fa0da7880727f928f3ba24925759af7d5af518355ffcf223cf235e8",
+      "bytes": 3808
+    },
+    "app/models.py": {
+      "sha256": "ed82e6b737930c03dafff191d3f3852a743a55eaba613b11aab6b1e948f8a977",
+      "bytes": 953
+    },
+    "app/notebook_acl.py": {
+      "sha256": "d9802c22d4f83c6a31ce2d91add68efee4e58f835810ee7453f4fa6c4a32404b",
+      "bytes": 23861
+    },
+    "app/notebook_acl_routes.py": {
+      "sha256": "478745d41cae428e9d080dd72fabda990cc0ca46259400e93ae6a69e38f8cc50",
+      "bytes": 8004
+    },
+    "app/notebook_acl_schema.py": {
+      "sha256": "00a3c2c29bd1d42a0a6b25bf8882f3b593ca55f820e7648cef46271b90a4bf9a",
+      "bytes": 2688
+    },
+    "app/notebook_blobs.py": {
+      "sha256": "43ced4c5bdaf78891c2a5a41b868995077c40b483f6dda529e14a0e086a4931c",
+      "bytes": 13237
+    },
+    "app/notebook_collection.py": {
+      "sha256": "65befafc42405de28f9273d14d225c2528d633da74b1032db02db6774ad4dc2a",
+      "bytes": 13702
+    },
+    "app/notebook_lifecycle.py": {
+      "sha256": "1f70955aee21c8fe9c9e6f371a249889383aea1dfb65c642556097569363f613",
+      "bytes": 23012
+    },
+    "app/notebook_lifecycle_routes.py": {
+      "sha256": "4ab62f23d83071bcee3461b214148e23ec1aae8031db889e27c349347a8f774b",
+      "bytes": 3437
+    },
+    "app/notebook_lifecycle_schema.py": {
+      "sha256": "3f36d85a9374b6585dec7000cb553dac427f17fb4cfef589a7fc5d34915dddcc",
+      "bytes": 1326
+    },
+    "app/notebook_managed_styles.py": {
+      "sha256": "1ff5ce8ddc7d83db8a50f84136602fc6a0211c9ab09efe306f19d5c8926388f0",
+      "bytes": 3763
+    },
+    "app/notebook_media_types.py": {
+      "sha256": "de60e6b4383f0ec7f7897949544eb4d61784088b157635fd2b220d8d44f3b561",
+      "bytes": 1261
+    },
+    "app/notebook_metadata.py": {
+      "sha256": "d963352b56b032e1d00efa462c3331aaa0b15d10f8e9c3eda9d102241edc8b88",
+      "bytes": 2373
+    },
+    "app/notebook_payload.py": {
+      "sha256": "8b563c46975a3ca4f9fe48724470aed9d27958db427613667b43741394d72583",
+      "bytes": 11523
+    },
+    "app/notebook_private_styles.py": {
+      "sha256": "0b48adbe16680a68ffe8b7049cdcc85e48aea5dfda8d321feeab57072b8906b2",
+      "bytes": 11882
+    },
+    "app/notebook_retention.py": {
+      "sha256": "8b348c86c2854bed619748ed66041d49607e363e8571ed0261796fa93d0767dd",
+      "bytes": 9847
+    },
+    "app/notebook_retention_routes.py": {
+      "sha256": "f335a48a6f5083f353b8b4addd9ae8b2baeb17cc622fb229131be7be61b263dd",
+      "bytes": 2715
+    },
+    "app/notebook_retention_schema.py": {
+      "sha256": "7571a962e3a39cddb151667a1cc76da3c58433c817641c51d601e88867a53d08",
+      "bytes": 1180
+    },
+    "app/notebook_startup.py": {
+      "sha256": "9323f348f2741b6798e1b70989b110dc111af2e7e0901c17db8deb25c9f54080",
+      "bytes": 11848
+    },
+    "app/notebook_style_sources.py": {
+      "sha256": "850b3adf41db5758172867e587485242001b938e61eba20ebf9f0b3b1737492c",
+      "bytes": 13821
+    },
+    "app/notebook_v2.py": {
+      "sha256": "15063c988cda44623ea0db2975ba143183b4b6e6c26336189e5cf34f7e7c8dd8",
+      "bytes": 18655
+    },
+    "app/notebook_v2_routes.py": {
+      "sha256": "4f6ee0886e70d4085b84eb03b706b8f50bb590420e2a280c2b017d50e58a790a",
+      "bytes": 5772
+    },
+    "app/notebook_v2_schema.py": {
+      "sha256": "79f8d8602635dde951601f86c27c1c0565d0e11d1906b65ba095bee22fecf562",
+      "bytes": 638
+    },
+    "app/notebook_validation.py": {
+      "sha256": "0f5d96fb50cce8ca893da996e5714744d20710adae9824a084e803086529bf9c",
+      "bytes": 12708
+    },
+    "app/notebook_wire.py": {
+      "sha256": "787b60803efdb2e95a43436f899c7ee15a3498927e72be8cbe59bd41e92bd650",
+      "bytes": 4981
+    },
+    "app/notebook_write_routes.py": {
+      "sha256": "ee1a89bc7c72dd1550d6266f5aae360ccc1bb8ef6d8118443607f5b00058b787",
+      "bytes": 4888
+    },
+    "app/notebook_write_schema.py": {
+      "sha256": "869188ac9e2dfa712db271ac2c4d8f446571b3ae2db0ba3a59ef2315b41ef8da",
+      "bytes": 1927
+    },
+    "app/notebook_writes.py": {
+      "sha256": "f01659f130484c00fb167fb0a02dca9a9b0f59ac2c71e00e0f0181eff317b227",
+      "bytes": 25720
+    },
+    "app/notebook_writes_v2.py": {
+      "sha256": "32d23696e66d408993f3ed594f89c4cf4ec821af0cfeae50ba13a0804a2393d0",
+      "bytes": 11060
+    },
+    "app/security.py": {
+      "sha256": "3948b182f6b38333dcf82d17475144be1fc94b78c0f0855eafd9de9d4bf37584",
+      "bytes": 5324
+    },
+    "app/sync.py": {
+      "sha256": "cff1298908a688a24a269f9617c6443a84b5ec084ffe80e9cf2993c214867819",
+      "bytes": 23806
+    }
+  }
+}

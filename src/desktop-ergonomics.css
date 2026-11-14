@@ -1,0 +1,65 @@
+/* Desktop study desk: reduce chrome, keep reading and writing within reach. */
+:root { --reading-measure: 72ch; --control-height: 42px; }
+.app-rail { gap: 0; }
+.rail-nav { min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; padding-bottom: 12px; }
+.rail-nav .rail-button, .rail-bottom, .app-mark { flex-shrink: 0; }
+.rail-button { scroll-margin-block: 8px; }
+@media (min-width:1180px) and (min-height:660px) {
+ .app-rail.is-compact {width:76px;flex-basis:76px;padding-inline:0;align-items:center;}
+ .app-rail.is-compact .app-mark {width:48px;padding:0;justify-content:center;}
+ .app-rail.is-compact .rail-button {width:42px;padding:0;justify-content:center;}
+ .app-rail.is-compact .rail-nav,.app-rail.is-compact .rail-bottom {align-items:center;}
+ .app-rail.is-compact .avatar-button {margin-left:0;}
+}
+.workspace-tab-frame {flex-shrink:0;}
+.workspace-tab > span {max-width:24ch;overflow:hidden;text-overflow:ellipsis;}
+.workspace-tabs:focus-within {scrollbar-color:var(--line-strong) transparent;}
+.ai-resize-handle:focus-visible {outline:2px solid var(--primary);outline-offset:-2px;}
+.ai-resize-handle:focus-visible span {opacity:1;background:var(--primary);}
+:where(.task-row-actions, .workspace-note-actions) button {min-width:36px;min-height:36px;}
+.page-heading h1, .calendar-title-row h1 {overflow-wrap:anywhere;}
+:where(.heading-subtitle,.confirm-content p,.local-account-disclaimer,.security-note p) {max-width:var(--reading-measure);}
+:where(.full-task-copy,.formation-active-copy,.formation-library-card,.local-account-card) {min-width:0;overflow-wrap:anywhere;}
+.task-list-toolbar .search-field {margin:0;}
+.task-list-toolbar .search-field input {min-width:0;}
+.task-empty .secondary-button {margin-top:12px;}
+.form-validation-error {overflow-wrap:anywhere;}
+.dialog-content .modal-actions {padding-bottom:16px;}
+@container workspace (max-width:560px) {
+ .page-heading {align-items:flex-start;flex-wrap:wrap;}
+ .page-heading .primary-button {white-space:normal;text-align:left;}
+ .task-list-toolbar {align-items:stretch;}
+ .task-search {flex-basis:100%;}
+ .full-task {flex-wrap:wrap;gap:10px;}
+ .full-task-copy {flex:1 1 170px;}
+ .task-row-actions {margin-left:auto;}
+ .learning-filter-tabs {display:flex;flex-wrap:wrap;gap:6px;}
+ .learning-filter-tabs button {white-space:normal;}
+ .workspace-note-actions {flex-wrap:wrap;}
+}
+@media (forced-colors:active) {
+ .workspace-tab.is-active {border-top:2px solid Highlight;box-shadow:none;}
+}
+
+/* The shell owns the visible keyboard focus; avoid a second ring inside it. */
+.auth-input-shell input:focus-visible { outline: none; }
+.auth-input-shell input::placeholder {color:var(--muted);opacity:1;}
+@media (forced-colors:active) { .auth-input-shell:focus-within {outline:2px solid Highlight;} }
+/* The former third illustration column no longer exists in the study banner. */
+.home-page .academic-banner {display:flex;flex-wrap:wrap;gap:18px;}
+.home-page .academic-banner-title {flex:1 1 320px;}
+.home-page .academic-banner-stats {flex:0 1 auto;flex-wrap:wrap;}
+/* Native minimum height is 600px: the document must not force a hidden 640px rail. */
+body {min-height:0;}
+@media (max-width:900px) {
+ .home-page .academic-banner-title {flex:0 1 auto;width:100%;}
+}
+@container workspace (max-width:1000px) {
+ .courses-layout .course-detail-header {flex-wrap:wrap;gap:14px;}
+ .courses-layout .course-title-block {min-width:0;flex:1 1 220px;}
+ .courses-layout .course-title-line {flex-wrap:wrap;}
+ .courses-layout .course-header-actions {width:100%;justify-content:flex-start;}
+ .courses-layout .course-facts {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .courses-layout .course-fact--validation {grid-column:1 / -1;}
+ .courses-layout .course-fact strong,.courses-layout .course-objective strong {white-space:normal;overflow-wrap:anywhere;}
+}

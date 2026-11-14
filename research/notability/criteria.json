@@ -1,0 +1,3626 @@
+{
+  "sourceDate": "2026-10-14T19:37:44.434138+00:00",
+  "historical": true,
+  "metrics": {
+    "criteria": 130,
+    "lots": 13,
+    "fully_accepted": 0,
+    "new_refactor_delivered": 0,
+    "source_classification": {
+      "partial": 94,
+      "absent": 29,
+      "foundation": 7
+    },
+    "historical_acceptance": {
+      "partial": 92,
+      "pending": 38
+    },
+    "audited_acceptance": {
+      "partial": 93,
+      "pending": 37
+    },
+    "meaning": "Un statut partial indique un sous-périmètre implémenté ; aucun pourcentage de finition n’est calculé."
+  },
+  "criteria": [
+    {
+      "id": "N001",
+      "fonction": "Dossiers imbriqués",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S069",
+      "requirement": "Arbre de dossiers, jusqu’à six niveaux.",
+      "remaining_work": [
+        "Recetter le déplacement d'une branche complète aux limites six niveaux, avec rejet atomique si ses descendants dépassent la profondeur.",
+        "Recetter clavier/toucher dans la vraie bibliothèque desktop/PWA et recharger le classement conservé."
+      ],
+      "validation": {
+        "criterion_contract": "Créer six niveaux, déplacer une branche et interdire les cycles.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Modèle testé ; parcours UI complet de branche non prouvé.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N002",
+      "fonction": "Couleurs et personnalisation",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S069",
+      "requirement": "Dossiers personnalisables ; options selon mode de stockage.",
+      "remaining_work": [
+        "Prouver couleur/nom/hiérarchie identiques sur trois clients physiques desktop/téléphone/tablette avec écritures concurrentes/offline.",
+        "Recetter changement de compte/espace/API et reconnect avant d'appeler le classement synchronisé."
+      ],
+      "validation": {
+        "criterion_contract": "Retrouver les mêmes dossiers et couleurs sur trois appareils.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Fusion et chemin source présents ; exigence trois appareils NOTRUN.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N003",
+      "fonction": "Déplacement des notes",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S069",
+      "requirement": "Déplacer une note vers un dossier.",
+      "remaining_work": [
+        "Recetter note avec plusieurs liens de cours et pièces jointes : déplacement/reload/sync conserve UUID et chaque référence.",
+        "Vérifier app desktop/PWA et concurrence de renommage/classement sans note dupliquée."
+      ],
+      "validation": {
+        "criterion_contract": "Déplacer sans changer son UUID ni casser ses liens de cours.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Séparation modèle/classement établie ; scénario UI UUID+liens complet non prouvé.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N004",
+      "fonction": "Compteurs",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S069",
+      "requirement": "Compteur de notes directement contenues.",
+      "remaining_work": [
+        "Ajouter une recette UI avec notes parent/enfant, doublons de liens de cours et corbeille pour confirmer direct vs descendants.",
+        "Vérifier mise à jour immédiate après bulk move, restauration et sync externe sans double comptage."
+      ],
+      "validation": {
+        "criterion_contract": "Distinguer notes directes et descendants ; aucun double comptage.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Règle directe lue dans source ; test spécifique du compteur UI absent des preuves inspectées.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N005",
+      "fonction": "Liste et grille",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S020",
+      "requirement": "Deux modes de bibliothèque.",
+      "remaining_work": [
+        "Recetter sélection, ordre et position de défilement après chaque bascule aux tailles téléphone/tablette/desktop.",
+        "Définir puis préserver les états de bibliothèque lors de retour depuis une note ; les états view/filter/sort ne sont pas durables dans ce composant."
+      ],
+      "validation": {
+        "criterion_contract": "Changer de vue sans perdre sélection, ordre ou position.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Implémentation source ; aucune recette actuelle couvrant ensemble sélection/ordre/position.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N006",
+      "fonction": "Vues rapides",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S020",
+      "requirement": "Toutes, récentes, favorites, partagées, non classées.",
+      "remaining_work": [
+        "Implémenter une collection Récentes définie (activité/ordre/périmètre explicites) et une vraie collection Partagées fondée sur droits serveur.",
+        "Conserver/restaurer filtres quand bibliothèque se démonte ; recetter mêmes collections en desktop/PWA sans mélanger propriétaires."
+      ],
+      "validation": {
+        "criterion_contract": "Afficher des collections réelles et conserver leurs filtres.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Sous-ensemble code ; Récentes distincte et Partagées non implémentées.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N007",
+      "fonction": "Tri",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S020",
+      "requirement": "Plusieurs critères de tri.",
+      "remaining_work": [
+        "Définir critères de tri requis et départage déterministe par identité pour titres/dates égaux sans réordonner de façon variable entre clients.",
+        "Tester accents, titres identiques, timestamps égaux et ordres d'entrée différents ; vérifier conservation du réglage."
+      ],
+      "validation": {
+        "criterion_contract": "Trier de façon stable avec égalités de titre et de date.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Deux tris source. La limite est absence de départage cross-client ; un tri instable JS n'est pas affirmé.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N008",
+      "fonction": "Création et titre",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S018",
+      "requirement": "Créer puis renommer une note.",
+      "remaining_work": [
+        "Recetter le + réel de l'App desktop/PWA : nouvelle note réellement vierge, nouvel onglet, titre visible en onglet/bibliothèque/cours après reload/sync.",
+        "Vérifier création pending pendant changement de compte/fermeture sans faux succès ni double note."
+      ],
+      "validation": {
+        "criterion_contract": "Le + ouvre une note vierge dans un onglet ; modifier son titre partout.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Chemin source + titre monté historique ; création note complète multiplateforme non prouvée.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N009",
+      "fonction": "Duplication",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S018",
+      "requirement": "Duplication de notes depuis la bibliothèque.",
+      "remaining_work": [
+        "Recetter bouton actuel desktop/PWA avec PDF/audio/image/texte sur plusieurs pages, indépendant après modifications des deux copies.",
+        "Vérifier interruption à chaque étape fichiers/staged/metadata/classement, reprise explicite, quotas et téléchargement serveur sous bon compte."
+      ],
+      "validation": {
+        "criterion_contract": "Copie indépendante avec ses pièces jointes et un nouvel UUID.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Fixture graphe/stockage PASS historique ; parcours complet appareils/réseau non prouvé.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N010",
+      "fonction": "Actions multiples",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S018",
+      "requirement": "Sélection et déplacement de plusieurs notes.",
+      "remaining_work": [
+        "Ajouter export multiple avec sélection exacte, fichiers/bundles de chaque note et scope capturé ; limiter résultat aux IDs choisis.",
+        "Recetter déplacement/corbeille/export avec des notes non choisies en contrôle et concurrent updates/reload."
+      ],
+      "validation": {
+        "criterion_contract": "Déplacer, exporter ou supprimer une sélection sans toucher les autres.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Déplacement/suppression logique en modèle ; export multiple absent et recette UI complète manquante.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N011",
+      "fonction": "Corbeille restaurable",
+      "domaine": "Bibliothèque",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S028",
+      "requirement": "Notes supprimées récupérables pendant trente jours.",
+      "remaining_work": [
+        "Relier suppression/restauration au tombstone canonique scoped avec délai30j et conservation cohérente notesMarkdown/document/assets/audio/outbox.",
+        "Vérifier restauration intégrale avant/après synchronisation sur plusieurs clients, collision version, purge après délai et récupération de branches originales ; ne pas considérer simple masque bibliothèque comme suppression définitive."
+      ],
+      "validation": {
+        "criterion_contract": "Restaurer texte, encre, audio et fichiers ; supprimer d’abord par tombstone.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Corbeille réversible au classement ; contrat30j+tombstone+contenu complet non satisfait.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N012",
+      "fonction": "Couvertures",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S059",
+      "requirement": "Couvertures disponibles en mode Notability Cloud.",
+      "remaining_work": [
+        "Recetter rendu actuel cartes grille/liste/phone et reload/sync, vérifier source canonique/assets identiques avant/après.",
+        "Valider migration/dupe/restauration d'une couverture avec plusieurs notes et comptes sans mélange."
+      ],
+      "validation": {
+        "criterion_contract": "La couverture s’affiche en bibliothèque sans déplacer le contenu.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Séparation et modèle testés ; recette visuelle/serveur actuelle complète manquante.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N013",
+      "fonction": "Recherche globale et par dossier",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S070",
+      "requirement": "Recherche dans la bibliothèque et dans une note.",
+      "remaining_work": [
+        "Raccorder un résultat à l'occurrence et à sa source/page exacte ; ne pas perdre le match lors d'ouverture de la note.",
+        "Tester titre/texte/PDF/dossier/accents/Unicode, changement compte et index async, données reçues/remplacées, sources sans OCR affichées honnêtement."
+      ],
+      "validation": {
+        "criterion_contract": "Trouver titre, texte et occurrence précise ; accent/casse gérés.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Index et normalisation source ; scénario recherche globale+occurrence exacte non prouvé.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N014",
+      "fonction": "Recherche dans la page",
+      "domaine": "Bibliothèque",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S070",
+      "requirement": "Résultats dans le gestionnaire de contenu.",
+      "remaining_work": [
+        "Mapper start/end du texte canonique aux offsets/pageProjection courants et résoudre hits traversant des pages après pagination/reflow.",
+        "Afficher/sélectionner la plage exacte avec surbrillance text/PDF et invalider résultats de source/revision antérieure ; ajouter tests continuation, doublons et source changée."
+      ],
+      "validation": {
+        "criterion_contract": "Un résultat mène à l’objet et à la page exacte, avec surbrillance.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Sous-ensemble objet/page racine ; exactitude continuation et surbrillance manquantes.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N015",
+      "fonction": "Deux notes simultanées",
+      "domaine": "Navigation et outils",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S064",
+      "requirement": "Multi-Note et sélecteur de notes.",
+      "remaining_work": [
+        "Refaire le parcours split complet avec le parent N067 actuel et vraies géométries de navigateur, deux documents longs/media/IME/audio, passage compte/API.",
+        "Recetter layout/accessibilité/resize/touch sur PWA installée et desktop natif sans fermeture/commande dans l'autre note."
+      ],
+      "validation": {
+        "criterion_contract": "Deux vues indépendantes d’un même moteur, sans mélange des commandes.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Montage partagé historique solide + core current ; app complète et split current appareils manquants.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N016",
+      "fonction": "Passage rapide entre notes",
+      "domaine": "Navigation et outils",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S064",
+      "requirement": "Sélecteur de notes ouvertes.",
+      "remaining_work": [
+        "Recetter vrai tabstrip de l'App actuelle, retour bibliothèque/rubrique/cours, fermeture/reouverture et pause application avec état de chaque note conservé.",
+        "Valider maintien/récupération IME et focus sur clavier virtuel réel iOS/Android/native, puis mesurer mémoire avec nombreux onglets."
+      ],
+      "validation": {
+        "criterion_contract": "Conserver les onglets Dowze et les états de chaque note.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Writers/panneaux montés et source App ; nouvelle livraison complète non certifiée.",
+        "current_runtime": [
+          "P_PARENT_CURRENT",
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N017",
+      "fonction": "Barre mobile et personnalisable",
+      "domaine": "Navigation et outils",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S068",
+      "requirement": "Outils réordonnables, masquables et duplicables.",
+      "remaining_work": [
+        "Recetter réordre par toucher sur téléphone/tablette et relancement réel : mêmes slots/ordre/masquage/dupes.",
+        "Si la mobilité implique repositionnement libre de la barre, préciser et implémenter cet emplacement ; aucun déplacement de barre flottante n'est exposé par la source inspectée.",
+        "Ajouter sync préférences si réglage doit être partagé entre appareils ; actuellement local."
+      ],
+      "validation": {
+        "criterion_contract": "Réordonner par clavier ou toucher et conserver le réglage.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Personnalisation et clavier montés ; toucher/relancement physique et barre libre non validés.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N018",
+      "fonction": "Préréglages par outil",
+      "domaine": "Navigation et outils",
+      "lot": "L2",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S068",
+      "requirement": "Duplicatas avec styles ou couleurs distincts.",
+      "remaining_work": [
+        "Recetter passage répétitif entre deux stylos sur appareil réel puis relancer app, vérifier mesure visuelle et paramètres distincts sans reset.",
+        "Valider collision CAS/change scope et éventuelle synchronisation distante des presets selon contrat utilisateur."
+      ],
+      "validation": {
+        "criterion_contract": "Passer entre deux stylos enregistrés sans perdre leurs réglages.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Modèle et UI montés ; relancement physique et partage réglages non certifiés.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E2"
+    },
+    {
+      "id": "N019",
+      "fonction": "Palettes personnelles",
+      "domaine": "Navigation et outils",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S008",
+      "requirement": "Sélecteur, HEX, pipette et couleurs rapides.",
+      "remaining_work": [
+        "Ajouter pipette avec capacité détectée et fallback explicite sur navigateurs sans API.",
+        "Vérifier couleur/opacité aux exports et vrai relancement/offline sur chaque cible ; décider/raccorder sync des palettes entre appareils si prévue."
+      ],
+      "validation": {
+        "criterion_contract": "Changer couleur et opacité ; les styles survivent au relancement.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Palette/HEX/opacité source et monté ; pipette absente, vérification physique non faite.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N020",
+      "fonction": "Mode concentration",
+      "domaine": "Navigation et outils",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S060",
+      "requirement": "Masquage des panneaux et outil actif discret.",
+      "remaining_work": [
+        "Recetter focus pendant capture micro réelle (actif/pause/recovery), petit écran/keyboard et lecteurs d'écran ; sortie reste atteignable sans perte.",
+        "Répéter focus scenario sur parent actuel et desktop/PWA installée, vérifier contrôle d'enregistrement visible à tous états."
+      ],
+      "validation": {
+        "criterion_contract": "Réduire les contrôles avec sortie évidente ; garder l’enregistrement visible.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Cas monté historique et source ; audio/viewport physiques actuels pas certifiés.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N021",
+      "fonction": "Raccourcis",
+      "domaine": "Navigation et outils",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S024",
+      "requirement": "Commandes clavier pour notes, outils et navigation.",
+      "remaining_work": [
+        "Publier aide des raccourcis réellement disponibles et compléter raccourcis notes/outils/navigation attendus sans voler entrées IME/PM.",
+        "Recetter Ctrl Windows/Linux, Cmd macOS/iPad keyboard, disposition clavier/langues et lecteur d'écran ; éviter conflits de raccourcis OS."
+      ],
+      "validation": {
+        "criterion_contract": "Ctrl/Cmd cohérents, aide accessible, aucun conflit avec la saisie.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Sous-ensemble commandes montées ; cohérence totale plateforme/aide accessible non certifiée.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N022",
+      "fonction": "Menus et gestes",
+      "domaine": "Navigation et outils",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S024",
+      "requirement": "Alternatives clavier aux gestes tactiles.",
+      "remaining_work": [
+        "Inventorier commandes essentielles du plan et relier chaque geste tactile à action clavier/bouton avec intitulé/aide ; compléter celles manquantes.",
+        "Recetter tab order/annulation/return focus sur parent courant, surface virtualisée/readOnly/source change et lecteurs d'écran de vraies plateformes."
+      ],
+      "validation": {
+        "criterion_contract": "Toute commande essentielle fonctionne sans geste caché.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Menus subset/source et ancienne recette gardée ; couverture toutes commandes essentielle à terminer.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N023",
+      "fonction": "Texte sur la feuille",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S066",
+      "requirement": "Saisie directe sur la note.",
+      "remaining_work": [
+        "Résoudre le contrat toucher feuille vide ouvre texte à l'emplacement vs navigation tactile : fournir admission explicite sans faux palm/contact clavier.",
+        "Recetter placement/caret au point sur pages tournées/zoom/scroll réel, clavier virtuel/IME et source révoquée sans nouvelle instance PM."
+      ],
+      "validation": {
+        "criterion_contract": "Cliquer ou toucher la feuille ouvre le texte à cet emplacement.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Texte existant et writer réels prouvés ; toucher vide demandé n'est pas implémenté actuellement.",
+        "current_runtime": [
+          "P_PARENT_CURRENT",
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N024",
+      "fonction": "Boîtes de texte libres",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S066",
+      "requirement": "Boîtes déplaçables et dimensionnables.",
+      "remaining_work": [
+        "Recetter boîte libre déplacée/redimensionnée pendant texte dirty/IME avec ink/image voisins et dimensions de page inchangés.",
+        "Vérifier taille/overflow/word-wrap/focus handles accessibles au toucher et clavier sur les vraies cibles ; refus de source/current doit conserver buffer."
+      ],
+      "validation": {
+        "criterion_contract": "Déplacer et redimensionner sans modifier encre, images ni page.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Modèle d'objet et PM durabilité testés ; placement/redimensionnement GUI complet actuel non certifié.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N025",
+      "fonction": "Styles et polices",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S066",
+      "requirement": "Mise en forme et styles favoris.",
+      "remaining_work": [
+        "Ajouter styles texte favoris et choix de polices requis avec comportement offline/fallback cohérent et métriques fiables.",
+        "Recetter même contenu/paragraphes/font-loaded/reflow sur desktop/tablette/téléphone physiques, très grandes formules et tables, export/impression lisible."
+      ],
+      "validation": {
+        "criterion_contract": "Même texte et métriques lisibles sur desktop/tablette/téléphone.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Formatting/rendu riche subset ; fonts/favoris et métriques physiques manquants.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N026",
+      "fonction": "Listes et citations",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S066",
+      "requirement": "Listes et citations ; disponibilité selon version.",
+      "remaining_work": [
+        "Recetter création/modification de checklist/listes numérotées/citations dans une même note et continuation/réorganisation/undo/reload au parent actuel.",
+        "Valider clavier virtuel et assistive technology cases, indentation, listes imbriquées et exports sans perte structure."
+      ],
+      "validation": {
+        "criterion_contract": "Créer cases, listes numérotées et citations dans le même document.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Modèle/editor/rendu subset ; parcours complet multi-cible de création non prouvé.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N027",
+      "fonction": "Scribble et lecture vocale",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S066",
+      "requirement": "Intégrations Apple pour saisie et restitution.",
+      "remaining_work": [
+        "Tester Scribble réel sur iPad/Pencil dans champ PM, sans supposer qu'un DOM contenteditable certifie la compatibilité.",
+        "Ajouter restitution vocale accessible/capability gate et alternative clavier/lecture ; messages indisponibilité honnêtes, fonctionnement offline si prévu."
+      ],
+      "validation": {
+        "criterion_contract": "Tester Scribble sur le champ web réel ; offrir clavier et lecture alternative.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Base clavier/PM seulement ; fonctions intégration Apple et lecture vocale NOTRUN/non raccordées.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E3"
+    },
+    {
+      "id": "N028",
+      "fonction": "Code",
+      "domaine": "Texte et objets",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S058",
+      "requirement": "Blocs de code conservant indentation.",
+      "remaining_work": [
+        "Recetter clipboard réel depuis PM avec tabs/espaces/newlines et language attrs après reload, export/import, source remplacée pendant language load.",
+        "Valider sélection/caret/IME/performance sur long code et téléphone ; communiquer fallback langue non supportée sans corruption."
+      ],
+      "validation": {
+        "criterion_contract": "Copier sans altérer les espaces ; langage et coloration cohérents.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Rendu/language/copy canonique subset ; clipboard plateformes et métriques réelles non prouvés.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N029",
+      "fonction": "Encre fluide",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S004",
+      "requirement": "Écriture avec pression et styles de traits.",
+      "remaining_work": [
+        "Mesurer fluidité et continuité souris/Pencil/S Pen réels avec coalescence, défilement/rotation, longue session et page hétérogène ; comparer capteurs fournis sans les inventer.",
+        "Conserver/reprendre un trait interrompu inattendu : pointercancel/capture-lost produisent snapshot cancelled mais le parent ne le journalise pas durablement ; tester quotas/backpressure et export."
+      ],
+      "validation": {
+        "criterion_contract": "Traits continus au Pencil, souris et S Pen ; pression vraie si fournie.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Moteur/UI actual montés, pointeurs simulés ; hardware prolonged et interrupted stroke exit L3 manquants.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E1"
+    },
+    {
+      "id": "N030",
+      "fonction": "Rejet de paume",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S004",
+      "requirement": "Différenciation stylet et paume.",
+      "remaining_work": [
+        "Faire essai dix minutes réel main posée au Pencil/S Pen avec contacts multidoigts et clavier virtuel ; noter aucun ink parasite et aucune ouverture clavier.",
+        "Ajuster seuils depuis mesures physiques et expliquer fallback sur navigateur non exposant assez d'info ; aucun capteur simulé."
+      ],
+      "validation": {
+        "criterion_contract": "Poser la paume pendant dix minutes sans trait parasite ni saisie clavier.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Heuristiques et handoff synthétiques ; exigence10min physique NOTRUN.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E1"
+    },
+    {
+      "id": "N031",
+      "fonction": "Doigt et navigation",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S004",
+      "requirement": "Défilement tactile distinct de l’écriture au Pencil.",
+      "remaining_work": [
+        "Résoudre/diagnostiquer l'échec actuel de conservation anchor lors changement géométrie et garder sa preuve d'échec jusqu'à revalidation.",
+        "Valider écriture puis pan/pinch doigt sur matériel en gardant points/selection/IME ; définir récupération des cancels inattendus pour ne pas perdre un trait accepté."
+      ],
+      "validation": {
+        "criterion_contract": "Écrire au stylet puis déplacer et zoomer avec les doigts sans perdre le trait.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Navigation monté synthétique subset ; divergence fondation8/9 et matériel sans perte non certifié.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N032",
+      "fonction": "Traits pointillés et miroir",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S004",
+      "requirement": "Styles et retournement de l’encre.",
+      "remaining_work": [
+        "Recetter current parent selection style/mirror clavier/touch et exports PDF/PNG avec voisins/groupes locked inchangés.",
+        "Mesurer alignement/nib sous zoom/rotation sur appareil ; définir alternative visible pour selections/flow multipage refusés."
+      ],
+      "validation": {
+        "criterion_contract": "Changer le style d’une sélection puis retourner sans déplacer ses voisins.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Modèle + scénario monté historique solide ; hardware/export actuel à terminer.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N033",
+      "fonction": "Double tap et survol",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S004",
+      "requirement": "Commandes liées aux modèles Apple Pencil.",
+      "remaining_work": [
+        "Détecter événements réellement disponibles pour survol/doubletap via API/natif supporté, exposer fallback équivalent de contrôle en absence.",
+        "Valider vrai matériel +PWA/native, sans déduire modèle du user-agent ou présenter événement synthétique comme capteur."
+      ],
+      "validation": {
+        "criterion_contract": "Détecter réellement la capacité ; proposer un contrôle équivalent si absente.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Contrôle outils de base ; doubletap/survol spécifiques non implémentés/NOTRUN.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E3"
+    },
+    {
+      "id": "N034",
+      "fonction": "Crayon texturé",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S001",
+      "requirement": "Outil crayon avec ombrage et pression.",
+      "remaining_work": [
+        "Implémenter ombrage dérivé de l'inclinaison seulement si réellement exposée, conserver champs bruts et fallback sans tilt explicite.",
+        "Valider texture/angle/pression export et lisibilité/latence sur Pencil/S Pen réels aux différents zooms sans déformation de capteurs."
+      ],
+      "validation": {
+        "criterion_contract": "Inclinaison modulant l’ombre uniquement sur matériel qui l’expose.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Texture+pressure source, shading tilt absent ; essais hardware NOTRUN.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N035",
+      "fonction": "Pencil USB-C",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S001",
+      "requirement": "Ce modèle ne fournit pas de sensibilité à la pression.",
+      "remaining_work": [
+        "Tester Pencil USB-C réel et vérifier largeur constante/intention usable, sans signaler pression comme capteur si API n'en fournit pas.",
+        "Si browser signale valeur générique/default, traiter capacité comme non vérifiée et ne pas inventer calibration/mesure matérielle."
+      ],
+      "validation": {
+        "criterion_contract": "Écriture utilisable à largeur constante ; ne pas simuler une pression mesurée.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Fallback générique implémenté ; criterion USB-C physique NOTRUN.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E3"
+    },
+    {
+      "id": "N036",
+      "fonction": "Calligraphie",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S002",
+      "requirement": "Plume avec épaisseur variable et angle.",
+      "remaining_work": [
+        "Recetter droitier/gaucher, angle/pression réels et transformations aux différents zooms, rotation page/objet et loupe.",
+        "Valider export/nib orientation/performance et fallback twist absent ; distinguer angle choisi d'une rotation mesurée."
+      ],
+      "validation": {
+        "criterion_contract": "Vérifier droitier/gaucher, angle et transformations à plusieurs niveaux de zoom.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Géométrie modèle prouvée, main/zoom physique et rendu final natif non certifiés.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N037",
+      "fonction": "Squeeze et retour d’outil",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S003",
+      "requirement": "Apple Pencil Pro : commandes temporaires ou persistantes.",
+      "remaining_work": [
+        "Raccorder seulement une API native/web réelle quand disponible et distinguer temporaire/persistant ; conserver boutons fallback.",
+        "Essai Pencil Pro et retour/haptique réels requis avant annoncer support ; absence explicite PWA si aucun événement exploitable."
+      ],
+      "validation": {
+        "criterion_contract": "Ne pas annoncer squeeze/haptique supportés en PWA sans événement et essai réel.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Retour générique implémenté ; squeeze/haptique non implémentés/NOTRUN.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E3"
+    },
+    {
+      "id": "N038",
+      "fonction": "Surligneur libre",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S048",
+      "requirement": "Encre transparente avec réglages.",
+      "remaining_work": [
+        "Recetter plusieurs superpositions sur vrai texte/images/PDF, sélection/undo/reload et exports PDF/PNG/JPEG actuels : texte encore lisible et opacité conforme.",
+        "Valider composition alpha/styles sur navigateur/native et accessibilité contrastes, sans prétendre que transparence seule garantit lisibilité."
+      ],
+      "validation": {
+        "criterion_contract": "Superpositions sans obscurcir le texte ; résultat stable à l’export.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Source alpha partagée et modèle testé ; export/contraste vrai multisurface actuel non certifié.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N039",
+      "fonction": "Surlignage intelligent",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S048",
+      "requirement": "Sélection guidée sur texte tapé ou PDF.",
+      "remaining_work": [
+        "Répéter commande/smartHighlight/PDF ciblés avec parent courant et vrai DOM Range/glyph/PDF assets, copier/sauver/exporter plusieurs lignes exactement.",
+        "Prévoir association source range→annotation ou recalcul honnête pour reflow texte, et chemin clairement indisponible glyphs/skew non supportés ; ne pas signaler succès d'une annotation périmée."
+      ],
+      "validation": {
+        "criterion_contract": "Surligner plusieurs lignes PDF sans surligner tout un rectangle.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Mécanisme et sous-scénarios montés prouvés ; géométrie glyph vraie/current reflow+export+hardware manquants.",
+        "current_runtime": [
+          "P_HOST_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N040",
+      "fonction": "Trait droit maintenu",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S048",
+      "requirement": "Maintien du tracé pour rectification.",
+      "remaining_work": [
+        "Recetter maintien naturel stylet avec zoom/rotation/loupe, activer/désactiver et undo/raw restore sans délai de release artificiel.",
+        "Vérifier current Root onInkCorrection et mutation concurrente reflow/source refuse mauvais objet, puis rendu/export du trait corrigé."
+      ],
+      "validation": {
+        "criterion_contract": "Activer ou désactiver la rectification ; annuler reste possible.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Aides source+tests montés historiques ; humain stylet/current correction full scenario non certifié.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N041",
+      "fonction": "Gomme par trait",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S047",
+      "requirement": "Suppression d’un tracé complet.",
+      "remaining_work": [
+        "Recetter un geste réel gomme sur traits sparse/rotated/calligraphy/grain/measurement avec parent actuel ; seul bon stroke supprimé et undo/reload exact.",
+        "Mesurer longs traits/capsules extrêmes sans overflow/UI gel et source changed pendant batch ; exports cohérents."
+      ],
+      "validation": {
+        "criterion_contract": "Un passage supprime le bon trait, même lorsque ses points sont éloignés.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Analytique et guards montés ; GUI/current async+long performance/physical non certifiés.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N042",
+      "fonction": "Gomme partielle",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S047",
+      "requirement": "Découpe en segments encore manipulables.",
+      "remaining_work": [
+        "Rejouer geste gomme actuel, sélectionner et déplacer chaque fragment séparément après zoom/mirror/rotation, parent/API/scope changed during batch.",
+        "Vérifier capteurs/frontières/IDs/audio anchors/assets invariants et très long trait ; mesures restent objets entiers, export conserve même coupe."
+      ],
+      "validation": {
+        "criterion_contract": "Effacer le milieu d’un trait et déplacer chaque fragment séparément.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Géométrie+ancien workflow monté ; device/current complete scenario non certifié.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N043",
+      "fonction": "Taille et retour au stylo",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S047",
+      "requirement": "Choix de taille ; réglage du retour d’outil.",
+      "remaining_work": [
+        "Recetter taille/geste réel gomme puis retour au stylo/preset distinct, refus/cancel/readOnly/scope ABA et relaunch.",
+        "Vérifier préférence persistante et éventuelle sync entre appareils, clavier/toucher small screens."
+      ],
+      "validation": {
+        "criterion_contract": "Effacer puis retrouver le stylo précédent sans perte de style.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Cas montés style/return forts ; matériel et current async eraser+relaunch non certifiés.",
+        "current_runtime": [],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N044",
+      "fonction": "Loupe d’écriture",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S054",
+      "requirement": "Fenêtre de détail avec zone cible.",
+      "remaining_work": [
+        "Recetter vraie géométrie navigateur/tablette et précision Pencil/S Pen, zoom/rotation/pan/page/resize, simultanéité IME/audio sans mutation de source voisine.",
+        "Valider phone controls/accessibilité/région et exports sous source current ; ne pas considérer DOMRect injecté comme calibration matérielle."
+      ],
+      "validation": {
+        "criterion_contract": "Écrire dans la loupe et retrouver les coordonnées exactes sur la page.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Coords math+current actual parent monté ; précision matériel/realDOM non certifiée.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N045",
+      "fonction": "Avancement automatique",
+      "domaine": "Écriture et stylet",
+      "lot": "L3",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S054",
+      "requirement": "La zone d’écriture avance puis change de ligne.",
+      "remaining_work": [
+        "Écrire une phrase longue réelle au Pencil/S Pen avec pauses/main/retour ligne et bas de page, sans perte points ni saut involontaire ; configurer taille et direction attendues.",
+        "Vérifier layout/avance après asyncaccepted save, scope changed, orientation/zoom/clavier et préservation aux reload/export."
+      ],
+      "validation": {
+        "criterion_contract": "Écrire une phrase longue avec retour de ligne continu.",
+        "audit": "Lecture seule de source et de journaux/JSON existants ; aucun test/build/runtime exécuté par cet audit.",
+        "observed_coverage": "Phrase/avance injectées et parent current subset ; continuité physique et prefs multipériphériques non certifiées.",
+        "current_runtime": [
+          "P_PARENT_CURRENT"
+        ],
+        "native_installation": "NOTRUN",
+        "physical_device_acceptance": "NOTRUN",
+        "cloud_three_devices": "NOTRUN",
+        "release_validation_missing_ref": "global_remaining.release_validation"
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N046",
+      "fonction": "Lasso",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Sélection de l’encre et édition.",
+      "remaining_work": [
+        "Traiter les intersections des segments d’encre sparse avec le lasso, puis préciser sélection partielle, tangence et frontière. Un segment peut traverser le polygone sans contenir un échantillon intérieur."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Valider lasso souris/stylet, groupes, rotations et reflets sur plusieurs pages."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N047",
+      "fonction": "Déplacer, tourner, agrandir",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Transformations de groupes d’encre.",
+      "remaining_work": [
+        "Ajouter redimensionnement collectif par matrice commune et poignées accessibles ; conserver largeur, capteurs, ancres audio et mesures. L’UI actuelle règle les dimensions d’un objet seul."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Vérifier sélection mixte, groupes, locked, undo/redo et export géométrique."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N048",
+      "fonction": "Copier et coller",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Copie d’encre entre emplacements.",
+      "remaining_work": [
+        "Compléter copie inter-note de texte continu, images privées, groupes, audio et mesures ; la calibration cible reste autoritaire. Les tableaux partiels et gros atomes demandent une découpe fidèle."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Coller A→B, tester collisions UUID et changement de compte/API pendant await ; aucun commit partiel."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N049",
+      "fonction": "Reconnaissance des formes",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S053",
+      "requirement": "Formes géométriques après maintien.",
+      "remaining_work": [
+        "Étendre formes complexes, ellipses inclinées et multi-traits ; les propositions non linéaires de plus de 20000 points restent refusées. Conserver l’original et une acceptation explicite pour les ambiguïtés."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Revalider propositions/restauration sur le parent continu actuel, puis tenue physique au stylet."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N050",
+      "fonction": "Style, ancrage et verrouillage",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S053",
+      "requirement": "Contour, remplissage et formes verrouillées.",
+      "remaining_work": [
+        "Ajouter remplissage canonique des formes et snapping grille/guide, avec UI, validators, export et archives. Les renderers actuels utilisent fill=none. Auditer verrouillage dans toutes les voies de modification."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester contour/remplissage, snap sous zoom/rotation et verrouillage clavier/pointeur, puis fidélité PDF/raster."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N051",
+      "fonction": "Règle et angles",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S056",
+      "requirement": "Guide de tracé et mesure angulaire.",
+      "remaining_work": [
+        "Compléter préférences distantes et outils d’angle avancés ; conserver priorité de la calibration de page sur l’ancien ratio local. Ne pas déduire de centimètres physiques de l’écran."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Vérifier règle/loupe sur plusieurs pages calibrées, précision imprimée et Pencil physique."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N052",
+      "fonction": "Échelle et mesures",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S050",
+      "requirement": "Sur iPad Cloud : longueur et surface calibrées.",
+      "remaining_work": [
+        "Valider précision sur PDF/raster et papier imprimé, synchronisation multi-client et compatibilité d’archives/clients anciens. Les bornes restent explicites : UI 128 points, polygone 512, longueur 20000."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester recalibrage, conversion métrique/impériale, aire, transformations et copies ; mesurer la sortie réelle et la sync."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N053",
+      "fonction": "Groupes et stickers personnels",
+      "domaine": "Sélection et dessin",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S051",
+      "requirement": "Encre regroupée puis enregistrée comme sticker.",
+      "remaining_work": [
+        "Créer une bibliothèque dédiée de stickers depuis une sélection/groupes, avec nom, aperçu et réinsertion sur une autre note. Compléter resize collectif ; les modèles de pages ne remplacent pas ce flux."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Créer, transformer et réutiliser un groupe ink sur A→B, puis undo, réouverture et sync."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N054",
+      "fonction": "Pointeur temporaire",
+      "domaine": "Sélection et dessin",
+      "lot": "L6",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S057",
+      "requirement": "Point ou traînée sans marquer la note.",
+      "remaining_work": [
+        "Compléter les réglages de durée/couleur/traînée et la présentation. Revalider absence de commande canonique, historique, archive ou trace exportée."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester timers après navigation/révocation/unmount, puis pointage sur écran réel et export sans laser."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N055",
+      "fonction": "Présentation",
+      "domaine": "Sélection et dessin",
+      "lot": "L6",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S057",
+      "requirement": "Affichage épuré pour l’audience.",
+      "remaining_work": [
+        "Valider fullscreen/fallback, écran externe, retour focus et parité visuelle PDF/images privées. Définir séparément projection native volontaire ; AirPlay n’est pas implémenté par le fallback local."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Rejouer le parent actuel après N067/audio, puis vraie recette navigateur/native et audience privée/publique."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N056",
+      "fonction": "Pages et miniatures",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S065",
+      "requirement": "Gestionnaire de pages avec filtres.",
+      "remaining_work": [
+        "Valider gestionnaire 100+ pages sur le parent actuel et gros PDF. Les miniatures sont lazy, mais la liste mappe encore toutes les pages ; optimiser DOM/cache et navigation clavier."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Mesurer mémoire/latence pour 100/2000 pages, vérifier filtres et accès exact sur appareils."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N057",
+      "fonction": "Ajouter et réordonner",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S065",
+      "requirement": "Ajout et déplacement des pages.",
+      "remaining_work": [
+        "Valider reorder avec writers dirty/IME et concurrence de reflow. Compléter découpe des tableaux/atomes volumineux et continuité après partition ; tester cloud multi-client."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Déplacer pages mixtes avec audio, undo/redo et mêmes identités, puis édition concurrente."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N058",
+      "fonction": "Dupliquer, copier et supprimer",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S065",
+      "requirement": "Actions sur une ou plusieurs pages.",
+      "remaining_work": [
+        "Ajouter copie dédiée de pages entre notes avec remap PDF/audio/sources et calibration cible. Compléter découpe des sous-ranges riches ; toute source ambiguë doit refuser sans perte."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester copie A→B, suppression/undo exacts et opérations pendant dirty/IME/récupération dans le parent actuel."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N059",
+      "fonction": "Signets et pages annotées",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S065",
+      "requirement": "Filtres sur les pages importantes.",
+      "remaining_work": [
+        "Préciser pages annotées vs pages ayant du contenu : le filtre content actuel ne prouve pas toute la sémantique PDF. Valider signets après reorder/copy/delete/import/sync et les états vides."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Vérifier filtres et signets exacts sur 100 pages, objets locked/continuations et undo/cloud."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N060",
+      "fonction": "Fond PDF et rotation",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S065",
+      "requirement": "Gestion du fond des pages PDF.",
+      "remaining_work": [
+        "Valider rotations répétées, crop boxes non nulles et annotations mesurées sur rendu/export réels. Conserver bytes PDF et calibration scalaire ; tester clients anciens."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Comparer 0/90/180/270° avec géométries hétérogènes, locked, texte continu, undo et impression."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N061",
+      "fonction": "Sommaire PDF",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S061",
+      "requirement": "Arborescence des sections du PDF.",
+      "remaining_work": [
+        "Compléter outlines profonds/volumineux et destinations alternatives ; budgets 2000 nœuds/depth 20 doivent rester explicites. Préserver destinations après reorder/copy/delete."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Vérifier PDF réels avec destinations nommées, sommaires imbriqués et liens internes après transformations."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N062",
+      "fonction": "Papier et formats",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S046",
+      "requirement": "Lignes, carreaux, points, formats et orientation.",
+      "remaining_work": [
+        "Valider dimensions imprimées, marges et changements de format avec texte continu/mesures/objets réfléchis. Les unités document 96/in ne certifient pas le DPI physique de l’écran."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester orientation, shrink refusal sans perte, grilles/espacement et PDF/raster sur appareils."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N063",
+      "fonction": "Modèles personnels",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S046",
+      "requirement": "Modèles issus d’un document ou import.",
+      "remaining_work": [
+        "Ajouter catalogue/sync cloud des modèles et conflits de version, ainsi que formats .note/.ntb si requis. Valider vrai téléchargement/choix de fichier ; l’événement IAB n’a pas été observé."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Exporter/réimporter les trois modes, audio/calibration, offline sur deux clients et migrations."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N064",
+      "fonction": "Scan vers PDF",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S046",
+      "requirement": "Numérisation utilisable comme fond PDF.",
+      "remaining_work": [
+        "Créer scan caméra volontaire, correction quadrilatère/perspective/rotation et assemblage PDF multipage. Préserver photos originales, aperçu et confirmation ; traiter annulation et refus de permission."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Scanner une photo inclinée, redresser puis annoter le PDF ; recette caméra physique."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N065",
+      "fonction": "Import de documents",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S041",
+      "requirement": "PDF et autres documents importables.",
+      "remaining_work": [
+        "Ajouter import Office converti et lots multi-fichiers avec erreurs isolées. Étendre PDF au-delà 16MiB, progression/cancel et documents protégés/malformés. Le blob PDF écrit avant le graph peut rester détaché après refus : prévoir récupération visible."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester lot PDF/images/Office, quotas, changement de note/API et originaux exacts sans graph/fichiers partiels."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N066",
+      "fonction": "Glisser-déposer et partage système",
+      "domaine": "Pages et PDF",
+      "lot": "L5",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S041",
+      "requirement": "Entrées depuis d’autres applications.",
+      "remaining_work": [
+        "Implémenter drop zones et événements Tauri scoped ; configurer partage système/share-target PWA et open-with. Rendre la note cible explicite, conserver nom original et staging propriétaire."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester drag/drop et partage OS réels, multi-fichiers/nonASCII et changement de note pendant lecture."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E4"
+    },
+    {
+      "id": "N067",
+      "fonction": "Défilement et page unique",
+      "domaine": "Pages et PDF",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S027",
+      "requirement": "Vue continue ou page par page.",
+      "remaining_work": [
+        "Conserver la correction T-X01 vérifiée et ses preuves de fondation9/9 ; recetter le reflow riche, les appareils et le cloud. Les bornes8 writers/32 frames/16 pins/2000 pages ne prouvent pas une performance universelle.",
+        "Rejouer types/builds et contrôles appropriés après les prochains changements ; types V8b desktop/PWA PASS, aucune livraison native déduite.",
+        "Compléter les recettes intégrées retrait owner/API pendant IME et chaîne de fermeture, puis l’ensemble du contrat de bascule sur chaque cible."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "T-X01 logiciel vérifié ; poursuivre T-X02 et les recettes navigateur, IME intégré, Pencil/Safari/natif et cloud concurrent, avec preuves distinctes."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E1"
+    },
+    {
+      "id": "N068",
+      "fonction": "Images et caméra",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S052",
+      "requirement": "Insertion d’images, photos et scans.",
+      "remaining_work": [
+        "Ajouter capture caméra volontaire et insertion à un point choisi ; l’image flottante actuelle reçoit une position par défaut. Valider serveur réel, quotas/offline et résolution des provenances ambiguës sans écrasement."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Insérer au point choisi, refuser/annuler caméra, réouvrir offline et vérifier sources/scopes sur serveur réel."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N069",
+      "fonction": "Transformations et recadrage",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S052",
+      "requirement": "Médias placés et modifiés librement.",
+      "remaining_work": [
+        "Ajouter crop non destructif canonique et poignées accessibles flottantes pour move/rotate/resize ; relayer crop vers validators, rendu, exports et archives. Les originaux doivent rester exacts."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Recadrer puis transformer, undo/reopen et comparer PDF/raster réels ; alt/caption et bytes source inchangés."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N070",
+      "fonction": "Ordre et verrouillage",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S052",
+      "requirement": "Objets devant/derrière et verrouillables.",
+      "remaining_work": [
+        "Préciser hit-testing/cycle de sélection dans les superpositions et ordre intermédiaire (actuel front/back). Auditer locked sur toutes les commandes, resize/crop/erase et page operations."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester objets mixtes superposés, clavier, front/back/undo, source/API ABA et ordre exporté."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N071",
+      "fonction": "GIF et notes autocollantes",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S052",
+      "requirement": "Médias animés et pense-bêtes.",
+      "remaining_work": [
+        "Ajouter contrôle play/pause/poster GIF et reduced motion sans transformer l’original. Revalider post-it avec PM persistant, transformations et archives ; le GIF actuel est un img animé standard."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester GIF contrôlé en note/projection/export et post-it édité/déplacé/reouvert/undo sur appareils."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N072",
+      "fonction": "Image Playground",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S052",
+      "requirement": "Génération liée à l’environnement Apple.",
+      "remaining_work": [
+        "Définir fournisseur Dowze de génération d’image volontaire, budgets/scopes, provenance et récupération. Aucun équivalent Image Playground n’est trouvé ; séparer capabilities Apple/native/PWA."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester fournisseur sandbox réel, refus/cancel/late API ABA, intégration asset et réouverture offline."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E3"
+    },
+    {
+      "id": "N073",
+      "fonction": "Capture de page web",
+      "domaine": "Médias",
+      "lot": "L4",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S006",
+      "requirement": "Extrait de page inséré comme image.",
+      "remaining_work": [
+        "Créer capture web figée avec URL/date/source et aperçu avant import PDF/image/bloc. Définir service navigateur/native/serveur, redirects/auth/timeouts sans conserver de secrets ; liens seuls ne constituent pas une capture."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester URL réelle/dynamique, lecture offline, ouverture volontaire et annulation/révocation tardive."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E3"
+    },
+    {
+      "id": "N074",
+      "fonction": "Image vers encre",
+      "domaine": "Médias",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S007",
+      "requirement": "Conversion disponible sur matériel Apple compatible.",
+      "remaining_work": [
+        "Construire vectorisation image/scan→Ink avec aperçu comparatif, corrections et original conservé. Marquer la géométrie dérivée ; ne pas inventer pression/tilt capteur. Prévoir travail borné/yield et refus sans perte."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Comparer scans réels bruités et vectorisation, undo/reopen/export vectoriel et performance mesurée."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N075",
+      "fonction": "Enregistrement",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S071",
+      "requirement": "Audio dans la note.",
+      "remaining_work": [
+        "Valider microphones Tauri/Safari/PWA réels, arrière-plan/sleep/track-ended, sessions longues et quotas. Garder accepted finalizations/recoveries dans la barrière avant nouvelle capture."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester start/stop/pause/resume durable, deux onglets, crash et permissions pending/ABA sur microphone physique."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N076",
+      "fonction": "Audio lié aux annotations",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S071",
+      "requirement": "Replay synchronisé avec les annotations.",
+      "remaining_work": [
+        "Ajouter replay mot par mot/ranges texte : les ancres actuelles sont par objet. Relier les nouvelles modifications d’un même objet à la vraie timeline plutôt qu’au seul createdAt ; préserver anchors après édition/pages/export."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Toucher mot/trait→temps réel avec pauses et sections ; trim/merge/reorder/undo puis archive/réimport."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N077",
+      "fonction": "Lecteur",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S071",
+      "requirement": "Vitesses et déplacements dans l’audio.",
+      "remaining_work": [
+        "Valider seek/vitesse et événements tardifs sur longues pistes/codecs variés. Compléter UX skip/replay/marqueurs/clavier, adaptation Safari/Tauri et budget cache/URLs."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester vitesse, transition sections, background, source/API ABA et gros fichiers réels/native/PWA."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N078",
+      "fonction": "Édition audio",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S071",
+      "requirement": "Découpage, renommage et fusion.",
+      "remaining_work": [
+        "Compléter édition waveform et mapping explicite des ancres vers nouvelles pistes ; originaux/historique restent. Offrir fallback pour codecs non lisibles, quota/annulation et sauvegarde échouée."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester trim/merge/rename concurrent, originaux et anchors exacts, undo/reimport, gros encoded et fermeture réelle."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N079",
+      "fonction": "Audio à l’export",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S071",
+      "requirement": "Export des notes avec leurs enregistrements.",
+      "remaining_work": [
+        "Valider export/download/réimport bout en bout sur GUI native/PWA avec anchors. Concevoir voie streaming au-delà archive 256MiB/membre 16MiB, versionnée et récupérable ; mesurer assembly Blob/WAV."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Exporter note complète avec fichiers réels, puis réimporter autre client et vérifier SHA/timeline, quota et interruption."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N080",
+      "fonction": "Import audio",
+      "domaine": "Audio",
+      "lot": "L7",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S034",
+      "requirement": "Formats MP3, MP4 et M4A.",
+      "remaining_work": [
+        "Implémenter vraie détection conteneur/codec, fichiers renommés et MP4 vidéo/audio : extension/type MIME ne suffit pas. Offrir conversion lorsque le probe navigateur échoue, avec original et receipt préservés."
+      ],
+      "validation": {
+        "executed": "verified_subset",
+        "next": [
+          "Tester MP3/M4A/MP4 réels, noms trompeurs/corruption/codec non supporté, conversion/cancel/API ABA et Safari/native."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E5"
+    },
+    {
+      "id": "N081",
+      "fonction": "Transcription horodatée",
+      "domaine": "Audio",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S033",
+      "requirement": "Texte de l’audio avec repères temporels.",
+      "remaining_work": [
+        "Créer modèle de transcription horodatée avec provenance audio/range/langue/provider/version, corrections utilisateur indépendantes des reruns, UI seek et jobs scoped récupérables."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Transcrire audio français réel, corriger puis régénérer/reconnecter ; source/time exacts et archive/reimport."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N082",
+      "fonction": "Transcription en direct",
+      "domaine": "Audio",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S032",
+      "requirement": "Transcription pendant l’enregistrement.",
+      "remaining_work": [
+        "Créer protocole live transcription provisional/final, chunks identifiés/timebase et déduplication reconnect. Préserver corrections, gérer pause/sleep/stop et finalization suivie par barrière."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester microphone/provider réels, réseau coupé/out-of-order/résultats doubles et fermeture de note."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N083",
+      "fonction": "Recherche manuscrite",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Recherche et conversion de l’écriture.",
+      "remaining_work": [
+        "Ajouter reconnaissance/index manuscrit français lié aux objets/points/langue/source version ; rechercher texte/PDF ne reconnaît pas ink. Conversion doit présenter confiance et garder original, undo et privacy."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester écriture française réelle cursive/accents, false positives, sparse/rotation, source/API ABA et devices."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N084",
+      "fonction": "Mathématiques manuscrites",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Conversion d’équations et édition LaTeX.",
+      "remaining_work": [
+        "Créer reconnaissance équation ink→LaTex avec original, confidence et aperçu éditable. Le rendu KaTeX de texte existant ne constitue pas reconnaissance manuscrite. Séparer résultat dérivé et correction."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester fractions/matrices/symboles manuscrits réels, ambiguïtés, édition LaTex, source/undo et réimport exacts."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N085",
+      "fonction": "Langue par note",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S055",
+      "requirement": "Langue de reconnaissance configurable.",
+      "remaining_work": [
+        "Relayer langue par note aux jobs OCR/transcription/recognition et index scoped. Ajouter héritage/reset/capabilities ; la langue actuelle sert au study et comparaison de réponses, pas à ces moteurs absents."
+      ],
+      "validation": {
+        "executed": "source_and_historical_subset",
+        "next": [
+          "Changer langue A sans toucher B ni index global, refuser jobs ancienne langue et préserver corrections/concurrence."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E7"
+    },
+    {
+      "id": "N086",
+      "fonction": "Résumés",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S067",
+      "requirement": "Matériel d’étude produit depuis la note.",
+      "remaining_work": [
+        "Créer véritable résumé synthétique sourcé et versionné, actualisation volontaire et confirmation ; les premiers paragraphes actuels sont des extraits. Conserver texte utilisateur et provenance exacte sans invention silencieuse."
+      ],
+      "validation": {
+        "executed": "source_only_for_required_summary",
+        "next": [
+          "Tester citations pages/audio/PDF, contradictions, source modifiée/deleted, job/API ABA et erreurs provider."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N087",
+      "fonction": "Quiz et flashcards",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S067",
+      "requirement": "Modes de mémorisation, entraînement et test.",
+      "remaining_work": [
+        "Compléter quiz/test avec types de questions et corrections sourcées, édition de fiches et reprise de session. Les fiches manuelles/importées et auto-évaluation SM2 existent ; génération intelligente/quiz complet restent."
+      ],
+      "validation": {
+        "executed": "source_and_historical_subset",
+        "next": [
+          "Créer/importer/réviser/corriger/reouvrir et sync deux clients, reviewID dedupe, sources déplacées/supprimées et accessibilité."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E7"
+    },
+    {
+      "id": "N088",
+      "fonction": "Textes à compléter",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S067",
+      "requirement": "Révision par éléments manquants.",
+      "remaining_work": [
+        "Ajouter édition question/réponse, plusieurs trous et création manuelle de cloze ; l’UI actuelle crée basic ou accepte une proposition heuristique. Sourcer UTF16/ranges de flow et traiter ambiguïtés Markdown."
+      ],
+      "validation": {
+        "executed": "source_and_historical_subset",
+        "next": [
+          "Créer puis corriger/retrouver réponse et extrait exact, Unicode/math/tableaux, changements de source et concurrence."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E7"
+    },
+    {
+      "id": "N089",
+      "fonction": "Actions à suivre",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S067",
+      "requirement": "Actions extraites du contenu de la note.",
+      "remaining_work": [
+        "Créer proposals d’actions sourcées et conversion volontaire vers tâche Dowze idempotente ; receipt source/version/task, ACL/destination, retry/offline et erreurs sans doublon."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Tester extraction→accept task→lost ACK/retry, source/API ABA, permissions et sync sans modifier texte utilisateur."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N090",
+      "fonction": "Notes intelligentes",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S014",
+      "requirement": "Synthèse actualisée avec les contenus.",
+      "remaining_work": [
+        "Créer synthèse actualisée distincte du texte utilisateur, source graph/provenance/version et diff confirmable. Jobs debounce/cancel refusent outputs obsolètes ; corrections utilisateur restent séparées et archivables."
+      ],
+      "validation": {
+        "executed": "not_executed_for_feature",
+        "next": [
+          "Vérifier texte utilisateur exact pendant refresh/concurrent edits/API ABA, citations et versions durables/export."
+        ],
+        "source_snapshot_coverage": "Preuves datées de sous-périmètres ; pas de nouveau test/build dans cet audit. Vérification des modifications postérieures reste requise."
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N091",
+      "fonction": "Questions sur les notes",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S015",
+      "requirement": "Questions sur une note ou la bibliothèque.",
+      "remaining_work": [
+        "Définir le périmètre note/bibliothèque et sélectionner les sources par IDs/revisions.",
+        "Raccorder une API configurée de questions/réponses, afficher citations vérifiables et absence de réseau, préserver les corrections."
+      ],
+      "validation": {
+        "criterion_contract": "Le chat du carnet cite les objets réellement consultés ; périmètre visible.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N092",
+      "fonction": "Import et répétition espacée",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S009",
+      "requirement": "Cartes importées puis révision espacée.",
+      "remaining_work": [
+        "Ajouter import APKG borné avec SQLite/ZIP, mapping des cartes/modèles et rapport des médias non gérés.",
+        "Vérifier sauvegarde/reprise, révisions hors ligne, doublons et restauration des médias sur appareils réels."
+      ],
+      "validation": {
+        "criterion_contract": "Import TXT/CSV/APKG avec compte rendu ; médias non gérés explicitement signalés.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E7"
+    },
+    {
+      "id": "N093",
+      "fonction": "Vidéo vers note",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S010",
+      "requirement": "Lien vidéo vers transcription et révision.",
+      "remaining_work": [
+        "Importer une transcription disponible avec URL, langue, provenance et horodatages, puis permettre corrections.",
+        "Raccorder extraction/ASR via un service autorisé; traiter absence de sous-titres et erreurs sans inventer de texte."
+      ],
+      "validation": {
+        "criterion_contract": "Utiliser la transcription disponible avec URL et horodatages, sans l’inventer.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E7"
+    },
+    {
+      "id": "N094",
+      "fonction": "Ruban de mémorisation",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L9",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S049",
+      "requirement": "Masquage réversible des zones de révision.",
+      "remaining_work": [
+        "Ajouter masque réversible ancré, état de révélation séparé du contenu et undo/redo.",
+        "Tester texte/encre/image masqués, export, rotation, coédition et reprise sans supprimer les originaux."
+      ],
+      "validation": {
+        "criterion_contract": "Révéler et recouvrir sans supprimer le contenu masqué.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E7"
+    },
+    {
+      "id": "N095",
+      "fonction": "Minuteur de travail",
+      "domaine": "Reconnaissance et étude",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S005",
+      "requirement": "Sessions et pauses personnalisées.",
+      "remaining_work": [
+        "Recetter l’activité avec vraie horloge, veille/fermeture, clavier/toucher et changements de profil sur chaque cible.",
+        "Documenter la liaison aux règles XP existantes et décider la synchronisation des sessions sans doubler le temps actif."
+      ],
+      "validation": {
+        "criterion_contract": "Pause, reprise et objectif ; temps actif cohérent avec les règles XP de Dowze.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N096",
+      "fonction": "Document partagé entre appareils",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L1",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S038",
+      "requirement": "Notes, dossiers et audio synchronisés.",
+      "remaining_work": [
+        "Recetter le document complet de la nouvelle source sur trois appareils: texte/encre/images/PDF/audio/dossiers et deux années.",
+        "Tester réseau lent, offline, tombstones, métadonnées Unicode, limites des blobs et reprise sans perte ni doublon."
+      ],
+      "validation": {
+        "criterion_contract": "Écrire hors ligne sur tablette puis retrouver tous les objets sur desktop.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E2"
+    },
+    {
+      "id": "N097",
+      "fonction": "Reprise automatique",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L1",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S038",
+      "requirement": "Même compte et bibliothèque partout.",
+      "remaining_work": [
+        "Injecter arrêts/crashes à chaque phase: publication du graphe, blobs, métadonnées, ACK perdu, close/IME et changement de compte.",
+        "Vérifier reprise de la nouvelle installation et service worker, file durable intacte et une seule mutation effective."
+      ],
+      "validation": {
+        "criterion_contract": "La file durable reprend après arrêt sans dupliquer une mutation.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E1"
+    },
+    {
+      "id": "N098",
+      "fonction": "Historique restaurable",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S037",
+      "requirement": "Ancienne version restaurée comme copie.",
+      "remaining_work": [
+        "Créer une note restaurée avec nouvel UUID et remapping complet pages/objets/audio/médias, sans remplacer la note courante.",
+        "Ajouter historique cloud durable complet, sélection de versions, vérification des pièces jointes et restauration sur autre appareil."
+      ],
+      "validation": {
+        "criterion_contract": "Restaurer une copie complète sans écraser la note courante.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P0",
+      "phase": "E6"
+    },
+    {
+      "id": "N099",
+      "fonction": "Versions collaboratives",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S037",
+      "requirement": "Historique des changements des participants.",
+      "remaining_work": [
+        "Introduire acteurs/horodatages et versions cloud sans consigner inutilement le texte privé dans un journal d’activité.",
+        "Afficher différences et auteurs, restaurer une copie; tester undo local préservant l’autre participant et collisions objets/texte/partitions."
+      ],
+      "validation": {
+        "criterion_contract": "Identifier les modifications et préserver les contenus simultanés.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N100",
+      "fonction": "Sauvegarde distincte de la sync",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S039",
+      "requirement": "Sauvegarde indépendante vers services externes.",
+      "remaining_work": [
+        "Recetter suppression de la note suivie de restauration de l’export, avec références et fichiers indépendants.",
+        "Ajouter politique de sauvegarde externe distincte de la sync, destinations configurées, rétention, erreurs et restauration isolée."
+      ],
+      "validation": {
+        "criterion_contract": "Effacer la note ne détruit pas sa sauvegarde ; restaurer un export complet.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N101",
+      "fonction": "Export PDF et images",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S042",
+      "requirement": "Exports visuels et formats éditables.",
+      "remaining_work": [
+        "Comparer toutes pages au rendu éditeur: texte riche, tableaux, gros atomes, images privées, rotation, PDF et encre.",
+        "Recetter 100 pages, mémoire/temps bornés, JPEG/PNG, dialogue natif et téléchargement PWA sur vrais appareils."
+      ],
+      "validation": {
+        "criterion_contract": "PDF/PNG/JPEG lisibles, encre vectorielle et pages correctes.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N102",
+      "fonction": "Format natif complet",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S042",
+      "requirement": "Formats propres à Notability selon version.",
+      "remaining_work": [
+        "Compléter historique intégral et mapping des matières de formations différentes.",
+        "Fournir fixtures légales .note/.ntb et parseurs validés, ou refus explicite sans substitution.",
+        "Recetter bornes actuelles 256MiB paquet/16MiB membre; décider et tester tailles supérieures et vrai Rust/PWA installés."
+      ],
+      "validation": {
+        "criterion_contract": "Créer un paquet Dowze documenté ; compatibilité .note/.ntb à prouver avec fixtures.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N103",
+      "fonction": "Impression",
+      "domaine": "Synchronisation et fiabilité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S042",
+      "requirement": "Partage des notes vers sortie document.",
+      "remaining_work": [
+        "Valider le rendu riche réel complet puis marges/orientation/annotations identiques à l’export.",
+        "Tester dialogues et sortie physique Linux/Windows/macOS, navigateur et iOS/PWA, sans assimiler window.print à une impression réussie."
+      ],
+      "validation": {
+        "criterion_contract": "Pages, marges, orientation et annotations identiques au fichier exporté.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N104",
+      "fonction": "Coédition",
+      "domaine": "Collaboration",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S062",
+      "requirement": "Plusieurs personnes modifient la même note.",
+      "remaining_work": [
+        "Créer l’accès partagé multi-utilisateur puis tester deux comptes, trois appareils, offline/concurrence et révocation.",
+        "Valider contributions texte/objets/audio et undo propre à chaque acteur avec présence/versions cohérentes."
+      ],
+      "validation": {
+        "criterion_contract": "Deux utilisateurs écrivent hors ligne puis fusionnent sans perte d’objets.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N105",
+      "fonction": "Droits et invitations",
+      "domaine": "Collaboration",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S062",
+      "requirement": "Accès lecture ou édition configurable.",
+      "remaining_work": [
+        "Définir invitations et rôles par note/groupe, acceptation, expiration et révocation côté serveur.",
+        "Contrôler chaque lecture, téléchargement et mutation après révocation, y compris outbox ancienne et client hors ligne."
+      ],
+      "validation": {
+        "criterion_contract": "Serveur valide les droits à chaque mutation, même après révocation.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N106",
+      "fonction": "Présence",
+      "domaine": "Collaboration",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S062",
+      "requirement": "Indication des participants actifs.",
+      "remaining_work": [
+        "Ajouter service de présence autorisée avec bail/expiration et reprise réseau.",
+        "Tester fermeture/crash/onglet arrière-plan et compte révoqué sans faux connecté; présence séparée du document."
+      ],
+      "validation": {
+        "criterion_contract": "Présence expire avec le bail réseau ; pas de faux état connecté.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N107",
+      "fonction": "Lien de partage",
+      "domaine": "Collaboration",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S043",
+      "requirement": "Lien consultable puis désactivable.",
+      "remaining_work": [
+        "Créer accès consultable explicitement public ou restreint avec expiration/révocation serveur et parcours utilisateur.",
+        "Tester URL révoquée, identité étrangère, cache, pièces jointes et téléchargements; publication uniquement sur action explicite."
+      ],
+      "validation": {
+        "criterion_contract": "Révocation réelle côté serveur ; préciser lien public ou accès restreint.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N108",
+      "fonction": "Commentaires ancrés",
+      "domaine": "Collaboration",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S011",
+      "requirement": "Fils de discussion placés sur une note.",
+      "remaining_work": [
+        "Modéliser ancrage stable, messages/acteurs/résolution, déplacement et conservation du fil après révision.",
+        "Raccorder API et UI; tester suppression/migration d’objet, réordre, coédition/offline et droits du participant."
+      ],
+      "validation": {
+        "criterion_contract": "Déplacer/résoudre le commentaire en conservant son ancrage au document.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N109",
+      "fonction": "Préférences d’écriture",
+      "domaine": "Réglages et sécurité",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S030",
+      "requirement": "Réglages d’outils, gestes et document.",
+      "remaining_work": [
+        "Raccorder sync des préférences en conservant overrides, conflits et version active.",
+        "Recetter presets indépendants, boutons/reset, stylet et gestes physiques sur desktop/tablette/téléphone."
+      ],
+      "validation": {
+        "criterion_contract": "Réglages globaux avec override par note ; UI claire et réinitialisation ciblée.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N110",
+      "fonction": "Main dominante et gestes",
+      "domaine": "Réglages et sécurité",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S030",
+      "requirement": "Personnalisation de l’écriture et des gestes.",
+      "remaining_work": [
+        "Vérifier ergonomie droitier/gaucher, paume, sélection et alternatives accessibles sur vraie tablette.",
+        "Documenter gestes réservés réellement disponibles et ajouter leurs alternatives sans supposer les API Apple."
+      ],
+      "validation": {
+        "criterion_contract": "Prévoir droitier/gaucher et alternatives à tout geste réservé.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N111",
+      "fonction": "Thèmes et papier",
+      "domaine": "Réglages et sécurité",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S025",
+      "requirement": "Apparence du contenu liée au thème.",
+      "remaining_work": [
+        "Créer thème de lecture clair/sombre par projection sans réécrire les couleurs originales.",
+        "Comparer exports avant/après, images/PDF/contrastés, boutons et lecteur d’écran sur chaque cible."
+      ],
+      "validation": {
+        "criterion_contract": "Lecture sombre possible sans modifier les couleurs originales à l’export.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N112",
+      "fonction": "Dossiers protégés",
+      "domaine": "Réglages et sécurité",
+      "lot": "L8",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S026",
+      "requirement": "Protection limitée à certains modes Notability.",
+      "remaining_work": [
+        "Définir verrou UI versus protection cryptographique, gestion/reprise de clés et déverrouillage autorisé.",
+        "Tester données locales, exports, recherche, previews, sync et autre profil; l’objet locked ne doit jamais être décrit comme chiffré."
+      ],
+      "validation": {
+        "criterion_contract": "Définir verrou UI et protection cryptographique séparément, puis tester l’accès hors ligne.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E6"
+    },
+    {
+      "id": "N113",
+      "fonction": "Vue texte téléphone",
+      "domaine": "PWA téléphone et tablette",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S063",
+      "requirement": "Texte reflué ; les autres objets restent conservés.",
+      "remaining_work": [
+        "Construire projection texte refluée adaptée à la largeur téléphone sans changer les coordonnées/objets canoniques.",
+        "Tester retour page, dessins/images/audio intacts, sélection/IME, clavier visible et état après reload sur appareil physique."
+      ],
+      "validation": {
+        "criterion_contract": "Passer en vue texte puis revenir retrouve tous les dessins et images.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N114",
+      "fonction": "Commandes compactes",
+      "domaine": "PWA téléphone et tablette",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S063",
+      "requirement": "Outils accessibles par tiroir sur téléphone.",
+      "remaining_work": [
+        "Finaliser tiroirs, safe areas, cibles tactiles et défilement vers le caret en présence du clavier virtuel.",
+        "Tester insertion/édition/menus en portrait/paysage et lecture d’écran sans masquer la ligne active."
+      ],
+      "validation": {
+        "criterion_contract": "Écrire avec clavier visible sans masquer la ligne active.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N115",
+      "fonction": "Navigation responsive",
+      "domaine": "PWA téléphone et tablette",
+      "lot": "L10",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S063",
+      "requirement": "Modes de lecture adaptés à l’écran.",
+      "remaining_work": [
+        "Résoudre ou qualifier la divergence de recette fondation viewport v15 avec preuve précise.",
+        "Recetter portrait/paysage, split-screen et rotation pendant trait/IME sur appareils physiques; mesurer mémoire/latence avec gros PDF et notes longues."
+      ],
+      "validation": {
+        "criterion_contract": "Tester portrait/paysage, tablette split-screen et rotation pendant un trait.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E8"
+    },
+    {
+      "id": "N116",
+      "fonction": "Pencil dans Dowze PWA",
+      "domaine": "PWA téléphone et tablette",
+      "lot": "L0",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S045",
+      "requirement": "FAQ Notability Web : stylet iOS non pris en charge.",
+      "remaining_work": [
+        "Installer et tester réellement Dowze PWA Safari/iPad avec modèles Pencil identifiés: traits lents/rapides, paume, pression disponible, rotation et suspension.",
+        "Comparer document sauvegardé/exporté sur Dell; consigner capacités absentes et alternatives sans transférer la garantie de Notability natif."
+      ],
+      "validation": {
+        "criterion_contract": "Tester le moteur Dowze dans une PWA installée réelle ; pas de transfert de garantie.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E10"
+    },
+    {
+      "id": "N117",
+      "fonction": "Fonctions natives Apple",
+      "domaine": "PWA téléphone et tablette",
+      "lot": "L0",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S045",
+      "requirement": "Capacités web et natives différentes.",
+      "remaining_work": [
+        "Produire matrice par appareil/OS/webview des événements et fonctions réellement exposés.",
+        "Implémenter adaptateurs natifs uniquement pour API disponibles et alternatives visibles; relever pression/tilt/hover/twist/squeeze/haptique/Siri/widgets séparément."
+      ],
+      "validation": {
+        "criterion_contract": "Matrice d’API réelle : pression, inclinaison, survol, squeeze, haptique, Siri, widgets.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E10"
+    },
+    {
+      "id": "N118",
+      "fonction": "Entrées depuis accueil",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S076",
+      "requirement": "Accès notes, modèles, enregistrement et révision.",
+      "remaining_work": [
+        "Ajouter entrées d’accueil du carnet et routes directes vers notes, modèles, enregistrement et révision.",
+        "Conserver le parcours de formation et les notes/onglets existants; valider navigation et retours sur les trois familles d’écran."
+      ],
+      "validation": {
+        "criterion_contract": "Relier l’accueil Dowze aux fonctions du carnet sans remplacer son parcours cours.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N119",
+      "fonction": "Alertes du carnet",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S076",
+      "requirement": "Notifications urgentes et non urgentes séparées.",
+      "remaining_work": [
+        "Définir sévérité, persistance et annonce accessible des alertes; garder erreurs de sauvegarde immédiatement visibles.",
+        "Tester disque plein, réseau perdu, permissions refusées, doublons et infos ordinaires, avec actions de reprise et barrières de fermeture."
+      ],
+      "validation": {
+        "criterion_contract": "Erreur de sauvegarde visible immédiatement ; informations ordinaires discrètes.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N120",
+      "fonction": "Brain Break",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S076",
+      "requirement": "Petites activités dans l’accueil Notability.",
+      "remaining_work": [
+        "Définir extension d’étude de pause explicite, activités et reprise du carnet sans mutation de contenu.",
+        "Relier aux sessions/XP selon règles Dowze et distinguer clairement cette activité de l’écriture."
+      ],
+      "validation": {
+        "criterion_contract": "Extension d’étude identifiée ; ne pas présenter comme une fonction d’écriture.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N121",
+      "fonction": "Calendrier de formation",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S021",
+      "requirement": "Calendrier LMS connecté par lien ICS.",
+      "remaining_work": [
+        "Relier échéance, formation/matière et identité stable de note; définir import/subscription ICS selon besoin.",
+        "Tester liens profonds, fuseaux/horaires, changements de calendrier et respect du calendrier existant sans écrasement."
+      ],
+      "validation": {
+        "criterion_contract": "Relier échéance et note avec la formation ; conserver le calendrier existant.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N122",
+      "fonction": "Planners",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S012",
+      "requirement": "Modèles de planification navigables.",
+      "remaining_work": [
+        "Recetter planners importés avec liens internes/externes en lecture, annotations et ordre des pages après import/copie/export.",
+        "Vérifier PDF scanné/rotatif/chiffré, gros volume, native/PWA et téléchargement physique."
+      ],
+      "validation": {
+        "criterion_contract": "Importer un planner PDF et vérifier ses liens internes en mode lecture.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "partial",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N123",
+      "fonction": "Raccourcis hors application",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S016",
+      "requirement": "Widgets notes et audio.",
+      "remaining_work": [
+        "Ajouter raccourcis manifest supportés, IDs de routes et permission de profil à l’ouverture.",
+        "N’exposer widget natif qu’avec conteneur/adaptateur OS prouvé; tester démarrage à froid et offline sur appareil installé."
+      ],
+      "validation": {
+        "criterion_contract": "PWA : raccourcis supportés ; widgets natifs uniquement si un conteneur les expose.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N124",
+      "fonction": "Rappel lié à une note",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S073",
+      "requirement": "Siri ouvre la note liée au rappel.",
+      "remaining_work": [
+        "Créer lien profond et rappel alternatif PWA lié à la note avec garde du profil/compte et tombstone.",
+        "Si nécessaire implémenter Siri via adaptateur natif distinct; tester note supprimée, mauvais compte, démarrage froid et offline."
+      ],
+      "validation": {
+        "criterion_contract": "PWA : lien profond/rappel alternatif ; intégration Siri native séparée si nécessaire.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N125",
+      "fonction": "Galerie et modèles partagés",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S085",
+      "requirement": "Publication et découverte de contenus.",
+      "remaining_work": [
+        "Créer catalogue Dowze de modèles partagé avec auteur/version/provenance; ne pas confondre catalogue de cours existant et galerie Notes.",
+        "Ajouter publication explicitement demandée, retrait, droits, médias et import indépendant; vérifier absence de publication automatique."
+      ],
+      "validation": {
+        "criterion_contract": "Catalogue Dowze de modèles avec auteur/version ; publication jamais automatique.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N126",
+      "fonction": "Modèles d’équipe",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S086",
+      "requirement": "Modèles administrés pour un groupe.",
+      "remaining_work": [
+        "Ajouter identité équipe, rôles et gestion/versionnement serveur des modèles.",
+        "Tester utilisation créant copie indépendante, révocation et versions anciennes conservées sans modifier les notes déjà créées."
+      ],
+      "validation": {
+        "criterion_contract": "Rôles propriétaire/éditeur/lecteur et copies indépendantes des notes créées.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P1",
+      "phase": "E9"
+    },
+    {
+      "id": "N127",
+      "fonction": "Contrôles d’organisation",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S087",
+      "requirement": "Fonctions activables au niveau organisation.",
+      "remaining_work": [
+        "Ajouter réglage serveur d’organisation versionné, règles de priorité et validation d’accès backend.",
+        "Tester propagation multi-client, cache/offline, révocation et différences de rôle sans substituer un simple contrôle UI."
+      ],
+      "validation": {
+        "criterion_contract": "Un réglage serveur est appliqué à tous les clients après synchronisation.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N128",
+      "fonction": "Journal d’activité",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S088",
+      "requirement": "Journal d’organisation exportable.",
+      "remaining_work": [
+        "Créer événements d’activité avec acteur, date serveur, action/résultat et identités stables sans transcription ni texte privé.",
+        "Ajouter export autorisé et politique de rétention; tester opérations concurrentes, échecs, déduplication et droits."
+      ],
+      "validation": {
+        "criterion_contract": "Tracer actions importantes avec acteur/date ; éviter d’enregistrer le contenu privé.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N129",
+      "fonction": "Capture de réunion desktop",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S074",
+      "requirement": "Nouvelle app desktop centrée sur notes et réunions.",
+      "remaining_work": [
+        "Implémenter et éprouver adaptateurs audio système par OS, permissions et choix explicite des sources; distinguer micro PWA.",
+        "Recetter réunion réelle prolongée, interruptions/appels/veille, synchronisation des pistes et provenance; ajouter transcription seulement via service configuré."
+      ],
+      "validation": {
+        "criterion_contract": "Audio système seulement via adaptateur OS éprouvé ; micro PWA distinct.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    },
+    {
+      "id": "N130",
+      "fonction": "Finalisation des notes",
+      "domaine": "Intégrations et collection",
+      "lot": "L11",
+      "cibles": "Desktop · PWA téléphone · PWA tablette",
+      "reference_source": "S074",
+      "requirement": "Synthèse combinant notes tapées et réunion.",
+      "remaining_work": [
+        "Raccorder transcription horodatée et génération configurée; conserver réunion/notes originales et corrections.",
+        "Présenter résultat séparé avec citations note/objet/timecode, limites/erreurs et restauration originale; tester réseau absent et résultats contradictoires."
+      ],
+      "validation": {
+        "criterion_contract": "Résultat séparé avec provenance et possibilité de reprendre sa version originale.",
+        "audit": "Lecture seule des sources et preuves historiques; aucun test/runtime/build exécuté ici.",
+        "release_validation_missing": [
+          "Recette native Dell Linux de la nouvelle édition, puis Windows/macOS; aucune compilation libtest ne vaut installation ou dialogue OS vérifié.",
+          "PWA réellement installée iPhone/Android et tablette iPad/Pencil/S Pen: clavier/IME, rotation, veille/appel, mode avion, stockage plein et reprise.",
+          "L12: performances/accessibilité avec notes longues/PDF/audio et plafonds de ressources; empaquetage, migration/réversibilité, installation, mise à jour signée et rollback."
+        ]
+      },
+      "original_acceptance_status": "pending",
+      "criterion_complete": false,
+      "new_refactor_installed": false,
+      "physical_capabilities_verified": false,
+      "priority": "P2",
+      "phase": "E9"
+    }
+  ],
+  "limits": [
+    "Aucune certification 100% Notability, aucun critère complet sans son contrat entier.",
+    "Tests montés réels React/PM/IDB avec seams DOM/SVG/Pointer/IME : pas matériel, navigateur natif, cloud ou GUI installée.",
+    "Les anciennes preuves couvrent leurs snapshots et cas ; elles ne sont pas toutes rejouées sur le code courant.",
+    "Signature présente dans manifeste public : pas revérifiée cryptographiquement dans cet audit.",
+    "La PWA publique répond ; son corpus carnet courant n’est pas déclaré déployé sans comparaison de bundle et recette.",
+    "Outils ops-memory et socket absents ; relais local, aucun ingest/reindex confirmé."
+  ]
+}

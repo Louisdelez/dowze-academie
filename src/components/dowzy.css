@@ -1,0 +1,67 @@
+.dowzy-sprite{display:block;flex-shrink:0;background-repeat:no-repeat;pointer-events:none}
+.dowzy-startup{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#171a23;color:#c8cedb;gap:12px;user-select:none}
+.dowzy-progress{height:4px;width:144px;overflow:hidden;background:#ffffff16;border-radius:8px}
+.dowzy-progress>span{display:block;height:100%;background:linear-gradient(90deg,#65cbd4,#a497f0);border-radius:inherit;transition:width .2s}
+.dowzy-progress.is-indeterminate>span{width:38%;animation:dowzy-progress 1.4s ease-in-out infinite}
+.dowzy-startup-label{font:11px/1.5 system-ui;text-align:center;max-width:280px;color:#a9afbd}
+@keyframes dowzy-progress{0%{transform:translateX(-110%)}100%{transform:translateX(370%)}}
+/* Coucou Linux island shell: geometry/layout a7bd575, MIT © Louis Raillé.
+   Scoped to the academy: no global reset, extra title strip or floating panel. */
+.app-shell{position:relative}
+.dowzy-island-host *{box-sizing:border-box}
+.dowzy-island-host{position:absolute;top:0;left:0;right:0;height:0;z-index:40;pointer-events:none;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e6e9ee}
+.dowzy-island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:64px;height:32px;background:#000;border-radius:0 0 14px 14px;pointer-events:auto;will-change:width,height;isolation:isolate}
+.dowzy-island::before,.dowzy-island::after{content:"";position:absolute;top:0;width:14px;height:14px;pointer-events:none}
+.dowzy-island::before{left:-14px;background:radial-gradient(circle at 0 100%,transparent 14px,#000 14.3px)}
+.dowzy-island::after{right:-14px;background:radial-gradient(circle at 100% 100%,transparent 14px,#000 14.3px)}
+.dowzy-island-clip{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
+.dowzy-island-trigger{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:pointer}
+.dowzy-island.is-expanded .dowzy-island-trigger{pointer-events:none}
+.dowzy-island-content{position:absolute;inset:0;padding:8px 10px 10px;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .16s}
+.dowzy-island.is-expanded:not(.view-greeting) .dowzy-island-content{opacity:1;pointer-events:auto;transition:opacity .3s .16s}
+.dowzy-island-header{height:34px;flex:0 0 34px;display:flex;align-items:center;justify-content:space-between;margin:0 -10px}
+.dowzy-island-header nav{display:flex;gap:5px;padding-left:14px;align-items:center}
+.dowzy-island-header button{width:30px;height:22px;padding:0;border:0;border-radius:11px;background:transparent;color:#8e939c;display:grid;place-items:center;cursor:pointer}
+.dowzy-island-header button.on,.dowzy-island-header button[aria-pressed=true]{background:#1b1e23;color:#f5f6f8}
+.dowzy-island-header button:hover{background:#ffffff0f;color:#f5f6f8}
+.dowzy-header-actions{display:flex;align-items:center;gap:14px;padding-right:16px}
+.dowzy-header-actions button{width:16px}
+.dowzy-island-views{position:relative;flex:1;min-height:0}
+.dowzy-island-view{position:absolute;inset:0;opacity:0;transform:scale(.97);pointer-events:none;filter:blur(8px);transition:opacity .16s,transform .16s,filter .16s}
+.dowzy-island-view.on{opacity:1;transform:scale(1);filter:none;pointer-events:auto;transition:opacity .3s .16s,transform .3s .16s,filter .3s .16s}
+.dowzy-card{position:relative;height:100%;border-radius:20px;background:#141518;border:1px solid #ffffff09;overflow:hidden}
+.dowzy-card::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 110%,#ffffff08,transparent 70%)}
+.dowzy-overview-grid{display:grid;grid-template-columns:1fr;height:100%}
+.dowzy-card-copy{position:relative;margin-left:106px;display:flex;flex-direction:column;justify-content:center;gap:4px;height:100%;padding-right:18px}
+.dowzy-card-copy strong{font-size:12px;font-weight:600}.dowzy-card-copy strong span{color:#8e939c;font-weight:400;margin-left:5px;font-size:11px}
+.dowzy-note,.dowzy-card-copy small{font-size:10px;color:#8e939c}
+.dowzy-xp-bar{display:block;width:100%;height:3px;border:0;appearance:none;border-radius:5px;overflow:hidden;background:#ffffff15;margin-top:5px}
+.dowzy-xp-bar::-webkit-progress-bar{background:#ffffff15;border-radius:5px}.dowzy-xp-bar::-webkit-progress-value{background:#34d399;border-radius:5px}.dowzy-xp-bar::-moz-progress-bar{background:#34d399;border-radius:5px}
+.dowzy-wardrobe-body{position:relative;margin-left:114px;margin-right:20px;height:100%;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.dowzy-wardrobe-title{display:flex;align-items:center;gap:12px}.dowzy-wardrobe-title strong{font-size:12px;font-weight:600}.dowzy-wardrobe-title span{font-size:11px;color:#8e939c}
+.dowzy-color-grid{display:flex;gap:7px;flex-wrap:wrap}
+.dowzy-color-grid button{display:grid;place-items:center;width:38px;height:38px;padding:0;position:relative;border-radius:7px;background:#ffffff0f;border:1px solid #ffffff14;color:inherit;cursor:pointer}
+.dowzy-color-grid button:hover{background:#ffffff1a}.dowzy-color-grid button[aria-pressed=true]{border-color:#ffffff66}
+.dowzy-settings-body{margin-left:100px;position:relative;display:flex;flex-direction:column;justify-content:center;gap:7px;height:100%;padding-right:18px}
+.dowzy-settings-body label{display:flex;align-items:center;gap:10px;font-size:11px;color:#c9cdd4}
+.dowzy-settings-body select{background:#ffffff12;color:#e6e9ee;border:1px solid #ffffff20;border-radius:8px;font:inherit;padding:2px 8px}.dowzy-settings-body option{background:#141518}
+.dowzy-settings-body input{accent-color:#34d399}.dowzy-settings-body small{font-size:10px;color:#8e939c;line-height:1.5}
+.dowzy-shared-pet{position:absolute;left:46px;top:16px;width:96px;height:104px;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%) scale(.087);transform-origin:center;padding:0;border:0;background:transparent;cursor:pointer;z-index:2;will-change:transform}
+.dowzy-island:not(.is-expanded) .dowzy-shared-pet{pointer-events:none}
+.dowzy-shared-pet .dowzy-pet-emote{position:relative;display:block}
+.dowzy-shared-pet.emote-slap .dowzy-pet-emote{animation:dowzy-slap .37s ease-in-out}
+.dowzy-shared-pet.emote-dizzy .dowzy-pet-emote{animation:dowzy-dizzy 1.3s ease-in-out 2}
+.dowzy-hearts{position:absolute;top:-10px;left:35px;font:24px/1 sans-serif;color:#ff4d6d;animation:dowzy-love 1.5s ease-in-out infinite}
+.dowzy-greeting-card{display:none;position:absolute;top:36px;left:10px;right:10px;height:104px;border-radius:20px;background:radial-gradient(ellipse at 50% 60%,#ffffff0d,transparent 70%),#141518;border:1px solid #ffffff09}
+.dowzy-island.view-greeting .dowzy-greeting-card{display:block}
+.dowzy-greeting-card::after{content:"";position:absolute;inset:0;border-radius:inherit;background-image:radial-gradient(circle,#ffffffb3 1px,transparent 1.3px),radial-gradient(circle,#34d39990 1px,transparent 1.3px);background-size:37px 29px,53px 43px;background-position:13px 5px,23px 11px;animation:dowzy-greet-stars 4.6s both;pointer-events:none}
+.dowzy-countdown{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:2px;border-radius:2px;background:#ffffff59;width:0;pointer-events:none}
+.dowzy-island:not(.mode-home) .dowzy-countdown{display:none}
+.dowzy-evolution-notice{position:absolute;right:24px;top:14px;color:#78e9c0;font-size:11px;pointer-events:none}
+.dowzy-island button:focus-visible{outline:2px solid #f5f6f8;outline-offset:-2px}
+@keyframes dowzy-slap{0%,100%{transform:scale(1)}20%{transform:scale(1.16,.75)}55%{transform:scale(.88,1.15)}}
+@keyframes dowzy-dizzy{0%{transform:rotate(0)}100%{transform:rotate(720deg)}}
+@keyframes dowzy-love{0%{opacity:0;transform:translate(-10px,0) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translate(15px,-30px) scale(1.1)}}
+@keyframes dowzy-greet-stars{0%{opacity:0;transform:scale(.5)}12%{opacity:.8}50%{opacity:.3}100%{opacity:0;transform:scale(1.03)}}
+@media(prefers-reduced-motion:reduce){.dowzy-island-content,.dowzy-island-view,.dowzy-island-view.on{transition:none;filter:none}.dowzy-hearts,.dowzy-pet-emote,.dowzy-greeting-card::after{animation:none!important}.dowzy-greeting-card::after{opacity:0}}
+@media(max-width:600px){.dowzy-overview-grid{grid-template-columns:1fr}.dowzy-wardrobe-body{margin-left:114px;margin-right:10px}.dowzy-color-grid{gap:4px}.dowzy-color-grid button{width:30px;height:30px}.dowzy-settings-body small{font-size:9px}}

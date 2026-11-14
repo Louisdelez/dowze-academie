@@ -1,3 +1,8 @@
+import "../planning-redesign.css";
+import { CollectionCover } from './CollectionCover';
+import { CurriculumWorkbench } from './CurriculumWorkbench';
+import { FormationChoicePicker } from "./FormationChoicePicker";
+import { ServerCatalog } from "./ServerCatalog";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -45,6 +50,7 @@ import {
 import { Modal } from "./Modal";
 
 export interface FormationsPageProps {
+  accountId: string;
   formations: readonly InstalledFormation[];
   activeFormation: InstalledFormation;
   onActivate: (formation: InstalledFormation) => Promise<void>;
@@ -57,7 +63,7 @@ export interface FormationsPageProps {
   ) => Promise<boolean>;
 }
 
-type PageView = "library" | "add";
+type PageView = "library" | "store" | "add";
 type BusyOperation =
   | "choose-package"
   | "install-package"
@@ -191,6 +197,7 @@ function FormationSwitchDialog({
 }
 
 export function FormationsPage({
+  accountId,
   formations,
   activeFormation,
   onActivate,
@@ -199,6 +206,7 @@ export function FormationsPage({
   onDownloadKit,
   onDownloadTemplate
 }: FormationsPageProps) {
+  const [workbenchOpen, setWorkbenchOpen] = useState(false);
   const [view, setView] = useState<PageView>("library");
   const [formationName, setFormationName] = useState("");
   const [academicDates, setAcademicDates] = useState(defaultAcademicYearDates);
@@ -359,18 +367,25 @@ export function FormationsPage({
       aria-labelledby="formations-page-title"
       aria-busy={Boolean(busyOperation)}
     >
-      {view === "library" ? (
+      {view !== "add" ? (
         <>
           <header className="page-heading formations-heading">
             <div>
-              <p className="eyebrow">Bibliothèque locale</p>
-              <h1 id="formations-page-title">Formations</h1>
+              <p className="eyebrow">Votre école, année après année</p>
+              <h1 id="formations-page-title">Mes formations</h1>
               <p className="heading-subtitle">Une formation correspond à une année scolaire complète.</p>
             </div>
             <button type="button" className="primary-button" onClick={openAddView}>
-              <Plus /> Ajouter une formation
+              <Plus /> Importer une formation
             </button>
           </header>
+
+          <nav className="formation-library-tabs" aria-label="Bibliothèque et catalogue">
+            <button type="button" aria-pressed={view === 'library'} onClick={() => setView('library')}>Mes années <span>{formations.length}</span></button>
+            <button type="button" aria-pressed={view === 'store'} onClick={() => setView('store')}>Catalogue</button>
+          </nav>
+          <ServerCatalog key={accountId} accountId={accountId} install={onInstallPreview} formations={formations} activate={onActivate} view={view} />
+          {view === 'library' && <>
 
           {(operationError || operationStatus) && (
             <div
@@ -409,7 +424,7 @@ export function FormationsPage({
             <header>
               <div>
                 <p className="eyebrow">Disponibles sur ce profil</p>
-                <h2 id="formations-library-title">Mes formations</h2>
+                <h2 id="formations-library-title">Mes années</h2>
               </div>
               <span>{formations.length} formation{formations.length === 1 ? "" : "s"}</span>
             </header>
@@ -422,7 +437,7 @@ export function FormationsPage({
                       className={`formation-card ${isActive ? "is-active" : ""}`}
                       style={formationStyle(formation)}
                     >
-                      <div className="formation-card-accent" aria-hidden="true" />
+                      <CollectionCover title={formation.manifest.name} category={formation.packageId.startsWith('dowze-fr-') ? 'France' : 'Suisse'} label={formationDisplayYear(formation)} />
                       <div className="formation-card-topline">
                         <span>{formationOriginLabel(formation)}</span>
                         {isActive && <strong><Check /> Active</strong>}
@@ -451,6 +466,7 @@ export function FormationsPage({
               })}
             </ul>
           </section>
+          </>}
         </>
       ) : (
         <>
@@ -465,6 +481,7 @@ export function FormationsPage({
             </div>
           </header>
 
+          <nav className="formation-builder-map" aria-label="Étapes d’import"><a href="#formation-name-title">1. Définir mon année</a><a href="#formation-prompts-title">2. Préparer les fichiers</a><a href="#formation-import-title">3. Vérifier et importer</a></nav>
           <section className="formation-builder-intro" aria-labelledby="formation-name-title">
             <div className="formation-builder-step"><span>1</span><p><strong id="formation-name-title">Nommer la formation</strong><small>Ce nom sera ajouté automatiquement dans chaque prompt et modèle.</small></p></div>
             <label className="formation-name-field">
@@ -525,7 +542,7 @@ export function FormationsPage({
             <div>
               <p className="eyebrow">Kit complet</p>
               <h2 id="formation-kit-title">Télécharger tous les modèles</h2>
-              <p>Le kit contient les six fichiers JSON obligatoires, le mode d’emploi, les schémas et une copie des prompts.</p>
+              <p>Le kit contient les six JSON, leurs schémas et prompts, ainsi qu’un dossier éditorial, six missions d’agents et des modèles de sources et compétences.</p>
             </div>
             <button
               type="button"
@@ -537,6 +554,8 @@ export function FormationsPage({
               {busyOperation === "download-kit" ? "Préparation…" : "Télécharger le kit"}
             </button>
           </section>
+
+          <details className="formation-editorial-disclosure" onToggle={(event) => setWorkbenchOpen(event.currentTarget.open)}><summary>Atelier de conception pédagogique (avancé)</summary>{workbenchOpen && <CurriculumWorkbench key={`${accountId}:${activeFormation.instanceId}`} accountId={accountId} annualInstanceId={activeFormation.instanceId} />}</details>
 
           <section className="formation-prompts-section" aria-labelledby="formation-prompts-title">
             <header>
@@ -638,6 +657,7 @@ export function FormationsPage({
                   <div><dt>Événements</dt><dd>{preview.counts.events}</dd></div>
                   <div><dt>Tâches</dt><dd>{preview.counts.tasks}</dd></div>
                 </dl>
+                {preview.valid && preview.manifest?.choices && !preview.manifest.choices.selected && <FormationChoicePicker key={preview.manifest.id} preview={preview} onConfirm={async chosen => { setPreview(chosen); }} />}
                 {previewErrors.length > 0 && (
                   <section className="formation-issue-group is-error" aria-labelledby="formation-errors-title">
                     <h4 id="formation-errors-title">{previewErrors.length} erreur{previewErrors.length === 1 ? "" : "s"} bloquante{previewErrors.length === 1 ? "" : "s"}</h4>
@@ -668,7 +688,7 @@ export function FormationsPage({
                     type="button"
                     className="primary-button"
                     onClick={() => void installPreview()}
-                    disabled={!preview.valid || Boolean(busyOperation)}
+                    disabled={!preview.valid || Boolean(busyOperation) || Boolean(preview.manifest?.choices && !preview.manifest.choices.selected)}
                   >
                     {busyOperation === "install-package" ? <LoaderCircle className="is-spinning" /> : <PackageCheck />}
                     {busyOperation === "install-package" ? "Installation…" : "Installer la formation"}

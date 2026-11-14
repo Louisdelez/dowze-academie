@@ -1,3 +1,4 @@
+import { appStorage } from "./appStorage";
 export const WORKSPACE_STORAGE = {
   subjects: "etude.subjects.energy-year1.v2",
   events: "etude.events.energy-year1.v2",
@@ -137,7 +138,7 @@ export function formationStorageFor(
  * compte. Les espaces de profils et les réglages d'authentification ne sont
  * jamais ciblés par cette liste fermée.
  */
-export function clearLegacyWorkspaceData(storage: Storage = window.localStorage): number {
+export function clearLegacyWorkspaceData(storage: Storage = appStorage): number {
   let removed = 0;
   for (const key of LEGACY_WORKSPACE_PURGE_KEYS) {
     if (storage.getItem(key) === null) continue;
@@ -152,7 +153,7 @@ export function clearLegacyWorkspaceData(storage: Storage = window.localStorage)
 
 export function profileRecoveryKeys(
   accountId: string,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): string[] {
   const prefix = profileStoragePrefix(accountId);
   const keys: string[] = [];
@@ -174,7 +175,7 @@ export function profileRecoveryKeys(
 export function formationRecoveryKeys(
   accountId: string,
   formation: FormationStorageIdentity,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): string[] {
   const workspaceKeys = Object.values(formationStorageFor(accountId, formation));
   const keys: string[] = [];
@@ -200,7 +201,7 @@ export function formationRecoveryKeys(
  */
 export function clearWorkspaceRecoveryData(
   accountId: string,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): number {
   const recoveryKeys = Object.values(workspaceStorageFor(accountId))
     .map((key) => `${key}.recovery`);
@@ -283,7 +284,7 @@ function parseResetIntent(accountId: string, raw: string): ProfileResetIntent {
  */
 export function pendingProfileReset(
   accountId: string,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): ProfileResetRecordId[] | null {
   const raw = storage.getItem(workspaceStorageFor(accountId).resetJournal);
   return raw === null ? null : parseResetIntent(accountId, raw).recordIds;
@@ -296,7 +297,7 @@ export function pendingProfileReset(
 export function beginProfileReset(
   accountId: string,
   recordIds: readonly ProfileResetRecordId[],
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): void {
   const validatedRecordIds = validateResetRecordIds(recordIds);
   const journalKey = workspaceStorageFor(accountId).resetJournal;
@@ -331,7 +332,7 @@ export function beginProfileReset(
 export function applyPendingProfileReset(
   accountId: string,
   entries: ReadonlyArray<ProfileResetEntry>,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): void {
   const storageKeys = workspaceStorageFor(accountId);
   const rawJournal = storage.getItem(storageKeys.resetJournal);
@@ -390,7 +391,7 @@ export function applyPendingProfileReset(
 /** Finalise un reset appliqué en supprimant uniquement son journal d’intention. */
 export function completeProfileReset(
   accountId: string,
-  storage: Storage = window.localStorage
+  storage: Storage = appStorage
 ): boolean {
   const journalKey = workspaceStorageFor(accountId).resetJournal;
   const rawJournal = storage.getItem(journalKey);

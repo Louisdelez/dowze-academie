@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-begin-notebook-export"
+description = "Enables the begin_notebook_export command without any pre-configured scope."
+commands.allow = ["begin_notebook_export"]
+
+[[permission]]
+identifier = "deny-begin-notebook-export"
+description = "Denies the begin_notebook_export command without any pre-configured scope."
+commands.deny = ["begin_notebook_export"]

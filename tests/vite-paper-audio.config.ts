@@ -1,0 +1,2 @@
+import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import {resolve} from 'node:path';import {notebookOfflineShell} from '../vite.pwa.config';
+export default defineConfig({plugins:[react(),notebookOfflineShell('paper-audio-test.html')],base:'/app/',resolve:{dedupe:['react','react-dom']},build:{outDir:'/home/louis/Documents/Dowze-Notebook-Implementation-20261012/audio-conversion-built',emptyOutDir:true,rollupOptions:{input:resolve(process.cwd(),'paper-audio-test.html')}}});

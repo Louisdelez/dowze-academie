@@ -1,66 +1,43 @@
-# Architecture
+# Architecture — état réuni au 14 novembre 2026
 
-Dowze Academie est une application de bureau Tauri 2. L’interface React orchestre le cursus et l’état utilisateur ; la partie Rust fournit les opérations qui exigent une frontière native ou des contrôles renforcés.
+## Composants
+
+Le bureau utilise React/TypeScript dans une fenêtre Tauri 2 ; Rust fournit les fichiers, le coffre du système, les WebViews, le réseau et les commandes natives. La PWA possède son entrée `pwa/src/App.tsx` et réutilise des modèles de `src/lib/`. Le serveur FastAPI gère les comptes, sessions, espaces, documents de synchronisation, médias et carnets. Son stockage admet SQLite en développement et PostgreSQL via configuration ; les blobs restent dans un stockage distinct.
 
 ```mermaid
 flowchart LR
-    U[Utilisateur] --> R[Interface React]
-    R --> P[Stockage profil local]
-    R -->|IPC validé| T[Noyau Tauri et Rust]
-    T --> A[AppData et PDF privés]
-    T --> K[Coffre sécurisé du système]
-    T --> W[WebViews distantes sans permission Tauri]
-    T --> C[API choisie ou Ollama local]
+    Desktop[Desktop Rust et React] --> HTTPS[academie.dowze.ch]
+    PWA[PWA téléphone et tablette] --> HTTPS
+    HTTPS --> Proxy[Frontal HTTPS VPS]
+    Proxy --> Epic[Epic-01 : site et services Dowze]
+    Epic --> API[API et synchronisation]
+    API --> DB[(Base configurée)]
+    API --> Blobs[(Fichiers et médias)]
+    Desktop --> Local[(Cache privé appareil)]
+    PWA --> Browser[(Stockage privé navigateur)]
 ```
 
-## Technologies
+Le frontal HTTPS et le répertoire public Epic‑01 ont été observés directement. La base effective, les volumes privés, l’image API et leurs sauvegardes n’ont pas pu être inspectés avec les accès ordinaires. Le schéma représente les responsabilités du code, sans certifier ces détails d’exploitation actuels.
 
-- React 19 et TypeScript pour l’interface ;
-- Vite 8 pour le serveur de développement et le bundle web ;
-- Tauri 2 et Rust pour l’application native ;
-- Milkdown/Crepe, ProseMirror, CodeMirror et KaTeX pour les notes ;
-- Playwright et le test runner Node pour les validations.
+## Frontières
 
-## Organisation du dépôt
+- L’interface locale appelle des commandes Rust validées ; les pages des fournisseurs utilisent des WebViews séparées.
+- Sessions, comptes et documents doivent rester séparés par identité et espace. Les outils de note ne doivent pas devenir un second propriétaire de la sauvegarde.
+- Le précache PWA concerne le shell et ses ressources ; il n’est pas une sauvegarde de la base utilisateur.
+- Les carnets gérés exigent un démarrage scellé : code, worker Node et manifeste validés avant ouverture. Le démarrage de développement `app.main:app` ne reproduit pas cette garantie.
+- Les configurations et clés privées de signature, de base ou de session restent hors du dépôt.
 
-| Chemin | Responsabilité |
+## Repères de code
+
+| Emplacement | Rôle |
 | --- | --- |
-| `src/App.tsx` | Orchestration du workspace, états et workflows |
-| `src/RootApp.tsx` | Barrière d’authentification et changement de profil |
-| `src/components/` | Pages et composants de l’interface |
-| `src/data/` | Cursus, notions et planning canoniques |
-| `src/lib/` | Modèles, validation, persistance et prompts |
-| `src-tauri/src/` | Comptes natifs, fichiers, WebViews, calendrier et réseau |
-| `tests/` | Tests unitaires TypeScript et parcours UI Playwright |
+| `src/App.tsx`, `src/RootApp.tsx` | Espace de travail et authentification bureau |
+| `src/components/` | Notes, cours, navigation, compagnon et interfaces |
+| `src/lib/` | Modèles, persistance, protocoles et synchronisation |
+| `src-tauri/src/` | Adaptations système et accès natifs |
+| `pwa/src/` | Client web mobile/tablette |
+| `server/api/app/main.py` | Construction de l’API et routes |
+| `server/api/app/notebook_startup.py` | Vérification du runtime des carnets gérés |
+| `server/api/app/config.py` | Configuration de stockage et limites |
 
-## Frontières de confiance
-
-### Interface locale
-
-La fenêtre principale charge uniquement le bundle local. Elle possède les capacités Tauri minimales déclarées dans `src-tauri/capabilities/main-local.json`. Les commandes natives vérifient leur appelant et revalident leurs entrées.
-
-### WebViews distantes
-
-Les pages de fournisseurs sont chargées dans des WebViews séparées sans permission Tauri. La navigation, les nouvelles fenêtres, les téléchargements et les domaines sensibles sont filtrés côté Rust. Une transition de compte ferme les contenus distants avant d’afficher le profil suivant.
-
-Sur macOS, l’accès vocal sépare trois frontières : seul le frontend local peut invoquer la demande TCC AVFoundation de l’application hôte, Wry décide ensuite de la permission média de l’origine WebKit, et la page distante ne reçoit toujours aucune permission Tauri. La demande native ne capture aucun son ; seule une fonction vocale déclenchée ensuite dans le site peut ouvrir le microphone.
-
-### Persistance
-
-Les données fonctionnelles sont préfixées par profil. Le registre de comptes natif conserve des vérificateurs Argon2id et s’écrit de façon atomique. Les PDF archivés sont rangés par compte et par évaluation. Les clés API et la reconnexion facultative utilisent le backend natif de `keyring` : Trousseau macOS, Gestionnaire d’identifiants Windows ou Secret Service Linux persistant. Aucun backend mock n’est activé dans les builds pris en charge.
-
-Les identifiants historiques `etude.*`, `com.etude.*`, l’UID iCalendar et le bundle ID `com.etude.desktop` restent volontairement présents après le renommage. Ils assurent la continuité des profils, secrets et événements déjà créés ; ce ne sont pas les noms publics actuels du produit.
-
-## Chat libre
-
-Le frontend ne contacte pas directement les API distantes. Il transmet la requête à Rust, qui applique les limites de taille, la validation d’URL, la politique de redirection et les protections contre les destinations réseau privées. Ollama constitue l’exception locale explicitement bornée à `127.0.0.1:11434`.
-
-## Mode navigateur
-
-`npm run dev` sert à travailler sur l’interface. Les fonctions natives y utilisent des adaptations de développement : elles ne représentent ni le stockage Argon2id natif, ni le coffre sécurisé, ni l’isolation des fichiers, ni le comportement réel des WebViews système.
-
-## Portabilité et livraison
-
-Les intégrations propres à macOS restent derrière des gardes `cfg(target_os = "macos")`. La suppression ciblée des données Google utilise ainsi les API WebKit natives sur macOS et est annoncée indisponible sur les autres systèmes. Les opérations portables — profils, fichiers, PDF, calendrier, réseau et coffre sécurisé — sont compilées nativement sur les quatre jobs du workflow de release.
-
-Les artefacts publics sont construits par GitHub Actions sur des runners macOS ARM64, macOS Intel, Windows x64 et Linux x64. La release reste en brouillon jusqu’à la réussite de toute la matrice et à la création d’un manifeste SHA-256.
+Les identifiants historiques `com.etude.desktop` sont conservés pour la continuité des profils. Les anciens runtimes Hermes/mémoire volumineux ne sont pas des ressources de cette application (`bundle.resources` vide) et ne sont pas réintroduits.

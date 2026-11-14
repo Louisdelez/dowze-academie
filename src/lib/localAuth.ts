@@ -1,3 +1,4 @@
+import { appStorage } from "./appStorage";
 import { invoke } from "@tauri-apps/api/core";
 import { isValidLocalAccountId } from "./profileStorage.ts";
 import { isTauri } from "./tauri.ts";
@@ -101,7 +102,7 @@ function emptyRegistry(): StoredAccountRegistry {
 function loadRegistry(): StoredAccountRegistry {
   let stored: string | null = null;
   try {
-    stored = window.localStorage.getItem(AUTH_REGISTRY_KEY);
+    stored = appStorage.getItem(AUTH_REGISTRY_KEY);
     if (stored === null) return emptyRegistry();
     const parsed: unknown = JSON.parse(stored);
     if (
@@ -130,8 +131,8 @@ function loadRegistry(): StoredAccountRegistry {
     if (stored) {
       try {
         const recoveryKey = `${AUTH_REGISTRY_KEY}.recovery`;
-        if (!window.localStorage.getItem(recoveryKey)) {
-          window.localStorage.setItem(recoveryKey, stored);
+        if (!appStorage.getItem(recoveryKey)) {
+          appStorage.setItem(recoveryKey, stored);
         }
       } catch {
         // La copie de récupération est best-effort lorsque le quota est épuisé.
@@ -146,7 +147,7 @@ function loadRegistry(): StoredAccountRegistry {
 
 function saveRegistry(registry: StoredAccountRegistry): void {
   try {
-    window.localStorage.setItem(AUTH_REGISTRY_KEY, JSON.stringify(registry));
+    appStorage.setItem(AUTH_REGISTRY_KEY, JSON.stringify(registry));
   } catch {
     throw new LocalAuthError(
       "storage-unavailable",
@@ -167,10 +168,10 @@ function publicAccount(account: StoredLocalAccount): LocalAccount {
 function clearBrowserSessions(): void {
   try {
     window.sessionStorage.removeItem(AUTH_SESSION_KEY);
-    window.localStorage.removeItem(AUTH_REMEMBERED_SESSION_KEY);
+    appStorage.removeItem(AUTH_REMEMBERED_SESSION_KEY);
     if (
       window.sessionStorage.getItem(AUTH_SESSION_KEY) !== null ||
-      window.localStorage.getItem(AUTH_REMEMBERED_SESSION_KEY) !== null
+      appStorage.getItem(AUTH_REMEMBERED_SESSION_KEY) !== null
     ) {
       throw new Error("La session locale est toujours présente.");
     }
@@ -189,7 +190,7 @@ function clearBrowserSessionsBestEffort(): void {
     // La suppression vérifiée reste assurée par clearBrowserSessions.
   }
   try {
-    window.localStorage.removeItem(AUTH_REMEMBERED_SESSION_KEY);
+    appStorage.removeItem(AUTH_REMEMBERED_SESSION_KEY);
   } catch {
     // La suppression vérifiée reste assurée par clearBrowserSessions.
   }
@@ -200,7 +201,7 @@ function setSession(accountId: string, rememberMe = false): void {
   const session: StoredAuthSession = { version: 1, accountId };
   const serialized = JSON.stringify(session);
   try {
-    const storage = rememberMe ? window.localStorage : window.sessionStorage;
+    const storage = rememberMe ? appStorage : window.sessionStorage;
     const key = rememberMe ? AUTH_REMEMBERED_SESSION_KEY : AUTH_SESSION_KEY;
     storage.setItem(key, serialized);
     if (storage.getItem(key) !== serialized) {
@@ -238,7 +239,7 @@ function storedBrowserAccountId(): string | null {
   let rememberedRaw: string | null;
   try {
     transientRaw = window.sessionStorage.getItem(AUTH_SESSION_KEY);
-    rememberedRaw = window.localStorage.getItem(AUTH_REMEMBERED_SESSION_KEY);
+    rememberedRaw = appStorage.getItem(AUTH_REMEMBERED_SESSION_KEY);
   } catch {
     throw new LocalAuthError("storage-unavailable", "La session locale ne peut pas être lue.");
   }

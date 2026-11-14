@@ -1,3 +1,4 @@
+import "../planning-redesign.css";
 import {
   FileCheck2,
   FileText,
@@ -48,7 +49,7 @@ function fileName(path: string) {
 }
 
 function parseScore(value: string) {
-  return Number(value.trim().replace(",", "."));
+  return value.trim() ? Number(value.trim().replace(",", ".")) : Number.NaN;
 }
 
 export function AssessmentEditor({
@@ -84,15 +85,20 @@ export function AssessmentEditor({
   const [completedSource, setCompletedSource] = useState<string>();
   const [choosing, setChoosing] = useState<"blank" | "completed" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const numericScore = useMemo(() => parseScore(score), [score]);
 
   const choose = async (variant: "blank" | "completed") => {
+    if (choosing || saving) return;
+    setFailure(null);
     setChoosing(variant);
     try {
       const path = await onChoosePdf();
       if (!path) return;
       if (variant === "blank") setBlankSource(path);
       else setCompletedSource(path);
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "Le PDF n’a pas pu être sélectionné. Réessayez.");
     } finally {
       setChoosing(null);
     }
@@ -100,7 +106,12 @@ export function AssessmentEditor({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!subjectId || !title.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > grading.scaleMax || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20 || !appreciation.trim()) return;
+    if (saving || choosing) return;
+    setFailure(null);
+    if (!subjectId || !title.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > grading.scaleMax || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20 || !appreciation.trim()) {
+      setFailure(`Complétez la matière, le titre et l’appréciation. La note doit être comprise entre 0 et ${grading.scaleMax}, et le coefficient entre 0,1 et 20.`);
+      return;
+    }
     const now = new Date().toISOString();
     setSaving(true);
     try {
@@ -123,6 +134,8 @@ export function AssessmentEditor({
         createdAt: assessment?.createdAt ?? now,
         updatedAt: now
       }, { blank: blankSource, completed: completedSource });
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "L’évaluation n’a pas pu être enregistrée. Vos réponses sont conservées ; réessayez.");
     } finally {
       setSaving(false);
     }
@@ -135,7 +148,7 @@ export function AssessmentEditor({
       onClose={saving ? () => undefined : onClose}
       size="lg"
     >
-      <form className="modal-form assessment-record-form" onSubmit={(event) => void submit(event)}>
+      <form className="modal-form assessment-record-form" aria-busy={saving} onSubmit={(event) => void submit(event)}>
         <div className="assessment-record-intro">
           <GraduationCap />
           <p>
@@ -144,6 +157,7 @@ export function AssessmentEditor({
           </p>
         </div>
 
+        <fieldset className="assessment-form-section"><legend>1. Identifier l’épreuve</legend>
         <div className="form-row">
           <label className="form-field">
             <span>Matière</span>
@@ -170,6 +184,8 @@ export function AssessmentEditor({
           <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex. Mini-test — Dérivation et applications" required />
         </label>
 
+        </fieldset>
+        <fieldset className="assessment-form-section"><legend>2. Enregistrer le résultat</legend>
         <div className="form-row assessment-score-row">
           <label className="form-field">
             <span>Date de l’épreuve</span>
@@ -219,10 +235,11 @@ export function AssessmentEditor({
           <textarea value={personalNote} onChange={(event) => setPersonalNote(event.target.value)} placeholder="Ce que je veux retravailler…" rows={2} />
         </label>
 
+        </fieldset>
         <fieldset className="assessment-files-field">
-          <legend>Copies PDF conservées dans Dowze Academie</legend>
+          <legend>3. Archiver les deux copies PDF</legend>
           <div className="assessment-file-pickers">
-            <button type="button" onClick={() => void choose("blank")} disabled={choosing !== null}>
+            <button type="button" onClick={() => void choose("blank")} disabled={choosing !== null || saving}>
               <span><FileText /></span>
               <p>
                 <strong>Sujet vierge</strong>
@@ -230,7 +247,7 @@ export function AssessmentEditor({
               </p>
               {blankSource || assessment?.blankPdf ? <FileCheck2 /> : <FileUp />}
             </button>
-            <button type="button" onClick={() => void choose("completed")} disabled={choosing !== null}>
+            <button type="button" onClick={() => void choose("completed")} disabled={choosing !== null || saving}>
               <span><ScanLine /></span>
               <p>
                 <strong>Copie remplie scannée</strong>
@@ -242,10 +259,11 @@ export function AssessmentEditor({
           <p className="assessment-storage-note">Les fichiers sélectionnés seront validés ensemble à l’enregistrement, puis copiés dans les données locales de l’application. Les originaux restent intacts.</p>
         </fieldset>
 
+        {failure && <p role="alert" className="formation-operation-error">{failure}</p>}
         <div className="modal-actions">
           <span />
           <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Annuler</button>
-          <button className="primary-button" disabled={saving || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > grading.scaleMax || !Number.isFinite(coefficient) || coefficient < 0.1 || coefficient > 20}>
+          <button className="primary-button" disabled={saving || choosing !== null}>
             <Save /> {saving ? "Enregistrement…" : "Enregistrer dans les notes"}
           </button>
         </div>

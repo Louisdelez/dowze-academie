@@ -1,0 +1,24 @@
+/* One edge control opens and folds each side panel, outside native AI content. */
+.panel-edge-tab {position:absolute;z-index:55;top:50%;display:flex;width:32px;min-height:64px;align-items:center;justify-content:center;flex-direction:column;gap:7px;padding:9px 4px;border:1px solid var(--line);background:var(--surface);color:var(--primary);box-shadow:0 3px 14px #20343b0c;transform:translateY(-50%);cursor:pointer;}
+.panel-edge-tab svg {width:15px;height:15px;flex-shrink:0;}
+.panel-edge-tab span {font-size:10px;font-weight:650;letter-spacing:.06em;writing-mode:vertical-rl;}
+.panel-edge-tab:hover {background:var(--primary-soft);color:var(--primary-deep);}
+.panel-edge-tab:focus-visible {outline:2px solid var(--primary);outline-offset:2px;}
+.ai-edge-tab {position:fixed;border-right:0;border-radius:12px 0 0 12px;transition:right 220ms cubic-bezier(.22,.8,.25,1);}
+.navigation-edge-tab {left:calc(100% + 1px);border-left:0;border-radius:0 12px 12px 0;}
+@media (min-width:760px) {
+ .app-rail:not(.is-compact) {width:214px;flex-basis:214px;align-items:stretch;padding-inline:14px;}
+ .app-rail:not(.is-compact) .rail-brand {display:block;}
+ .app-rail:not(.is-compact) .app-mark {display:flex;width:auto;justify-content:flex-start;gap:9px;}
+ .app-rail:not(.is-compact) .rail-nav,.app-rail:not(.is-compact) .rail-bottom {align-items:stretch;}
+ .app-rail:not(.is-compact) .rail-button {display:flex;width:100%;justify-content:flex-start;gap:12px;padding:0 12px;}
+ .app-rail:not(.is-compact) .rail-label {display:inline;}
+ .app-rail.is-compact {width:76px;flex-basis:76px;padding-inline:0;align-items:center;}
+ .app-rail.is-compact .rail-brand,.app-rail.is-compact .rail-label,.app-rail.is-compact .rail-group-label {display:none;}
+ .app-rail.is-compact .app-mark {width:48px;padding:0;margin-left:0;justify-content:center;}
+ .app-rail.is-compact .rail-button {width:42px;padding:0;justify-content:center;}
+ .app-rail.is-compact .rail-nav,.app-rail.is-compact .rail-bottom {align-items:center;}
+ .app-rail.is-compact .avatar-button {margin-left:0;}
+}
+@media (max-width:759px) {.navigation-edge-tab {display:none;}}
+@media (prefers-reduced-motion:reduce) {.ai-edge-tab {transition:none;}}

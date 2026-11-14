@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-secure-ai-panel-for-account-transition"
+description = "Enables the secure_ai_panel_for_account_transition command without any pre-configured scope."
+commands.allow = ["secure_ai_panel_for_account_transition"]
+
+[[permission]]
+identifier = "deny-secure-ai-panel-for-account-transition"
+description = "Denies the secure_ai_panel_for_account_transition command without any pre-configured scope."
+commands.deny = ["secure_ai_panel_for_account_transition"]

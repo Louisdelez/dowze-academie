@@ -1,0 +1,32 @@
+import {build} from 'vite';
+import {indexedDB} from 'fake-indexeddb';
+import {JSDOM} from 'jsdom';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+const out=await mkdtemp(join(process.cwd(),'tests/.paper-image-renderer-'));
+globalThis.indexedDB=indexedDB;
+process.env.NODE_ENV='development';
+let root,dom,module;const originalCreate=URL.createObjectURL,originalRevoke=URL.revokeObjectURL;
+try{
+ await build({configFile:false,ssr:{noExternal:['yjs','lib0']},build:{ssr:'tests/paper-image-renderer-entry.tsx',outDir:out,copyPublicDir:false,minify:false,sourcemap:false,reportCompressedSize:false,rollupOptions:{output:{entryFileNames:'image-renderer.mjs'}}},logLevel:'error'});
+ const m=await import(pathToFileURL(join(out,'image-renderer.mjs')));module=m;
+ const document=m.migratePaper('note','Original',null),asset={id:'image',name:'Filename.png',mediaType:'image/png',size:3,serverId:'server-image'};document.assets.push(asset);const media={accountId:'qa-renderer-image-owner',spaceId:'year'};
+ const foreign=m.renderToStaticMarkup(m.createElement(m.PaperRichText,{markdown:'![Illustration précise](dowze-photo:paper-v3-note-other/image "Titre exact")',document,media}));assert.ok(foreign.includes('autre carnet'));assert.ok(foreign.includes('Illustration précise'));assert.ok(foreign.includes('title="Titre exact"'));assert.ok(!foreign.includes('<img'));assert.ok(foreign.includes('data-image-error="true"'));
+ const invalid=m.renderToStaticMarkup(m.createElement(m.PaperRichText,{markdown:'![Original](dowze-photo:bad/path/extra)',document,media}));assert.ok(invalid.includes('référence d’image'));assert.ok(!invalid.includes('<img'));
+ console.log('Readonly Markdown renderer: foreign/malformed private references show human-readable status, never a substituted image: PASS');
+ dom=new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',{url:'https://qa.invalid/'});globalThis.window=dom.window;globalThis.document=dom.window.document;globalThis.HTMLElement=dom.window.HTMLElement;globalThis.Event=dom.window.Event;globalThis.getComputedStyle=dom.window.getComputedStyle.bind(dom.window);globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ let urls=0;const revoked=[];URL.createObjectURL=()=>`blob:qa-paper-image-${++urls}`;URL.revokeObjectURL=url=>revoked.push(url);
+ root=m.createRoot(globalThis.document.getElementById('root'));const tick=()=>new Promise(resolve=>setTimeout(resolve,10));
+ const waitFor=async(predicate)=>{for(let attempt=0;attempt<100;attempt++){await m.act(async()=>{await tick();});if(predicate())return;}throw Error('The renderer did not settle');};
+ const seed=async(scope)=>{await m.putDraft({...scope,type:'whiteboard',documentId:m.notebookDocumentId(document.noteId),title:'Note',content:document,baseVersion:1,updatedAt:1,syncState:'synced'});await m.putLocalBlob({...scope,id:asset.id,documentId:m.notebookDocumentId(document.noteId),name:asset.name,blob:new Blob(['IMG'],{type:'image/png'}),createdAt:1,status:'uploaded',serverId:asset.serverId});};await seed(media);
+ const ownMarkdown='![Description précise](dowze-photo:paper-v3-note-note/image "Titre exact")';await m.act(async()=>{root.render(m.createElement(m.PaperRichText,{markdown:ownMarkdown,document,media}));});await waitFor(()=>!!globalThis.document.querySelector('img'));
+ const image=globalThis.document.querySelector('img');assert.equal(image.alt,'Description précise');assert.equal(image.title,'Titre exact');assert.equal(image.getAttribute('src'),'blob:qa-paper-image-1');
+ await m.act(async()=>{root.render(m.createElement(m.PaperRichText,{markdown:'![](dowze-photo:paper-v3-note-note/image)',document,media}));});await waitFor(()=>!!globalThis.document.querySelector('img'));assert.equal(globalThis.document.querySelector('img').getAttribute('alt'),'');
+ console.log('Mounted private image renderer: Markdown alt/title are preserved exactly, including empty decorative alt: PASS');
+ let release,started=false;const gate=new Promise(resolve=>{release=resolve;}),other={accountId:'qa-renderer-image-other-owner',spaceId:'year',api:{downloadBlob:async()=>{started=true;await gate;return new Blob(['NEW']);}}};await m.putDraft({...other,api:undefined,type:'whiteboard',documentId:m.notebookDocumentId(document.noteId),title:'Other scoped note',content:document,baseVersion:1,updatedAt:1,syncState:'synced'});
+ await m.act(async()=>{m.flushSync(()=>root.render(m.createElement(m.PaperAssetImage,{asset,document,media:other,alt:'Current account image'})));assert.equal(globalThis.document.querySelector('img'),null);});await waitFor(()=>started);assert.equal(globalThis.document.querySelector('img'),null);
+ await m.act(async()=>{m.flushSync(()=>root.render(m.createElement(m.PaperAssetImage,{asset,document,media,alt:'Original account image'})));});await waitFor(()=>!!globalThis.document.querySelector('img'));const activeUrl=globalThis.document.querySelector('img').getAttribute('src');release();for(let i=0;i<5;i++)await m.act(async()=>{await tick();});assert.equal(globalThis.document.querySelector('img').getAttribute('src'),activeUrl);assert.equal(globalThis.document.querySelector('img').alt,'Original account image');assert.equal((await m.listLocalBlobs(other.accountId,other.spaceId)).length,0);assert.ok(revoked.includes('blob:qa-paper-image-1'));
+ console.log('Mounted renderer account switch: no one-frame old image; late cancelled download creates no file and cannot replace the active image: PASS');
+}finally{if(root){if(typeof module?.act==='function')await module.act(async()=>root.unmount());else root.unmount();}URL.createObjectURL=originalCreate;URL.revokeObjectURL=originalRevoke;dom?.window.close();await rm(out,{recursive:true,force:true});}

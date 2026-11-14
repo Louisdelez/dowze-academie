@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {PDFDocument,PDFName,PDFDict,PDFArray,PDFRef,PDFHexString} from 'pdf-lib';
+import {addPaperPdfLink,addPaperPdfOutlines,preparePdfOutline} from '../src/lib/paperPdfLinkExport.ts';
+test('Exported links point to new PDF page references and retain their position',async()=>{
+ const pdf=await PDFDocument.create(),a=pdf.addPage([600,840]),b=pdf.addPage([400,600]);addPaperPdfLink(pdf,a,{left:10,top:20,width:25,height:5},1);addPaperPdfLink(pdf,a,{left:10,top:30,width:25,height:5},undefined,'https://academie.dowze.ch/app/');addPaperPdfLink(pdf,a,{left:0,top:0,width:100,height:100},undefined,'javascript:alert(1)');const links=a.node.Annots()!;assert.equal(links.size(),2);const internal=pdf.context.lookup(links.get(0),PDFDict),destination=internal.lookup(PDFName.of('Dest'),PDFArray);assert.equal(destination.get(0),b.ref);assert.deepEqual(internal.lookup(PDFName.of('Rect'),PDFArray).asArray().map(x=>Number(String(x))),[60,630,210,672]);const uri=pdf.context.lookup(links.get(1),PDFDict).lookup(PDFName.of('A'),PDFDict);assert.equal(uri.lookup(PDFName.of('S'),PDFName).toString(),'/URI');assert.equal(uri.lookup(PDFName.of('URI'),PDFHexString).decodeText(),'https://academie.dowze.ch/app/');
+ const read=await PDFDocument.load(await pdf.save());assert.equal(read.getPage(0).node.Annots()!.size(),2);
+});
+test('Outline hierarchy targets exported pages, skips deleted targets and excludes executable URLs',async()=>{
+ const source={numPages:2,getDestination:async()=>null,getPageIndex:async()=>0};const tree=await preparePdfOutline(source,[{title:'Cours',items:[{title:'Présent',dest:[0],items:[]},{title:'Supprimé',dest:[1],items:[]},{title:'Unsafe',url:'javascript:alert(1)',items:[]}]}],number=>number===1?0:undefined);assert.equal(tree.length,1);assert.equal(tree[0].items.length,1);const pdf=await PDFDocument.create();pdf.addPage();addPaperPdfOutlines(pdf,tree);const root=pdf.catalog.lookup(PDFName.of('Outlines'),PDFDict),first=root.lookup(PDFName.of('First'),PDFDict),child=first.lookup(PDFName.of('First'),PDFDict);assert.equal(first.lookup(PDFName.of('Title'),PDFHexString).decodeText(),'Cours');assert.equal(child.lookup(PDFName.of('Title'),PDFHexString).decodeText(),'Présent');assert.ok(child.lookup(PDFName.of('Dest'),PDFArray).get(0) instanceof PDFRef);
+});

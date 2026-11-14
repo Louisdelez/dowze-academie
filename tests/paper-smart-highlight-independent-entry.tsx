@@ -1,0 +1,30 @@
+import {useLayoutEffect,useRef} from 'react';
+import {usePaperSmartHighlight} from '../src/hooks/usePaperSmartHighlight';
+import {PaperTextFlowView} from '../src/components/PaperTextFlowView';
+import {PaperRichText} from '../src/components/PaperObjectVisual';
+import type {PaperDocument,PaperCommand} from '../src/lib/notebookDocument';
+import type {NotebookMediaScope} from '../src/components/NotebookEditor';
+export function SmartHighlightRecipe(props:{document:PaperDocument;pageId:string;owner:string;generation:number;media:NotebookMediaScope;enabled?:boolean;disabled?:boolean;visible?:boolean;textOnly?:boolean;isCurrent?:()=>boolean;getCurrent:()=>PaperDocument;commit:(command:PaperCommand)=>boolean;onNotice:(message:string)=>void;report:(value:ReturnType<typeof usePaperSmartHighlight>)=>void}){
+ const viewport=useRef<HTMLDivElement>(null),page=props.document.pages.find(p=>p.id===props.pageId);
+ const api=usePaperSmartHighlight({...props,document:props.document,page,enabled:props.enabled??true,disabled:props.disabled??false,visible:props.visible??true,textOnly:props.textOnly??false,viewport,current:props.isCurrent??(()=>true)});
+ useLayoutEffect(()=>props.report(api));
+ return <div ref={viewport}>{props.document.objects.filter(o=>(o.kind==='text'||o.kind==='sticky')&&(o.pageId===props.pageId||o.textFlow?.pageIds.includes(props.pageId))).map(o=><div data-object={o.id} key={o.id}>{o.kind==='text'?<PaperTextFlowView object={o} document={props.document} media={props.media} pageId={props.pageId}/>:<div className="paper-selectable-text-source"><PaperRichText markdown={o.markdown??''} document={props.document} media={props.media}/></div>}</div>)}</div>;
+}
+export {PaperNotebook} from '../src/components/PaperNotebook';
+export {capturePaperNotebookCommandTarget,paperNotebookCommandTargetCurrent} from '../src/lib/paperNotebookCommands';
+export {PaperRichText,PaperInkVisual} from '../src/components/PaperObjectVisual';
+export {PaperExportPage} from '../src/components/PaperExportPage';
+export * from '../src/lib/paperTextHighlight';
+export {objectPoint} from '../src/lib/paperGeometry';
+export {copiedPageText,duplicatePaperPage} from '../src/lib/paperPageCopy';
+export {reflowPaperText,textFlowFingerprint} from '../src/lib/paperTextFlow';
+export {migratePaper,applyPaperCommand,isPaperDocument,notebookDocumentId} from '../src/lib/notebookDocument';
+export {amendPaperCollaboration,verifyPaperCollaboration} from '../src/lib/paperCollaboration';
+export {paperArchiveMetadata} from '../src/lib/paperArchiveMetadata';
+export {putDraft,getDraft,putSnapshot,getSnapshot,listSnapshots,listLocalBlobs} from '../pwa/src/storage';
+export {hasPendingNotebookWrites,resumeAllNotebookAccounts} from '../src/lib/notebookSession';
+export {loadPaperToolPreferences,applyPaperToolPreferenceCommand,commitPaperToolPreferences} from '../src/lib/paperToolPreferences';
+export {createElement,act} from 'react';
+export {createRoot} from 'react-dom/client';
+export {flushSync} from 'react-dom';
+export {renderToStaticMarkup} from 'react-dom/server';

@@ -1,3 +1,4 @@
+import "../planning-redesign.css";
 import {
   CalendarDays,
   Download,
@@ -149,7 +150,7 @@ export function CalendarExportModal({
       onClose={busy ? () => undefined : onClose}
       size="lg"
     >
-      <div className="calendar-export-modal">
+      <div className="calendar-export-modal" aria-busy={busy !== null}>
         <section className="calendar-export-summary" aria-label="Résumé de l’export">
           <span className="calendar-export-summary-art" aria-hidden="true">
             <img
@@ -169,8 +170,8 @@ export function CalendarExportModal({
           <em>{timeZone}</em>
         </section>
 
-        <fieldset className="calendar-export-groups">
-          <legend>Contenu à envoyer</legend>
+        <fieldset className="calendar-export-groups" disabled={busy !== null}>
+          <legend>1. Choisir les événements à exporter</legend>
           <div>
             {CALENDAR_EXPORT_GROUPS.map((group) => {
               const count = groupCounts[group.id];
@@ -192,6 +193,8 @@ export function CalendarExportModal({
           </div>
         </fieldset>
 
+        {!selectedEvents.length && <p className="calendar-export-warning" role="status">Sélectionne au moins un contenu du planning pour préparer l’export.</p>}
+        <h3 className="export-step-title">2. Choisir un agenda</h3>
         <div className="calendar-export-providers">
           <article className="calendar-export-provider calendar-export-provider--apple">
             <span className="calendar-export-provider-logo"><CalendarDays /></span>
@@ -200,6 +203,7 @@ export function CalendarExportModal({
               <p>Ouvre le fichier directement dans ton application de calendrier par défaut.</p>
             </div>
             <button
+              type="button"
               className="primary-button"
               disabled={!selectedEvents.length || busy !== null || Boolean(nativeExportError)}
               onClick={() => void transfer("system")}
@@ -216,7 +220,8 @@ export function CalendarExportModal({
               <p>Enregistre le fichier, puis ouvre directement la rubrique officielle « Importer et exporter ».</p>
             </div>
             <button
-              className="primary-button"
+              type="button"
+              className="secondary-button"
               disabled={!selectedEvents.length || busy !== null || googleFileTooLarge || Boolean(nativeExportError)}
               onClick={() => void transfer("google")}
             >
@@ -253,8 +258,9 @@ export function CalendarExportModal({
 
         <div className="calendar-export-actions">
           <span>Format RFC 5545 compatible Apple et Google</span>
-          <button className="secondary-button" onClick={onClose} disabled={busy !== null}>Fermer</button>
+          <button type="button" className="secondary-button" onClick={onClose} disabled={busy !== null}>Fermer</button>
           <button
+            type="button"
             className="secondary-button"
             onClick={() => void transfer("file")}
             disabled={!selectedEvents.length || busy !== null || Boolean(nativeExportError)}

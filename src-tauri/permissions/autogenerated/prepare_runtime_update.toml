@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-prepare-runtime-update"
+description = "Enables the prepare_runtime_update command without any pre-configured scope."
+commands.allow = ["prepare_runtime_update"]
+
+[[permission]]
+identifier = "deny-prepare-runtime-update"
+description = "Denies the prepare_runtime_update command without any pre-configured scope."
+commands.deny = ["prepare_runtime_update"]

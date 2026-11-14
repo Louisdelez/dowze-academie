@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-open-google-calendar-import"
+description = "Enables the open_google_calendar_import command without any pre-configured scope."
+commands.allow = ["open_google_calendar_import"]
+
+[[permission]]
+identifier = "deny-open-google-calendar-import"
+description = "Denies the open_google_calendar_import command without any pre-configured scope."
+commands.deny = ["open_google_calendar_import"]

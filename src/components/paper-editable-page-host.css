@@ -1,0 +1,5 @@
+.paper-editable-page-host{position:relative;overflow:hidden}
+.paper-editable-page-reader,.paper-editable-page-placeholder,.paper-editable-page-input{position:absolute;inset:0;width:100%;height:100%}
+.paper-editable-page-input{z-index:200;overflow:hidden}
+.paper-editable-page-reader .paper-object{pointer-events:auto}
+.paper-editable-page-placeholder{background:linear-gradient(#eef2f755 1px,transparent 1px);background-size:100% 28px}

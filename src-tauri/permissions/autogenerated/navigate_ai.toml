@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-navigate-ai"
+description = "Enables the navigate_ai command without any pre-configured scope."
+commands.allow = ["navigate_ai"]
+
+[[permission]]
+identifier = "deny-navigate-ai"
+description = "Denies the navigate_ai command without any pre-configured scope."
+commands.deny = ["navigate_ai"]

@@ -1,0 +1,23 @@
+# Local, reviewed payloads only; no RUN apt/npm/curl and no mutable base tag.
+FROM dowze-academie-api@sha256:40aff48d9922a36f38024f351a55e8a1c0415819ea21bf5f020a19f07b6f695e
+USER root
+# Replace code only INSIDE THE NEW IMAGE. Never mount/remove the data volumes.
+# Purge old bytecode and unsealed old modules before copying the full closure.
+RUN python3 -I -c "import shutil; shutil.rmtree('/srv/dowze/app/app')"
+COPY --chown=0:0 app/ /srv/dowze/app/app/
+COPY --chown=0:0 runtime/ /opt/dowze/notebook-validator/
+COPY --chown=0:0 verify-notebook-runtime.py /opt/dowze/verify-notebook-runtime.py
+# The inherited image owns /srv/dowze{,/app} as UID10001. Only these
+# CODE parents and /opt/dowze are corrected, non-recursively, in the NEW image.
+# No data path or mounted host/volume content is traversed/chowned.
+RUN python3 -I -c "import os,stat; from pathlib import Path; parents=[Path('/srv/dowze'),Path('/srv/dowze/app'),Path('/opt/dowze')]; assert all(stat.S_ISDIR(p.lstat().st_mode) for p in parents); [(os.chown(p,0,0),os.chmod(p,0o755)) for p in parents]; fixed=[Path('/'),Path('/srv'),Path('/opt')]; assert all(stat.S_ISDIR(p.lstat().st_mode) and p.lstat().st_uid==0 and not p.lstat().st_mode&0o022 for p in fixed); roots=[Path('/srv/dowze/app/app'),Path('/opt/dowze/notebook-validator')]; [(os.chmod(p,0o755) if p.is_dir() else os.chmod(p,0o555 if p.name=='node' else 0o644)) for root in roots for p in [root,*root.rglob('*')]]; os.chmod('/opt/dowze/verify-notebook-runtime.py',0o644)"
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /srv/dowze/app
+# Preserve the verified existing API identity and secret/data permissions.
+# Build-only code-parent corrections above remain root-owned; no host chown.
+USER 10001:10001
+EXPOSE 8000
+# A single worker preserves the existing one-validator-child bound. No generic
+# shell command/env loader. Root must match the existing proxy's container port.
+ENTRYPOINT ["python3","-I","-B","-m","uvicorn"]
+CMD ["app.notebook_startup:create_managed_app","--factory","--app-dir","/srv/dowze/app","--host","0.0.0.0","--port","8000","--workers","1","--no-access-log"]

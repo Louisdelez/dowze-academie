@@ -1,3 +1,4 @@
+import "./studio-tools.css";
 import {
   BookOpenCheck,
   Check,
@@ -11,8 +12,6 @@ import {
   X
 } from "lucide-react";
 import {
-  lazy,
-  Suspense,
   useEffect,
   useId,
   useMemo,
@@ -24,7 +23,9 @@ import type { Subject, SubjectNoteDocument } from "../types";
 import { Modal } from "./Modal";
 import { SubjectIcon } from "./SubjectIcon";
 
-const MarkdownNoteEditor = lazy(() => import("./MarkdownNoteEditor"));
+import { NotebookEditor, type NotebookMediaScope, type NotebookMirrorExpectation } from "./NotebookEditor";
+import type {PaperHistoryCopyCallback} from '../lib/paperHistoryVersions';
+import type {PaperSearchNavigation} from '../lib/notebookSearchNavigation';
 const MAX_TAGS = 30;
 const MAX_TAG_LENGTH = 64;
 
@@ -69,32 +70,43 @@ function noteFilename(title: string) {
 }
 
 export interface WorkspaceNotePageProps {
+  onRestoreVersion?:PaperHistoryCopyCallback;
   note: SubjectNoteDocument;
+  searchNavigation?:PaperSearchNavigation;
+  media?: NotebookMediaScope;
   subjects: readonly Subject[];
   /** Clé locale surveillée pour afficher le vrai état de sauvegarde. */
   storageKey: string;
-  onUpdateNote: (noteId: string, patch: NotePatch) => void;
+  onUpdateNote: (noteId: string, patch: NotePatch,expected?:NotebookMirrorExpectation) => void|boolean|Promise<void|boolean>;
   onOpenSubjects: (note: SubjectNoteDocument) => void;
   onDeleteNote: (note: SubjectNoteDocument) => void;
 }
 
 export function WorkspaceNotePage({
   note,
+  onRestoreVersion,
+  searchNavigation,
   subjects,
   storageKey,
+  media,
   onUpdateNote,
   onOpenSubjects,
   onDeleteNote
 }: WorkspaceNotePageProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
+  const [saveConfirmed, setSaveConfirmed] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportNotice, setExportNotice] = useState("");
   const [exportError, setExportError] = useState<string | null>(null);
   const linkedSubjects = subjects.filter((subject) => note.subjectIds.includes(subject.id));
   const wordCount = note.markdown.trim() ? note.markdown.trim().split(/\s+/u).length : 0;
 
   useEffect(() => {
     setTagDraft("");
+    setSaveConfirmed(false);
     setExportError(null);
+    setExportNotice("");
   }, [note.id]);
 
   useEffect(() => {
@@ -102,6 +114,7 @@ export function WorkspaceNotePage({
       const detail = (event as CustomEvent<{ key?: string }>).detail;
       if (detail?.key !== storageKey) return;
       setSaveFailed(event.type === "etude:persistence-error");
+      setSaveConfirmed(event.type === "etude:persistence-success");
     };
     window.addEventListener("etude:persistence-error", updateStatus);
     window.addEventListener("etude:persistence-success", updateStatus);
@@ -131,20 +144,23 @@ export function WorkspaceNotePage({
   };
 
   const exportNote = async () => {
+    if (exportBusy) return;
+    setExportBusy(true); setExportNotice("");
     try {
-      await saveTextDocument(note.markdown, `${noteFilename(note.title)}.md`, "markdown");
+      const exported = await saveTextDocument(note.markdown, `${noteFilename(note.title)}.md`, "markdown");
       setExportError(null);
+      if (exported) setExportNotice("Export Markdown terminé.");
     } catch (error) {
       setExportError(`Impossible d’exporter la note : ${String(error)}`);
-    }
+    } finally { setExportBusy(false); }
   };
 
   return (
-    <main className="workspace-note-page">
+    <main className="workspace-note-page studio-tools">
       <header className="workspace-note-header">
         <div className="workspace-note-heading">
           <NotebookPen aria-hidden="true" />
-          <div className="workspace-note-title-block">
+          <div className="workspace-note-title-block"><span className="studio-eyebrow">NOTE</span>
             <input
               className="workspace-note-title"
               value={note.title}
@@ -156,12 +172,12 @@ export function WorkspaceNotePage({
               aria-label="Titre de la note"
               placeholder="Sans titre"
             />
-            <div className={`workspace-note-save-status ${saveFailed ? "is-error" : ""}`} role="status">
-              {saveFailed ? (
-                <><span aria-hidden="true">!</span> Non enregistrée — stockage local plein</>
+            <div className={`workspace-note-save-status ${saveFailed ? "is-error" : ""}`}>
+              <span role="status">{saveFailed ? (
+                <><span aria-hidden="true">!</span> Non enregistrée — exportez cette note pour la conserver</>
               ) : (
-                <><Check aria-hidden="true" /> Enregistrée automatiquement</>
-              )}
+                <><Check aria-hidden="true" /> {saveConfirmed ? "Enregistrée sur cet appareil" : "Sauvegarde automatique activée"}</>
+              )}</span>
               <time dateTime={note.updatedAt}>Modifiée le {formattedUpdatedAt(note.updatedAt)}</time>
             </div>
           </div>
@@ -178,9 +194,9 @@ export function WorkspaceNotePage({
             <span>Matières</span>
             <em>{linkedSubjects.length}</em>
           </button>
-          <button type="button" onClick={() => void exportNote()} title="Télécharger en Markdown">
+          <button type="button" onClick={() => void exportNote()} disabled={exportBusy} aria-busy={exportBusy} title="Télécharger en Markdown">
             <Download aria-hidden="true" />
-            <span>Exporter .md</span>
+            <span>{exportBusy ? "Export en cours…" : "Exporter .md"}</span>
           </button>
           <button
             type="button"
@@ -208,7 +224,7 @@ export function WorkspaceNotePage({
           )}
         </div>
 
-        <div className="workspace-note-tags" aria-label="Tags de la note">
+        <div className="workspace-note-tags" aria-label="Tags de la note"><span className="studio-field-caption">Mots-clés</span>
           <Tags aria-hidden="true" />
           {note.tags.map((tag) => (
             <span className="workspace-note-tag" key={tag.toLocaleLowerCase("fr")}>
@@ -231,12 +247,15 @@ export function WorkspaceNotePage({
             onChange={(event) => setTagDraft(event.target.value.replace(/^,+/u, ""))}
             onKeyDown={handleTagKeyDown}
             onBlur={() => addTag()}
+            aria-describedby="note-tag-help"
             aria-label="Ajouter un tag"
             placeholder={note.tags.length ? "Ajouter un tag…" : "Ajouter des tags…"}
           />
         </div>
       </section>
 
+      <p className="studio-note-help" id="note-tag-help">Classez votre note par matière et mots-clés. Entrée ajoute un mot-clé.</p>
+      {exportNotice && <p className="studio-success" role="status">{exportNotice}</p>}
       {exportError && (
         <div className="workspace-note-error" role="alert">
           <span>{exportError}</span>
@@ -247,21 +266,11 @@ export function WorkspaceNotePage({
       )}
 
       <section className="workspace-note-editor" aria-label="Contenu de la note">
-        <Suspense fallback={(
-          <div className="workspace-note-editor-loading" role="status">Chargement de l’éditeur Markdown…</div>
-        )}>
-          <MarkdownNoteEditor
-            key={note.id}
-            noteId={note.id}
-            initialMarkdown={note.markdown}
-            onChange={(markdown) => onUpdateNote(note.id, { markdown })}
-          />
-        </Suspense>
+        <NotebookEditor onRestoreVersion={onRestoreVersion} metadata={note} searchNavigation={searchNavigation} key={note.id} noteId={note.id} markdown={note.markdown} onChange={(markdown,expected)=>onUpdateNote(note.id,{markdown},expected)} media={media ?? {accountId:'local',spaceId:storageKey}}/>
       </section>
 
       <footer className="workspace-note-statusbar" aria-label="Statistiques de la note">
-        <span>Markdown</span>
-        <span>LaTeX</span>
+        <span>Texte · dessins · images</span>
         <span>{wordCount} mot{wordCount === 1 ? "" : "s"}</span>
         <span>{note.markdown.length} caractère{note.markdown.length === 1 ? "" : "s"}</span>
       </footer>
@@ -317,12 +326,12 @@ export function NoteLibraryDialog({
 
   return (
     <Modal
-      title="Ouvrir un onglet de note"
-      subtitle="Crée une page vierge ou reprends une note déjà enregistrée."
+      title="Votre carnet de notes"
+      subtitle="Retrouvez vos idées, vos révisions et vos notes de cours."
       size="lg"
       onClose={onClose}
     >
-      <div className="global-note-library">
+      <div className="global-note-library studio-tools">
         <button type="button" className="global-note-create" onClick={handleCreate}>
           <span><FilePlus2 aria-hidden="true" /></span>
           <strong>Nouvelle note</strong>
@@ -399,10 +408,11 @@ export function NoteLibraryDialog({
               })}
             </div>
           ) : (
-            <div className="global-note-library-empty">
+            <div className="global-note-library-empty" role="status">
               <Search aria-hidden="true" />
               <strong>{documents.length ? "Aucune note ne correspond" : "Aucune note pour le moment"}</strong>
               <p>{documents.length ? "Essaie avec un autre titre, tag ou nom de matière." : "Crée ta première note pour la retrouver ensuite ici."}</p>
+              {query && <button type="button" className="secondary-button" onClick={() => setQuery("")}>Afficher toutes les notes</button>}
             </div>
           )}
         </section>
@@ -454,7 +464,7 @@ export function NoteSubjectsDialog({
       size="lg"
       onClose={onClose}
     >
-      <div className="global-note-subjects-dialog">
+      <div className="global-note-subjects-dialog studio-tools">
         <div className="global-note-subjects-toolbar">
           <label className="global-note-search">
             <Search aria-hidden="true" />

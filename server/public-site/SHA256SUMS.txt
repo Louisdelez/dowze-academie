@@ -1,0 +1,5 @@
+ca289ee8bb463345dd8168bd6a7d3a8ed8b8df027f3159ae5851760f1d100f82  downloads/DowzeAcademie-0.6.0-macOS-Intel.dmg
+0aae2bc0184195a59307387ac292fedced4d39bce1a1c739c03cdfda4888f98e  downloads/DowzeAcademie-0.6.0-macOS-Intel.app.tar.gz
+485d87865ed87dc37f040a403b1e3386e63bcba2eb4388d254267014fc4e527c  downloads/DowzeAcademie-0.6.0-Windows-x64.exe
+29446357f63d562a074d90cf51e9c8eb4f5a8f6a11ad59a26216b58f6e4fc1dd  downloads/DowzeAcademie-0.6.0-Fedora44-x86_64.rpm
+7bdfd6f15baca088f2a11b6886b1390786c3adef2d6af9647d8e727834ee311f  downloads/DowzeAcademie-0.6.0-Linux-x86_64.AppImage

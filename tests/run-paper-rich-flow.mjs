@@ -1,0 +1,40 @@
+import {createServer} from 'vite';
+import {JSDOM} from 'jsdom';
+import assert from 'node:assert/strict';
+import {indexedDB} from 'fake-indexeddb';
+globalThis.indexedDB=indexedDB;
+const vite=await createServer({configFile:false,server:{middlewareMode:true,hmr:false,ws:false,watch:null},optimizeDeps:{noDiscovery:true,include:[]},ssr:{noExternal:['yjs','lib0']},logLevel:'error'});
+let dom,root,module;
+try{
+ module=await vite.ssrLoadModule('/tests/paper-rich-flow-entry.tsx');
+ dom=new JSDOM('<!doctype html><html><head><style>.katex{font-size:19.36px}</style></head><body><main id="root"></main></body></html>',{url:'https://qa.invalid/'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,NodeFilter:dom.window.NodeFilter,MutationObserver:dom.window.MutationObserver,getComputedStyle:dom.window.getComputedStyle,IS_REACT_ACT_ENVIRONMENT:true});
+ const frames=new Map();let serial=0;globalThis.requestAnimationFrame=callback=>{frames.set(++serial,callback);return serial;};globalThis.cancelAnimationFrame=id=>frames.delete(id);globalThis.ResizeObserver=class{observe(){}disconnect(){}};
+ const rect=(top,height,width=400)=>({x:0,y:top,left:0,right:width,top,bottom:top+height,width,height,toJSON(){return this;}});
+ const font=element=>parseFloat(getComputedStyle(element).fontSize)||19.36;
+ const painted=source=>{const atom=source.querySelector('.katex');return atom?220*font(atom)/19.36:0;};
+ dom.window.HTMLElement.prototype.getBoundingClientRect=function(){const source=this.classList.contains('paper-flow-source')?this:this.closest('.paper-flow-source');if(this.classList.contains('paper-flow-source'))return rect(0,painted(this)+88);if(this.classList.contains('katex-html'))return rect(48,220*font(this.closest('.katex'))/19.36,820*font(this.closest('.katex'))/19.36);if(this.classList.contains('katex-display')||this.classList.contains('katex')||this.hasAttribute('data-md-atomic'))return rect(48,source?painted(source):0);return rect(0,0);};
+ dom.window.Range.prototype.getClientRects=function(){const node=this.startContainer,owner=node.nodeType===3?node.parentElement:node,p=owner?.closest('p'),source=owner?.closest('.paper-flow-source');if(!p||!source)return [];return [rect(p===source.querySelector('p')?8:painted(source)+64,17,180)];};
+ dom.window.Range.prototype.getBoundingClientRect=function(){return this.getClientRects()[0]??rect(0,0);};
+ const m=module,markdown='Avant conservé.\n\n$$\nx^2+y^2=z^2\n$$\n\nAprès conservé.',doc=m.migratePaper('mounted-rich-flow',markdown,null);doc.objects[0].width=400;doc.objects[0].height=160;const object=doc.objects[0],layouts=[];root=m.createRoot(document.getElementById('root'));
+ await m.act(async()=>root.render(m.createElement(m.PaperTextFlowView,{object,document:doc,media:{accountId:'qa-rich-flow',spaceId:'year'},pageId:object.pageId,onLayout:(source,breaks,offsets)=>{layouts.push({source,breaks,offsets});return true;}})));
+ const source=document.querySelector('.paper-flow-source'),text=source.querySelector('p span').firstChild,range=document.createRange();range.setStart(text,3);range.collapse(true);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);const htmlBefore=source.innerHTML;
+ for(let pass=0;pass<5;pass++)await m.act(async()=>{const queued=[...frames.values()];frames.clear();for(const frame of queued)frame(0);await Promise.resolve();});
+ assert.equal(source.dataset.flowReady,'true');assert.ok(document.querySelector('[data-paper-flow-math]'));assert.equal(source.innerHTML,htmlBefore);assert.equal(selection.anchorNode,text);assert.equal(selection.anchorOffset,3);assert.equal(object.markdown,markdown);assert.ok(layouts.length>0);assert.equal(layouts.at(-1).offsets.at(-1),markdown.length);
+ const first=layouts.at(-1),prepared=m.applyPaperCommand(doc,m.reflowPaperText(doc,object.id,first.source,first.breaks,first.offsets));assert.equal(prepared.objects.length,1);assert.equal(prepared.objects[0].id,object.id);assert.equal(prepared.objects[0].markdown,markdown);assert.equal(JSON.stringify(m.measureTextFlow(source,400,160,markdown).breaks),JSON.stringify(first.breaks));
+ console.log('Mounted real flow component: scoped math sizing keeps source DOM, selection node/offset, canonical Markdown/identity, source offsets and repeat measurement stable: PASS');
+ const imageDocument=m.migratePaper('mounted-rich-images','Original source',null),asset={id:'original-image',name:'Original.png',mediaType:'image/png',size:3};imageDocument.assets.push(asset);const imageMedia={accountId:'qa-rich-original-images',spaceId:'year'},identity={...imageMedia,documentId:m.notebookDocumentId(imageDocument.noteId)},originalBytes=new Blob(['IMG'],{type:'image/png'}),originalSha=await m.localBlobDigest(originalBytes);
+ await m.putDraft({...identity,type:'whiteboard',title:'Original image source',content:imageDocument,baseVersion:1,updatedAt:1,syncState:'synced'});await m.putLocalBlob({...identity,id:asset.id,name:asset.name,blob:originalBytes,createdAt:1,status:'uploaded'});
+ const imageMarkdown='Avant conservé.\n\n![Description externe](data:image/png;base64,QUJD "Titre externe")<!-- dowze-image-size:v1 ratio=0.1 -->\n\n![Description privée](dowze-photo:'+identity.documentId+'/'+asset.id+' "Titre privé")<!-- dowze-image-size:v1 ratio=0.2 -->\n\nAprès conservé.',unchangedDocument=JSON.stringify(imageDocument),styleBefore=globalThis.getComputedStyle;
+ globalThis.getComputedStyle=element=>{const style=dom.window.getComputedStyle(element);return new Proxy(style,{get(target,property){if(property==='getPropertyValue')return name=>name==='--flow-height'&&element.closest('.paper-flow-source')?'160px':target.getPropertyValue(name);const value=Reflect.get(target,property);return typeof value==='function'?value.bind(target):value;}});};
+ try{
+  await m.act(async()=>root.render(m.createElement('div',{className:'paper-flow-source',style:{width:400,'--flow-height':'160px'}},m.createElement(m.PaperRichText,{markdown:imageMarkdown,document:imageDocument,media:imageMedia}))));
+  for(let pass=0;pass<30&&!document.querySelector('img[src^="blob:"]');pass++)await m.act(async()=>{await new Promise(resolve=>setTimeout(resolve,5));});
+  const images=[...document.querySelectorAll('img')];assert.equal(images.length,2);assert.deepEqual(images.map(image=>image.dataset.paperImageRatio),['0.1','0.2']);assert.deepEqual(images.map(image=>[image.alt,image.title]),[['Description externe','Titre externe'],['Description privée','Titre privé']]);
+  const retainedText=document.querySelector('p span').firstChild,retainedRange=document.createRange();retainedRange.setStart(retainedText,3);retainedRange.collapse(true);selection.removeAllRanges();selection.addRange(retainedRange);
+  for(const image of images){Object.defineProperties(image,{naturalWidth:{value:40,configurable:true},naturalHeight:{value:480,configurable:true}});await m.act(async()=>image.dispatchEvent(new dom.window.Event('load')));}
+  assert.deepEqual(images.map(image=>image.style.height),['48px','96px']);assert.deepEqual(images.map(image=>image.style.getPropertyValue('--paper-image-height')),['48px','96px']);assert.equal(selection.anchorNode,retainedText);assert.equal(selection.anchorOffset,3);assert.equal(JSON.stringify(imageDocument),unchangedDocument);const saved=(await m.listLocalBlobs(imageMedia.accountId,imageMedia.spaceId))[0];assert.equal(await m.localBlobDigest(saved.blob),originalSha);assert.equal(await saved.blob.text(),'IMG');assert.ok(!document.body.textContent.includes('dowze-image-size:'));
+  console.log('Mounted real rich image renderer: public/private exact source markers, natural ratio origin, frame caps, alt/title, caret and original bytes/SHA retained: PASS');
+ }finally{globalThis.getComputedStyle=styleBefore;}
+ console.log('Geometry in this runner is synthetic; actual browser geometry is covered by paper-rich-flow-test.html, not claimed here.');
+}finally{if(root&&module)await module.act(async()=>root.unmount());dom?.window.close();await vite.close();}

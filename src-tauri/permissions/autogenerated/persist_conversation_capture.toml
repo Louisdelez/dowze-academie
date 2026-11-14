@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-persist-conversation-capture"
+description = "Enables the persist_conversation_capture command without any pre-configured scope."
+commands.allow = ["persist_conversation_capture"]
+
+[[permission]]
+identifier = "deny-persist-conversation-capture"
+description = "Denies the persist_conversation_capture command without any pre-configured scope."
+commands.deny = ["persist_conversation_capture"]

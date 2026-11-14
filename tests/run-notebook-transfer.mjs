@@ -1,0 +1,76 @@
+import {build} from 'vite';
+import {indexedDB} from 'fake-indexeddb';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+const out=await mkdtemp(join(process.cwd(),'tests/.transfer-'));
+globalThis.indexedDB=indexedDB;
+Object.defineProperty(globalThis,'navigator',{value:{onLine:false},configurable:true});
+try{
+ await build({configFile:false,ssr:{noExternal:['yjs','lib0']},build:{ssr:'tests/notebook-transfer-entry.ts',outDir:out,rollupOptions:{output:{entryFileNames:'transfer.mjs'}}},logLevel:'error'});
+ const m=await import(pathToFileURL(out+'/transfer.mjs'));
+ const stamp='2026-10-12T10:00:00Z';
+ const create=(profile,note='note')=>({scope:{accountId:'local-'+profile,spaceId:'local-year'},doc:m.migratePaper(note,'Texte original.',null,stamp)});
+ const draft=(scope,doc,version=0)=>({...scope,type:'whiteboard',documentId:m.notebookDocumentId(doc.noteId),title:'Original',content:doc,baseVersion:version,updatedAt:1,syncState:'local'});
+ const target={accountId:'cloud-transfer-a',spaceId:'cloud-year'};
+ const {scope,doc:plain}=create('profile-transfer-a');
+ let doc=m.applyPaperCommand(plain,{type:'batch',commands:[{type:'add-asset',asset:{id:'photo',name:'image.png',mediaType:'image/png',size:3,serverId:'old-photo'}},{type:'add-asset',asset:{id:'sound',name:'audio.wav',mediaType:'audio/wav',size:3,serverId:'old-sound'}},{type:'add-audio',audio:{id:'session',assetId:'sound',name:'Cours',duration:3,startedAt:1}},{type:'patch-object',id:plain.objects[0].id,patch:{markdown:'Texte original.\n\n![Photo](dowze-photo:note-note/photo)',groupId:'group',audioAnchor:{sessionId:'session',time:1}}}]});
+ doc=m.amendPaperCollaboration(doc,doc);const originalDraft=draft(scope,doc);await m.putDraft(originalDraft);
+ await m.putLocalBlob({...scope,id:'photo',name:'image.png',blob:new Blob(['IMG']),createdAt:1,status:'uploaded',serverId:'old-photo'});
+ await m.putLocalBlob({...scope,id:'sound',name:'audio.wav',blob:new Blob(['WAV']),createdAt:1,status:'uploaded',serverId:'old-sound'});
+ await m.putLocalBlob({...target,id:'photo',name:'other.png',blob:new Blob(['OTHER']),createdAt:1,status:'uploaded',serverId:'cloud-other'});
+ let library=m.updateNotebookLibrary(m.emptyNotebookLibrary(),{folder:{id:'folder',parentId:null,title:'Mes cours',color:'#4461dc',order:0}});library=m.updateNotebookLibrary(library,{note:{id:'note',patch:{folderId:'folder',favorite:true,cover:{color:'#fff4d8',pattern:'grid'}}}});
+ await m.putDraft({...scope,type:'preferences',documentId:m.LIBRARY_DOCUMENT_ID,title:'Classement',content:library,baseVersion:0,updatedAt:1,syncState:'local'});
+ const historyKey=`paper-history|${scope.accountId}|${scope.spaceId}|whiteboard|${m.notebookDocumentId('note')}|000000000000`;await m.putSnapshot({key:historyKey,...scope,value:doc});
+ const journal={id:'unfinished',noteId:'note',mimeType:'audio/webm',name:'En cours',startedAt:1,chunkIds:['chunk'],size:3,duration:1,status:'recoverable'};await m.saveAudioChunk(scope.accountId,scope.spaceId,journal,new Blob(['MIC']));
+ const before=(await m.listLocalBlobs(scope.accountId,scope.spaceId)).map(({blob,...metadata})=>metadata);
+ const result=await m.transferNotebookScope({profileId:'profile-transfer-a',localSpaceId:scope.spaceId,target,notes:[],current:()=>true});assert.equal(result.conflicts,0);
+ const copied=(await m.getDraft({...originalDraft,...target})).content;m.verifyPaperCollaboration(copied);assert.equal(copied.noteId,doc.noteId);assert.deepEqual(copied.pages,doc.pages);assert.equal(copied.objects[0].id,doc.objects[0].id);assert.equal(copied.objects[0].audioAnchor.sessionId,'session');assert.equal(copied.objects[0].groupId,'group');assert.equal(copied.audio[0].id,'session');
+ const photo=copied.assets.find(a=>a.name==='image.png');assert.notEqual(photo.id,'photo');assert.equal(photo.serverId,undefined);assert.ok(copied.objects[0].markdown.includes(photo.id));
+ const files=await m.listLocalBlobs(target.accountId,target.spaceId);assert.equal(await files.find(b=>b.id==='photo').blob.text(),'OTHER');assert.equal(files.find(b=>b.id==='photo').serverId,'cloud-other');assert.equal(await files.find(b=>b.id===photo.id).blob.text(),'IMG');assert.equal(files.find(b=>b.id===photo.id).status,'pending');
+ const savedLibrary=(await m.getDraft({...target,type:'preferences',documentId:m.LIBRARY_DOCUMENT_ID})).content;assert.deepEqual(savedLibrary.notes.note,library.notes.note);
+ const history=(await m.listSnapshots(target.accountId,target.spaceId)).find(s=>s.key.startsWith('paper-history|')).value;assert.equal(history.assets.find(a=>a.name==='image.png').id,photo.id);m.verifyPaperCollaboration(history);
+ const recovered=(await m.listSnapshots(target.accountId,target.spaceId)).find(s=>s.key.startsWith('audio-recording|')).value;assert.equal(recovered.id,journal.id);assert.equal(await files.find(b=>b.id===recovered.chunkIds[0]).blob.text(),'MIC');assert.equal(files.find(b=>b.id===recovered.chunkIds[0]).removedFromNote,true);
+ assert.deepEqual((await m.getDraft(originalDraft)).content,doc);assert.deepEqual((await m.listLocalBlobs(scope.accountId,scope.spaceId)).map(({blob,...metadata})=>metadata),before);assert.deepEqual((await m.listSnapshots(scope.accountId,scope.spaceId)).find(s=>s.key===historyKey).value,doc);
+ console.log('Transfer: identities, files/aliases, audio, folders/covers, mapped history and unchanged originals: PASS');
+ const snapshotsCount=(await m.listSnapshots(target.accountId,target.spaceId)).length;const repeated=await m.transferNotebookScope({profileId:'profile-transfer-a',localSpaceId:scope.spaceId,target,notes:[],current:()=>true});assert.equal(repeated.copied,0);assert.equal((await m.listSnapshots(target.accountId,target.spaceId)).length,snapshotsCount);
+ const other={accountId:target.accountId,spaceId:'other-year'};const ignored=await m.transferNotebookScope({profileId:'profile-transfer-a',localSpaceId:scope.spaceId,target:other,notes:[],current:()=>true});assert.equal(ignored.sourceMaySeedMetadata,false);assert.equal((await m.listDrafts(other.accountId,other.spaceId)).length,0);assert.equal((await m.listLocalBlobs(other.accountId,other.spaceId)).length,0);
+ console.log('Transfer: idempotence and no implicit replication into a different year: PASS');
+ const {scope:conflictScope,doc:local}=create('profile-transfer-conflict','same');const remote=m.migratePaper('same','Version serveur',null,stamp);await m.putDraft(draft(conflictScope,local));const remoteDraft={...draft({accountId:'cloud-conflict',spaceId:'year'},remote,7),syncState:'synced'};await m.putDraft(remoteDraft);
+ const conflict=await m.transferNotebookScope({profileId:'profile-transfer-conflict',localSpaceId:conflictScope.spaceId,target:remoteDraft,notes:[],current:()=>true});assert.equal(conflict.conflicts,1);const blocked=await m.getDraft(remoteDraft);assert.equal(blocked.syncState,'conflict');assert.equal(blocked.baseVersion,7);assert.equal(blocked.content.objects[0].markdown,'Texte original.');assert.ok((await m.listSnapshots(remoteDraft.accountId,remoteDraft.spaceId)).some(s=>s.value.durable?.content?.objects?.[0]?.markdown==='Version serveur'));
+ console.log('Transfer: different versions become explicit conflicts with both originals retained: PASS');
+ const {scope:changing,doc:version}=create('profile-transfer-cas','race');const old=draft(changing,version);await m.putDraft(old);const dest={...old,accountId:'cloud-race',spaceId:'year'},receipt={key:'qa-cas-receipt',accountId:dest.accountId,spaceId:dest.spaceId,value:{ok:true}};
+ const plan={target:dest,sources:[changing],drafts:[dest],blobs:[],snapshots:[receipt],draftChecks:[{identity:old,expected:await m.getDraft(old)},{identity:dest,expected:undefined}],blobChecks:[],snapshotChecks:[{key:receipt.key,expected:undefined}]};
+ await m.putDraft({...old,content:{...version,revision:1}});await assert.rejects(()=>m.commitNotebookTransfer(plan,()=>true));assert.equal(await m.getDraft(dest),undefined);assert.ok(!(await m.listSnapshots(dest.accountId,dest.spaceId)).some(s=>s.key===receipt.key));
+ const updated=await m.getDraft(old);plan.draftChecks[0].expected=updated;let calls=0;await assert.rejects(()=>m.commitNotebookTransfer(plan,()=>++calls<3));assert.equal(await m.getDraft(dest),undefined);
+ console.log('Atomic transfer: concurrent source edit or revoked session commits neither target nor receipt: PASS');
+
+ const blobIdentity={accountId:changing.accountId,spaceId:changing.spaceId,id:'cas-media'};
+ await m.putLocalBlob({...blobIdentity,name:'same.bin',blob:new Blob(['AAA']),createdAt:1,status:'pending'});
+ const expectedBlob=(await m.listLocalBlobs(changing.accountId,changing.spaceId)).find(b=>b.id===blobIdentity.id);
+ plan.blobChecks=[{identity:blobIdentity,expected:expectedBlob}];
+ await m.putLocalBlob({...expectedBlob,blob:new Blob(['BBB'])});
+ const changedBlob=(await m.listLocalBlobs(changing.accountId,changing.spaceId)).find(b=>b.id===blobIdentity.id);
+ assert.notEqual(changedBlob.sha256,expectedBlob.sha256);assert.equal(changedBlob.revision,expectedBlob.revision+1);
+ await assert.rejects(()=>m.commitNotebookTransfer(plan,()=>true));assert.equal(await m.getDraft(dest),undefined);
+ const unchecked={...plan,snapshotChecks:[]};await assert.rejects(()=>m.commitNotebookTransfer(unchecked,()=>true),/vérifier chaque destination/);
+ console.log('Atomic transfer: same-size attachment rewrite detected by SHA/revision and every receipt guarded: PASS');
+
+ assert.equal(await m.acknowledgeLocalBlob(expectedBlob,'old-upload',()=>true),false);
+ assert.equal(await m.acknowledgeLocalBlob(changedBlob,'revoked-upload',()=>false),false);
+ assert.equal(await (await m.listLocalBlobs(changing.accountId,changing.spaceId)).find(b=>b.id===blobIdentity.id).blob.text(),'BBB');
+ assert.equal(await m.acknowledgeLocalBlob(changedBlob,'new-upload',()=>true),true);
+ const acknowledgedFile=(await m.listLocalBlobs(changing.accountId,changing.spaceId)).find(b=>b.id===blobIdentity.id);assert.equal(acknowledgedFile.serverId,'new-upload');assert.equal(await acknowledgedFile.blob.text(),'BBB');
+ console.log('Attachment uploader: late receipts never revert newer bytes or an invalid session: PASS');
+
+
+ const damaged={...draft({accountId:'local-profile-transfer-damaged',spaceId:'local-year'},m.migratePaper('damaged','Original',null,stamp)),content:{...m.migratePaper('damaged','Original',null,stamp),notebookSchema:4}};await m.putDraft(damaged);await assert.rejects(()=>m.transferNotebookScope({profileId:'profile-transfer-damaged',localSpaceId:'local-year',target:{accountId:'cloud-damaged',spaceId:'year'},notes:[{id:'damaged',title:'Original',markdown:'Original'}],current:()=>true}));assert.equal((await m.getDraft(damaged)).content.notebookSchema,4);assert.equal((await m.listDrafts('cloud-damaged','year')).length,0);
+ console.log('Transfer: unsupported schemas are preserved and never replaced by a text-only migration: PASS');
+ const legacyScope={accountId:'legacy-profile',spaceId:'local-year'},legacy={...legacyScope,type:'whiteboard',documentId:'note-legacy',title:'Legacy',content:{photos:[],board:{strokes:[{id:'stroke',color:'#123456',width:2,points:[{x:10,y:10},{x:90,y:100}]}]}},baseVersion:0,updatedAt:1,syncState:'local'};await m.putDraft(legacy);
+ await m.transferNotebookScope({profileId:'legacy-profile',localSpaceId:'local-year',target:{accountId:'local-legacy-profile',spaceId:'local-year'},mode:'local-alias',notes:[{id:'legacy',title:'Ancienne note',markdown:'Ancien texte',createdAt:stamp}],current:()=>true});const normalized=(await m.getDraft({accountId:'local-legacy-profile',spaceId:'local-year',type:'whiteboard',documentId:m.notebookDocumentId('legacy')})).content;assert.equal(normalized.objects.find(o=>o.kind==='ink').points.length,2);assert.equal(normalized.objects.find(o=>o.kind==='text').markdown,'Ancien texte');assert.deepEqual((await m.getDraft(legacy)).content,legacy.content);
+ console.log('Local alias: old profile drawing and metadata become one paper document without deleting the old board: PASS');
+ const state=m.emptySyncState();state.base['whiteboard|note-provenance']={version:4,content:{original:true}};let deleted=0,written=0;
+ await m.syncDocuments({state,save:async()=>{},documents:()=>[],apply:()=>true,current:()=>true,id:()=>crypto.randomUUID(),transport:{changes:async()=>({items:[{document_type:'whiteboard',document_id:'note-provenance',version:5,content:{newer:true},deleted:false}],has_more:false,next_cursor:'cursor'}),put:async()=>{written++;return {version:6};},remove:async()=>{deleted++;return {version:6};}}});assert.equal(deleted,0);assert.equal(written,0);assert.deepEqual(state.base['whiteboard|note-provenance'],{version:4,content:{original:true}});
+ console.log('Native generic sync: notebook provenance is never uploaded or deleted by a second synchronizer: PASS');
+}finally{await rm(out,{recursive:true,force:true});}

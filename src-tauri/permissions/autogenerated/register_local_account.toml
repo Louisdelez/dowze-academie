@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-register-local-account"
+description = "Enables the register_local_account command without any pre-configured scope."
+commands.allow = ["register_local_account"]
+
+[[permission]]
+identifier = "deny-register-local-account"
+description = "Denies the register_local_account command without any pre-configured scope."
+commands.deny = ["register_local_account"]

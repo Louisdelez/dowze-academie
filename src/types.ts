@@ -1,4 +1,4 @@
-export type AppSection = "home" | "calendar" | "courses" | "grades" | "tasks" | "formations" | "settings";
+export type AppSection = "home" | "calendar" | "courses" | "grades" | "tasks" | "formations" | "settings" | "notes" | "drawing";
 export type CalendarView = "year" | "month" | "week" | "day";
 export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type AiProvider =

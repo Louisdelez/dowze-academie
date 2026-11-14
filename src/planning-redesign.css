@@ -1,0 +1,137 @@
+/* Planning, assessment and annual formation workflows. */
+.calendar-page .calendar-toolbar {align-items:flex-start;gap:22px;flex-wrap:wrap;}
+.calendar-page .calendar-title-row {flex-wrap:wrap;gap:12px;}
+.calendar-page .calendar-title-row h1 {font-size:27px;letter-spacing:-.035em;}
+.calendar-page .calendar-toolbar-actions {flex-wrap:wrap;gap:10px;}
+.calendar-page .segmented-control {padding:4px;background:var(--canvas);border:1px solid var(--line);border-radius:10px;}
+.calendar-page .segmented-control button {border-radius:7px;min-height:36px;color:var(--muted);}
+.calendar-page .segmented-control button.is-active {background:var(--surface);color:var(--primary-deep);box-shadow:0 1px 3px #20343b12;}
+.calendar-jump-date {display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.calendar-jump-date input {max-width:145px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--surface);color:var(--ink);font:inherit;}
+.calendar-interaction-hint {font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 14px;}
+.calendar-page .calendar-surface {background:var(--surface);border-radius:14px;box-shadow:none;border:1px solid var(--line);}
+.calendar-page .calendar-meta-row {flex-wrap:wrap;gap:12px;}
+.calendar-page .month-day {min-height:125px;border-color:var(--line);}
+.calendar-page .month-day.is-today {background:var(--primary-soft);}
+.calendar-page .month-day-number {width:30px;height:30px;border-radius:8px;}
+.calendar-page .month-day.is-today .month-day-number,.calendar-page .mini-days .is-today span {background:var(--primary);color:white;}
+.calendar-page .mini-month {background:var(--surface);box-shadow:none;border:1px solid var(--line);border-radius:12px;padding:18px;}
+.calendar-page .year-grid {gap:18px;}
+.calendar-page .week-day-head.is-today {background:var(--primary-soft);color:var(--primary-deep);}
+.calendar-page .time-event {border-radius:7px;box-shadow:none;}
+.calendar-export-modal .calendar-export-summary {padding:18px;background:var(--primary-soft);border:1px solid var(--line);border-radius:12px;min-height:0;}
+.calendar-export-modal .calendar-export-summary-art {display:none;}
+.calendar-export-modal .calendar-export-summary>div>strong {font-size:20px;color:var(--ink);}
+.calendar-export-modal .calendar-export-summary em {color:var(--muted);}
+.calendar-export-modal .calendar-export-groups {padding:0;border:0;margin:24px 0;}
+.calendar-export-modal .calendar-export-groups legend,.export-step-title {font-size:15px;font-weight:650;color:var(--ink);margin-bottom:12px;}
+.calendar-export-modal .calendar-export-groups label {padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+.calendar-export-modal .calendar-export-groups label.is-selected {background:var(--primary-soft);border-color:var(--primary);}
+.calendar-export-modal .calendar-export-groups input {accent-color:var(--primary);width:18px;height:18px;}
+.calendar-export-modal .calendar-export-providers {gap:14px;}
+.calendar-export-modal .calendar-export-provider {background:var(--surface);border:1px solid var(--line);box-shadow:none;border-radius:12px;padding:20px;}
+.calendar-export-modal .calendar-export-provider-logo {color:var(--primary);background:var(--primary-soft);}
+.calendar-export-modal .calendar-export-provider strong {color:var(--ink);}
+.calendar-export-modal .calendar-export-provider p {font-size:13px;color:var(--muted);line-height:1.6;}
+.calendar-export-modal .calendar-export-information {background:var(--canvas);border:1px solid var(--line);border-radius:10px;font-size:12px;line-height:1.6;}
+.assessment-record-form {gap:22px;}
+.assessment-record-form .assessment-record-intro {background:var(--primary-soft);color:var(--ink);border:1px solid var(--line);border-radius:10px;}
+.assessment-record-form .assessment-record-intro>svg {color:var(--primary);}
+.assessment-form-section {display:grid;gap:16px;padding:20px;border:1px solid var(--line);border-radius:12px;margin:0;min-width:0;}
+.assessment-form-section legend,.assessment-record-form .assessment-files-field legend {font-size:14px;color:var(--ink);font-weight:650;padding:0 8px;}
+.assessment-record-form .form-field>span {font-size:13px;}
+.assessment-record-form .form-field input,.assessment-record-form .form-field select,.assessment-record-form .form-field textarea {border-radius:8px;border-color:var(--line-strong);background:var(--surface);}
+.assessment-record-form .assessment-file-pickers button {background:var(--canvas);border:1px dashed var(--line-strong);border-radius:10px;padding:18px;}
+.assessment-record-form .assessment-file-pickers button>span {color:var(--primary);background:var(--primary-soft);}
+.assessment-record-form .assessment-file-pickers small {overflow-wrap:anywhere;line-height:1.5;}
+.assessment-record-form .assessment-storage-note {font-size:12px;line-height:1.65;color:var(--muted);}
+.formations-page {max-width:1320px;margin-inline:auto;}
+.formations-page .formation-library-tabs {border-bottom:1px solid var(--line);gap:24px;background:transparent;}
+.formations-page .formation-library-tabs button {background:transparent;color:var(--muted);border-radius:0;min-height:44px;}
+.formations-page .formation-library-tabs button[aria-pressed=true] {color:var(--primary);border-bottom:2px solid var(--primary);}
+.formations-page .formation-active-card {background:var(--primary-soft);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:none;}
+.formations-page .formation-active-copy h2 {font-size:22px;letter-spacing:-.025em;}
+.formations-page .formation-active-copy p,.formations-page .formation-active-meta {color:var(--muted);}
+.formations-page .formation-active-icon,.formations-page .formation-kit-icon {background:var(--surface);color:var(--primary);}
+.formations-page .formation-active-badge {color:var(--primary-deep);background:var(--surface);}
+.formations-page .formation-card-grid {gap:18px;}
+.formations-page .formation-card {background:var(--surface);border:1px solid var(--line);box-shadow:none;border-radius:12px;padding:22px;}
+.formations-page .formation-card.is-active {border-color:var(--primary);}
+.formations-page .formation-card>p {line-height:1.6;color:var(--muted);}
+.formations-page .formation-current-button {background:var(--primary-soft);color:var(--primary-deep);}
+.formation-builder-map {display:flex;gap:14px;flex-wrap:wrap;padding:16px 20px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:22px;}
+.formation-builder-map a {color:var(--primary-deep);font-size:13px;font-weight:600;text-decoration:none;padding:5px;}
+.formations-page [id^=formation-] {scroll-margin-top:24px;}
+.formations-page .formation-builder-intro,.formations-page .formation-kit-card,.formations-page .formation-file-card,.formations-page .formation-import-section {background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none;}
+.formations-page .formation-builder-step>span,.formations-page .formation-file-index {background:var(--primary-soft);color:var(--primary-deep);}
+.formations-page .formation-file-heading strong {color:var(--ink);}
+.formations-page .formation-file-actions {flex-wrap:wrap;gap:10px;}
+.formations-page .formation-prompt-details summary,.formation-editorial-disclosure>summary {cursor:pointer;min-height:40px;line-height:1.5;font-weight:600;font-size:13px;color:var(--primary-deep);}
+.formations-page .formation-prompt-details pre {background:var(--canvas);border:1px solid var(--line);border-radius:8px;max-height:320px;overflow:auto;}
+.formation-editorial-workbench {background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;margin-top:12px;}
+.formation-editorial-workbench>h2 {font-size:20px;letter-spacing:-.02em;}
+.formation-editorial-workbench p {font-size:13px;color:var(--muted);line-height:1.65;max-width:85ch;}
+.formation-editorial-workbench label {display:grid;gap:7px;font-size:13px;font-weight:600;color:var(--ink);margin:14px 0;}
+.formation-editorial-workbench input,.formation-editorial-workbench select,.formation-editorial-workbench textarea {width:100%;padding:11px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-weight:400;min-width:0;}
+.formation-editorial-workbench input[type=file] {padding:14px;background:var(--canvas);border-style:dashed;}
+.editorial-source-grid {display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.editorial-empty-guidance {padding:16px;background:var(--primary-soft);border-radius:8px;}
+.formation-editorial-workbench summary {cursor:pointer;font-size:14px;font-weight:650;min-height:44px;padding:12px 0;color:var(--ink);}
+.formation-editorial-workbench fieldset {padding:20px;border:1px solid var(--line);border-radius:10px;min-width:0;}
+.formation-editorial-workbench legend {font-size:13px;font-weight:650;padding:0 8px;}
+.formation-editorial-workbench .formation-editorial-actions {display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;}
+.formation-editorial-workbench>pre {max-height:360px;overflow:auto;font-size:12px;padding:16px;border-radius:8px;background:var(--canvas);}
+.annual-story {padding:26px;background:var(--surface);color:var(--ink);}
+.annual-story .annual-story-title {font-size:25px;letter-spacing:-.03em;line-height:1.3;}
+.annual-story .annual-story-context {color:var(--muted);}
+.annual-story .annual-story-progress span {background:var(--line);}
+.annual-story .annual-story-progress span.is-complete {background:var(--primary);}
+.annual-story .annual-story-option {min-height:78px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;}
+.annual-story .annual-story-option.is-selected {background:var(--primary-soft);border-color:var(--primary);}
+.annual-story .annual-story-option.is-unavailable {background:var(--canvas);opacity:.65;}
+.annual-story .annual-story-option small {line-height:1.5;color:var(--muted);}
+.annual-story .annual-story-ready {background:var(--primary-soft);border:1px solid var(--line);border-radius:10px;color:var(--ink);}
+.annual-story .annual-story-actions {gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px;}
+.annual-choice-guidance {font-size:13px;color:var(--muted);line-height:1.6;}
+.collection-store .collection-store-intro {background:var(--canvas);border:1px solid var(--line);border-radius:12px;padding:24px;}
+.collection-store .collection-store-intro h2 {font-size:25px;letter-spacing:-.03em;}
+.collection-store .collection-store-toolbar {gap:16px;flex-wrap:wrap;}
+.collection-store .collection-search {background:var(--surface);border:1px solid var(--line);border-radius:9px;min-height:44px;}
+.collection-search button {padding:6px 12px;font-size:20px;color:var(--muted);background:transparent;border:0;}
+.collection-store .collection-filters button {border:1px solid var(--line);border-radius:8px;color:var(--muted);background:var(--surface);min-height:40px;}
+.collection-store .collection-filters button[aria-pressed=true] {color:var(--primary-deep);background:var(--primary-soft);border-color:var(--primary);}
+.collection-grid {gap:20px;}
+.collection-grid .collection-card {border:1px solid var(--line);border-radius:14px;box-shadow:none;background:var(--surface);overflow:hidden;}
+.collection-card .collection-card-body {padding:22px;}
+.collection-card .collection-card-body h3 {font-size:19px;letter-spacing:-.02em;line-height:1.4;}
+.collection-card .collection-card-body>p {font-size:13px;line-height:1.6;color:var(--muted);}
+.collection-card .collection-card-kicker {color:var(--primary-deep);}
+.collection-card .collection-card-includes span {background:var(--canvas);color:var(--muted);border-radius:5px;}
+.collection-empty {padding:32px;text-align:center;background:var(--surface);border:1px dashed var(--line-strong);border-radius:12px;}
+@media(max-width:800px) {
+ .calendar-page .calendar-toolbar-actions {width:100%;}
+ .calendar-page .calendar-surface--week,.calendar-page .calendar-surface--month {overflow-x:auto;}
+ .calendar-page .month-calendar {min-width:660px;}
+ .calendar-page .year-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .calendar-export-modal .calendar-export-providers {grid-template-columns:1fr;}
+ .editorial-source-grid {grid-template-columns:1fr;gap:0;}
+ .collection-store .collection-store-intro {flex-direction:column;align-items:flex-start;}
+}
+@media(max-width:520px) {
+ .calendar-page .calendar-title-row h1 {font-size:23px;width:100%;}
+ .calendar-jump-date {order:3;width:100%;}
+ .calendar-page .calendar-toolbar-actions .segmented-control {width:100%;display:flex;}
+ .calendar-page .segmented-control button {flex:1;}
+ .calendar-page .calendar-sync-trigger {flex:1;font-size:12px;}
+ .calendar-page .year-grid {grid-template-columns:1fr;}
+ .calendar-export-modal .calendar-export-groups>div {grid-template-columns:1fr;}
+ .calendar-export-modal .calendar-export-summary {flex-wrap:wrap;gap:12px;}
+ .assessment-form-section {padding:16px;}
+ .assessment-record-form .form-row,.assessment-record-form .assessment-file-pickers {grid-template-columns:1fr;}
+ .formation-editorial-workbench,.annual-story {padding:18px;}
+ .annual-story .annual-story-title {font-size:22px;}
+ .annual-story .annual-story-actions .primary-button {width:100%;justify-content:center;}
+ .formation-builder-map {flex-direction:column;gap:6px;}
+ .collection-store .collection-filters {flex-wrap:wrap;}
+ .collection-grid {grid-template-columns:1fr;}
+}

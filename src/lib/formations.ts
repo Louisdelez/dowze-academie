@@ -1,3 +1,4 @@
+import { parseFormationChoices, selectFormationChoices, type FormationChoices } from "./formationChoices";
 import type {
   CalendarEvent,
   CefrLevel,
@@ -87,6 +88,7 @@ export interface FormationManifest {
   objectives?: string[];
   motto?: string;
   specialization?: string;
+  choices?: FormationChoices;
   pathway?: {
     id: string;
     name: string;
@@ -693,7 +695,8 @@ function parseManifest(value: unknown, collector: IssueCollector): FormationMani
       "objectives",
       "motto",
       "specialization",
-      "pathway"
+      "pathway",
+      "choices"
     ],
     collector,
     file,
@@ -839,6 +842,11 @@ function parseManifest(value: unknown, collector: IssueCollector): FormationMani
       .filter((entry): entry is string => Boolean(entry));
   }
 
+  let choices: FormationChoices | undefined;
+  if (object.choices !== undefined) {
+    try { choices = parseFormationChoices(object.choices); }
+    catch (error) { collector.error(file, "$.choices", "invalid-value", String(error)); }
+  }
   let pathway: FormationManifest["pathway"];
   if (object.pathway !== undefined) {
     const pathwayObject = strictObject(
@@ -920,6 +928,7 @@ function parseManifest(value: unknown, collector: IssueCollector): FormationMani
     ...(objectives ? { objectives } : {}),
     ...(motto ? { motto } : {}),
     ...(specialization ? { specialization } : {}),
+    ...(choices ? { choices } : {}),
     ...(pathway ? { pathway } : {})
   };
 }
@@ -2420,6 +2429,12 @@ export function validateAndCompileFormationPackage(
     return emptyPreview(collector.issues, manifest);
   }
 
+  if (manifest.choices) {
+    const ids = new Set(rawSubjects.map(s => s.id));
+    for (const option of manifest.choices.groups.flatMap(g => g.options)) {
+      if (option.subjectIds.some(id => !ids.has(id))) collector.error("formation.json", "$.choices", "invalid-value", "Une option référence une matière absente.");
+    }
+  }
   validateReferences(rawSubjects, programs, schedule, assessments, rawTasks, collector);
   if (collector.errorCount() > 0) return emptyPreview(collector.issues, manifest);
 
@@ -2471,7 +2486,7 @@ export function validateAndCompileFormationPackage(
     0
   );
 
-  return {
+  const preview: FormationImportPreview = {
     valid: true,
     issues: collector.issues,
     manifest,
@@ -2488,6 +2503,11 @@ export function validateAndCompileFormationPackage(
       tasks: tasks.length
     }
   };
+  if (manifest.choices?.selected) {
+    const selected = manifest.choices.selected;
+    return selectFormationChoices({ ...preview, manifest: { ...manifest, choices: { groups: manifest.choices.groups } } }, selected);
+  }
+  return preview;
 }
 
 export function isInstalledFormation(value: unknown): value is InstalledFormation {

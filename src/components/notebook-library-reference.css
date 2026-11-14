@@ -1,0 +1,45 @@
+/* Library presentation follows the inspected Notability26.42.3 visual grammar:
+ * neutral canvas, quiet folder rail, 148px first-page cards and blue emphasis.
+ * Notes keep Dowze identity, commands, covers and accessibility targets. */
+.notebook-library{
+ --note-library-canvas:#fff;--note-library-rail:#f6f6f8;--note-library-ink:#171a20;
+ --note-library-muted:#697180;--note-library-line:#e4e6eb;--note-library-accent:#4278ff;
+ color:var(--note-library-ink);background:var(--note-library-canvas);
+ font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.note-library-sidebar{background:var(--note-library-rail);border-color:var(--note-library-line);padding:24px 14px;}
+.note-library-sidebar>header{font-size:18px;letter-spacing:-.35px;margin-bottom:24px;}
+.note-library-sidebar>button{font-size:14px;min-height:42px;margin:3px 0;}
+.note-library-sidebar .active{background:#e8ebf0;color:var(--note-library-ink);font-weight:600;}
+.note-folders-title{font-size:12px;font-weight:600;color:var(--note-library-muted);letter-spacing:.1px;}
+.note-folder-row button:last-child{font-size:14px;min-height:40px;gap:10px;}
+.note-folder-row button:last-child>svg{width:10px;height:10px;border-radius:50%;background:currentColor;stroke-width:0;}
+.note-folder-children{padding-left:18px;}
+.note-folder-row small{font-variant-numeric:tabular-nums;color:var(--note-library-muted);font-size:12px;}
+.note-library-heading h1{font-size:28px;line-height:1.2;letter-spacing:-.7px;font-weight:700;}
+.note-library-heading p{font-size:13px;color:var(--note-library-muted);}
+.note-library-create{background:var(--note-library-accent)!important;border-radius:10px!important;min-height:42px;}
+.note-library-main{background:var(--note-library-canvas);padding:30px;}
+.note-library-controls{background:var(--note-library-canvas);box-shadow:0 1px 0 var(--note-library-line);gap:8px;}
+.note-library-controls label{border-color:var(--note-library-line);background:var(--note-library-rail);min-height:40px;box-sizing:border-box;}
+.note-library-controls input{font-size:14px;}
+.note-library-controls select{min-height:40px;border-color:var(--note-library-line);font-size:12px;}
+.note-library-controls button{min-width:40px;min-height:40px;justify-content:center;}
+.note-library-controls button[aria-pressed=true]{background:#eaf0ff;color:#2357d8;}
+.note-library-cards{grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:20px;}
+.note-library-card{border:.5px solid var(--note-library-line);border-radius:12px;box-shadow:0 2px 5px #171a2008;transition:box-shadow .15s ease;}
+.note-library-card:hover,.note-library-card:focus-within{box-shadow:0 4px 13px #171a2014;}
+.note-library-card.is-picked{border-color:var(--note-library-accent);box-shadow:0 0 0 1px var(--note-library-accent);}
+.note-card-open{padding:0 14px 14px!important;gap:7px!important;}
+.note-card-preview{height:148px;box-sizing:border-box;line-height:1.5;background:#fff;border-color:var(--note-library-line);font-size:12px;color:var(--note-library-muted);}
+.note-card-open strong{font-size:15px;line-height:18px;letter-spacing:-.15px;}
+.note-card-open time{font-size:11px;color:var(--note-library-muted);}
+.note-card-footer{border-color:var(--note-library-line);}
+.note-card-footer select{border-color:var(--note-library-line);}
+.note-library-empty h2{color:var(--note-library-ink);}
+.note-library-empty>svg{color:var(--note-library-accent);}
+.notebook-library :is(button,input,select,summary):focus-visible{outline:2px solid var(--note-library-accent);outline-offset:3px;}
+@media(min-width:751px){.note-library-sidebar{width:216px;box-sizing:border-box;}}
+@media(max-width:750px){.note-library-main{padding:20px;}.note-library-cards{gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));}.note-card-preview{height:132px;}}
+@media(max-width:500px){.note-library-sidebar{padding:8px;}.note-library-sidebar>button{font-size:12px;min-height:40px;}.note-library-main{padding:18px 12px;}.note-library-heading{flex-wrap:wrap;}.note-library-heading h1{font-size:25px;}.note-library-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.note-card-preview{height:112px;}.note-card-open strong{font-size:14px;}.note-library-controls button{min-width:44px;min-height:44px;}}
+@media(prefers-reduced-motion:reduce){.note-library-card{transition:none;}}

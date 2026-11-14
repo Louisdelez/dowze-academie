@@ -1,0 +1,18 @@
+.paper-command-menu{display:inline-flex;align-items:center;position:relative}
+.paper-command-menu .paper-command-trigger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;width:auto;min-height:44px;padding:6px 10px;white-space:nowrap}
+.paper-command-trigger>span:first-child{font-size:22px;line-height:1}
+.paper-command-backdrop{position:fixed;inset:0;background:#14203b30;z-index:1200}
+.paper-command-dialog{position:fixed;z-index:1201;display:flex;flex-direction:column;width:min(384px,calc(100vw - 16px));max-height:calc(100dvh - 16px);padding:12px;gap:8px;background:#fff;color:#17263f;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 12px 38px #14203b33;box-sizing:border-box;overflow:auto}
+.paper-command-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.paper-command-dialog button{width:auto;min-height:44px;border:1px solid #d5deea;border-radius:6px;background:#f8fafc;color:inherit;font:inherit;padding:8px;box-sizing:border-box}
+.paper-command-dialog button:focus-visible{outline:3px solid #3154b8;outline-offset:1px}
+.paper-command-dialog button:disabled{opacity:.5;cursor:default}
+.paper-command-dialog p{margin:0;font-size:13px;line-height:1.45}
+.paper-command-objects{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow:auto;min-height:44px;flex-shrink:0}
+.paper-command-objects button{display:flex;text-align:left;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
+.paper-command-objects button[aria-selected=true]{background:#eaf1ff;border-color:#91a8d4}
+.paper-command-actions{display:flex;flex-direction:column;gap:3px;min-height:44px;overflow:auto}
+.paper-command-actions button{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;flex-shrink:0}
+.paper-command-actions small{font-size:11px;color:#64748b;white-space:nowrap}
+.paper-command-help{color:#52627a}.paper-command-selection{font-weight:600}
+@media(max-width:480px){.paper-command-dialog{padding:8px;gap:6px}.paper-command-objects{max-height:140px}.paper-command-actions small{white-space:normal;text-align:right;max-width:90px}}

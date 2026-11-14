@@ -1,0 +1,35 @@
+.workspace-active-panel {position:relative;}
+.workspace-tab-panel {width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;}
+.workspace-tab-panel[hidden] {display:none!important;}
+
+/* A miniature tab: rounded shoulders and feet on the same baseline as its neighbours. */
+.workspace-tab-add {
+  position: relative;
+  width: 48px;
+  height: 38px;
+  flex: 0 0 48px;
+  align-self: flex-end;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.workspace-tab-add > .workspace-tab-add-shape {
+  position: absolute;
+  inset: 0;
+  width: 48px;
+  height: 38px;
+  fill: var(--canvas);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  pointer-events: none;
+  transition: fill 130ms ease, stroke 130ms ease;
+}
+.workspace-tab-add > .workspace-tab-add-icon { position: relative; width: 16px; height: 16px; stroke-width: 2; }
+.workspace-tab-add:hover { border: 0; background: transparent; color: var(--primary); }
+.workspace-tab-add:hover > .workspace-tab-add-shape { fill: var(--primary-soft); stroke: var(--primary); }
+.workspace-tab-add:active > .workspace-tab-add-shape { fill: #dce6ff; }
+.workspace-tab-add:focus-visible { outline: 0; }
+.workspace-tab-add:focus-visible > .workspace-tab-add-shape { stroke: var(--primary); stroke-width: 2; }

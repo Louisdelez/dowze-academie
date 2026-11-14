@@ -1,0 +1,35 @@
+/* Dialogs behave like a compact task sheet; long forms scroll below their title. */
+.modal-backdrop--workspace { padding:62px 20px 20px; background:rgb(23 43 46 / 24%); backdrop-filter:blur(3px); }
+.modal-card {display:flex;flex-direction:column;max-height:calc(100dvh - 86px);background:white;}
+.modal-card > header {flex:none;min-height:72px;}
+.modal-card > header > button {width:40px;height:40px;flex-basis:40px;color:var(--ink);background:#edf3f2;}
+.dialog-content {min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;}
+.dialog-content .modal-form {gap:20px;padding:24px;}
+.dialog-content .assessment-record-form {max-height:none;overflow:visible;}
+.dialog-content .form-field > span,.dialog-content .color-field legend {font-size:13px;font-weight:600;color:var(--ink);}
+.dialog-content .form-field > span em {font-size:12px;color:var(--muted);}
+.dialog-content .form-field > input,.dialog-content .form-field > select,.dialog-content .form-field > textarea,.dialog-content .readonly-link {font-size:14px;min-height:44px;border-radius:8px;border-color:var(--line-strong);color:var(--ink);}
+.dialog-content .form-field > textarea {line-height:1.65;}
+.dialog-content .form-field :is(input,select,textarea):focus,.dialog-content .readonly-link:focus-within {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.dialog-content .modal-actions {position:sticky;bottom:-24px;z-index:2;flex-wrap:wrap;gap:8px;padding:16px 0 0;background:white;border-top:1px solid var(--line);margin-top:4px;}
+.dialog-content .modal-actions button {min-height:42px;}
+.dialog-content .confirm-actions {padding:16px 24px 24px;bottom:0;}
+.dialog-content .confirm-content {padding:24px;gap:16px;}
+.dialog-content .confirm-content p {font-size:14px;line-height:1.7;color:var(--ink);}
+.dialog-content .association-callout {background:#edf5f2;border:1px solid #c7ded5;border-radius:10px;}
+.dialog-content .association-callout p span,.dialog-content .paper-provider-note {font-size:13px;line-height:1.6;color:var(--muted);}
+.dialog-content .color-field button {min-width:36px;min-height:36px;}
+.dialog-content .form-validation-error {font-size:13px;line-height:1.6;border-radius:8px;}
+.dialog-content .global-note-list-title strong {font-size:14px;}
+.dialog-content .global-note-list-preview {font-size:13px;line-height:1.55;}
+.dialog-content .global-note-search input {font-size:14px;min-height:40px;}
+@container workspace (max-width:520px) {
+ .modal-backdrop--workspace {padding:58px 10px 10px;}
+ .dialog-content .form-row {grid-template-columns:minmax(0,1fr);}
+ .modal-card > header {padding:16px;}
+ .modal-card > header h2 {font-size:18px;}
+ .dialog-content .modal-form {padding:18px;}
+ .dialog-content .modal-actions {bottom:-18px;}
+ .dialog-content .modal-actions > span {display:none;}
+ .dialog-content .modal-actions button {flex:1 1 auto;}
+}

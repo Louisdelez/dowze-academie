@@ -1,9 +1,11 @@
+import "./studio-tools.css";
 import {
   BookOpenText,
   Bot,
   BrainCircuit,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ClipboardCopy,
   ExternalLink,
@@ -18,7 +20,6 @@ import {
   MicOff,
   MoonStar,
   Music2,
-  PanelRightClose,
   Play,
   RefreshCw,
   Search,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { clampAiPanelWidth } from "../lib/layout";
+import { maxAiPanelWidth, clampAiPanelWidth } from "../lib/layout";
 import {
   isLanguagePracticeProvider,
   isStandaloneLearningProvider,
@@ -36,6 +37,7 @@ import {
 } from "../lib/learningProviders";
 import { languagePracticeName } from "../lib/languageCurriculum.ts";
 import {
+  configureAiCapture,
   currentAiUrl,
   getNativeCapabilities,
   isTauri,
@@ -55,7 +57,6 @@ const AI_PROVIDERS: AiProvider[] = [
   "claude",
   "gemini",
   "mistral",
-  "deepseek",
   "kimi",
   "freechat",
   "duolingo",
@@ -122,6 +123,8 @@ function lessonModeLabel(activeLesson: ActiveLesson) {
 }
 
 interface AiPanelProps {
+  captureAccountId: string;
+  captureFormationId: string;
   visible: boolean;
   suspended?: boolean;
   resettingProfile?: boolean;
@@ -148,6 +151,8 @@ interface AiPanelProps {
 }
 
 export function AiPanel({
+  captureAccountId,
+  captureFormationId,
   visible,
   suspended = false,
   resettingProfile = false,
@@ -169,6 +174,11 @@ export function AiPanel({
   onAssociateCurrent,
   onCopyLessonPrompt
 }: AiPanelProps) {
+  const captureSetupRef = useRef<Promise<boolean>>(Promise.resolve(false));
+  useEffect(() => {
+    captureSetupRef.current = configureAiCapture({ accountId: captureAccountId, formationId: captureFormationId, provider, paused: true })
+      .then(() => true).catch(() => false);
+  }, [captureAccountId, captureFormationId, provider]);
   const providerIsFreeChat = provider === "freechat";
   const providerIsLanguagePractice = isLanguagePracticeProvider(provider);
   const providerIsStandaloneLearning = isStandaloneLearningProvider(provider);
@@ -217,6 +227,9 @@ export function AiPanel({
       .then(async () => {
         const slot = slotRef.current;
         if (!slot) return;
+        if (!await captureSetupRef.current) {
+          throw new Error("Le scope natif de capture n’est pas configuré.");
+        }
         const rect = slot.getBoundingClientRect();
         await syncAiPanel(
           desiredNativeVisibilityRef.current,
@@ -473,25 +486,42 @@ export function AiPanel({
   return (
     <>
       <aside
-        className={`ai-pane ${visible ? "is-visible" : ""}`}
+        id="study-assistant"
+        className={`ai-pane studio-tools ${visible ? "is-visible" : ""}`}
         style={{ width: visible ? (dragWidth ?? width) : 0 }}
+        aria-label="Assistant d’étude"
         aria-hidden={!visible}
+        inert={!visible ? true : undefined}
       >
         {visible && (
           <button
             className="ai-resize-handle"
+            role="separator"
+            aria-orientation="vertical"
+            aria-valuemin={360}
+            aria-valuemax={maxAiPanelWidth(window.innerWidth)}
+            aria-valuenow={dragWidth ?? width}
+            aria-valuetext={`${Math.round(dragWidth ?? width)} pixels`}
+            aria-controls="study-assistant"
             onPointerDown={(event) => {
               event.preventDefault();
               dragWidthRef.current = width;
               setDragWidth(width);
               setIsResizing(true);
             }}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const next = event.key === "Home" ? 0 : event.key === "End" ? window.innerWidth : width + (event.key === "ArrowLeft" ? 32 : -32);
+              onWidthChange(clampAiPanelWidth(next, window.innerWidth));
+            }}
             aria-label="Redimensionner le panneau latéral"
+            aria-description="Flèche gauche pour agrandir, flèche droite pour réduire"
           >
             <span />
           </button>
         )}
-        <header className="ai-toolbar" data-tauri-drag-region>
+        <header className="ai-toolbar">
           <div className="ai-provider-picker" ref={providerPickerRef}>
             <button
               ref={providerTriggerRef}
@@ -594,9 +624,6 @@ export function AiPanel({
                 </button>
               </>
             )}
-            <button onClick={onClose} aria-label="Masquer le panneau" data-tooltip="Masquer">
-              <PanelRightClose />
-            </button>
           </div>
         </header>
 
@@ -712,7 +739,7 @@ export function AiPanel({
               </span>
               <h3>{providerLabel(provider)}</h3>
               <p>
-                La page officielle s’affiche ici dans l’application Tauri. Le navigateur de prévisualisation ne peut pas l’intégrer.
+                Ouvrez ce service dans votre navigateur pour poursuivre votre étude. Dans l’application de bureau, sa page s’affiche directement dans ce panneau.
               </p>
               <button className="primary-button" onClick={() => void openInBrowser(providerHome(provider))}>
                 <ExternalLink /> Ouvrir {providerLabel(provider)}
@@ -721,7 +748,7 @@ export function AiPanel({
             </div>
           )}
           {!providerIsFreeChat && nativeError && (
-            <div className="browser-ai-preview error-preview">
+            <div className="browser-ai-preview error-preview" role="alert">
               <Bot />
               <h3>La page n’a pas pu s’ouvrir</h3>
               <p>{nativeError}</p>
@@ -731,13 +758,20 @@ export function AiPanel({
         </div>
       </aside>
 
-      {!visible && (
-        <button className="ai-reopen-tab" onClick={onOpen} aria-label={`Afficher ${providerLabel(provider)}`}>
-          {providerIsLanguagePractice ? <Languages /> : provider === "khanacademy" ? <GraduationCap /> : <Bot />}
-          <span>{providerIsLanguagePractice ? languagePracticeName(activeSubject) : provider === "khanacademy" ? "Khan" : providerIsFreeChat ? "Chat" : "Web"}</span>
-          <ChevronRight />
-        </button>
-      )}
+      <button
+        type="button"
+        className="panel-edge-tab ai-edge-tab studio-tools"
+        style={{ right: visible ? (dragWidth ?? width) : 0 }}
+        onClick={visible ? onClose : onOpen}
+        aria-label={`${visible ? "Masquer" : "Afficher"} le panneau IA`}
+        aria-expanded={visible}
+        aria-controls="study-assistant"
+        title={`${visible ? "Masquer" : "Afficher"} le panneau IA`}
+      >
+        <Bot aria-hidden="true" />
+        <span>IA</span>
+        {visible ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+      </button>
     </>
   );
 }

@@ -1,3 +1,5 @@
+import { useDialogFocus } from "../hooks/useDialogFocus";
+import "./studio-tools.css";
 import {
   Bot,
   Check,
@@ -46,7 +48,6 @@ const BACKENDS: ReadonlyArray<{
 }> = [
   { value: "openai", label: "OpenAI API", detail: "Responses API" },
   { value: "mistral", label: "Mistral API", detail: "Clé personnelle" },
-  { value: "deepseek", label: "DeepSeek API", detail: "Clé personnelle" },
   { value: "kimi", label: "Kimi API", detail: "Moonshot AI" },
   { value: "compatible", label: "API compatible", detail: "Format OpenAI" },
   { value: "ollama", label: "Ollama local", detail: "Sur cet appareil" }
@@ -71,11 +72,13 @@ const FREE_CHAT_BACKENDS = new Set<FreeChatBackend>(
   BACKENDS.map((item) => item.value)
 );
 
-function isStoredFreeChatConfig(value: unknown): value is FreeChatConfig {
+export function isStoredFreeChatConfig(value: unknown): value is FreeChatConfig {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Partial<Record<FreeChatBackend, unknown>>;
   return Object.entries(candidate).every(([backend, entry]) => {
-    if (!FREE_CHAT_BACKENDS.has(backend as FreeChatBackend)) return false;
+    // Preserve configurations from older releases without restoring the removed
+    // DeepSeek choice in the UI. Defaults still contain this legacy entry.
+    if (!FREE_CHAT_BACKENDS.has(backend as FreeChatBackend) && backend !== "deepseek") return false;
     if (entry === null || typeof entry !== "object" || Array.isArray(entry)) return false;
     const config = entry as Partial<BackendConfig>;
     return typeof config.model === "string" &&
@@ -134,7 +137,7 @@ export function FreeChatPanel({
   const [backend, setBackend] = usePersistentState<FreeChatBackend>(
     storageKeys.backend,
     "ollama",
-    (value): value is FreeChatBackend => typeof value === "string" && FREE_CHAT_BACKENDS.has(value as FreeChatBackend)
+    (value): value is FreeChatBackend => typeof value === "string" && value !== "deepseek" && FREE_CHAT_BACKENDS.has(value as FreeChatBackend)
   );
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -142,6 +145,7 @@ export function FreeChatPanel({
   const [error, setError] = useState<string | null>(null);
   const [errorConversationId, setErrorConversationId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [keyStatus, setKeyStatus] = useState<Partial<Record<FreeChatBackend, boolean>>>({});
@@ -149,6 +153,8 @@ export function FreeChatPanel({
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const followMessagesRef = useRef(true);
+  const lastConversationRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const handledContextRequestRef = useRef<string | null>(null);
@@ -190,54 +196,17 @@ export function FreeChatPanel({
   const selectedConfig = activeConversation?.backend === backend
     ? { model: activeConversation.model, endpoint: activeConversation.endpoint }
     : safeConfig[backend];
-  const sortedConversations = [...conversations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const historyMatches = (conversation: StoredFreeChatConversation) => !historyQuery.trim() || [conversation.title, backendLabel(conversation.backend)].join(" ").toLocaleLowerCase("fr").includes(historyQuery.trim().toLocaleLowerCase("fr"));
+  const sortedConversations = [...conversations].filter(historyMatches).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const contextKey = context?.key;
   const contextRequestId = context?.requestId;
   const contextPrompt = context?.prompt;
   const contextTitle = context?.title;
 
-  useEffect(() => {
-    if (!showHistory && !showSettings) return;
-    const drawer = drawerRef.current;
-    const previouslyFocused = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    const focusableSelector = "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])";
-    const focusableElements = () => Array.from(
-      drawer?.querySelectorAll<HTMLElement>(focusableSelector) ?? []
-    ).filter((element) => element.getClientRects().length > 0);
-    const frame = window.requestAnimationFrame(() => (focusableElements()[0] ?? drawer)?.focus());
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setShowHistory(false);
-        setShowSettings(false);
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = focusableElements();
-      if (!focusable.length) {
-        event.preventDefault();
-        drawer?.focus();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === drawer)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("keydown", onKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [showHistory, showSettings]);
+  useDialogFocus(drawerRef, () => {
+    setShowHistory(false);
+    setShowSettings(false);
+  }, showHistory || showSettings);
 
   useEffect(() => {
     if (!isActive) return;
@@ -270,8 +239,13 @@ export function FreeChatPanel({
   useEffect(() => {
     const element = messagesRef.current;
     if (!element) return;
-    element.scrollTop = element.scrollHeight;
-  }, [activeConversation?.messages.length, isSending]);
+    const switched = lastConversationRef.current !== activeId;
+    if (switched || followMessagesRef.current) {
+      element.scrollTop = element.scrollHeight;
+      followMessagesRef.current = true;
+    }
+    lastConversationRef.current = activeId;
+  }, [activeId, activeConversation?.messages.length, isSending]);
 
   useEffect(() => {
     if (!error) setErrorConversationId(null);
@@ -491,6 +465,7 @@ export function FreeChatPanel({
           updatedAt: now
         };
 
+    followMessagesRef.current = true;
     setConversations((current) => existing
       ? current.map((item) => item.id === conversationId ? nextConversation : item)
       : [nextConversation, ...current]);
@@ -535,7 +510,7 @@ export function FreeChatPanel({
         : current.filter((item) => item.id !== conversationId));
       if (!existing) setActiveId(null);
       setDraft(content);
-      setErrorConversationId(conversationId);
+      setErrorConversationId(existing ? conversationId : null);
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       if (responseEpochRef.current !== responseEpoch) return;
@@ -606,32 +581,32 @@ export function FreeChatPanel({
   };
 
   return (
-    <section className="free-chat" aria-label="Chat libre" hidden={!isActive}>
+    <section className="free-chat studio-tools" aria-label="Chat libre" hidden={!isActive}>
       <header className="free-chat-toolbar">
         <div>
-          <button onClick={() => setShowHistory(true)} aria-label="Afficher les conversations du Chat libre">
-            <List />
+          <button onClick={() => setShowHistory(true)} aria-haspopup="dialog" aria-label="Afficher les conversations du Chat libre">
+            <List /><span className="studio-tool-label">Historique</span>
           </button>
           <button onClick={startBlankConversation} aria-label="Nouvelle conversation libre">
             <Plus />
           </button>
         </div>
-        <button className="free-chat-backend" onClick={() => setShowSettings(true)}>
+        <button className="free-chat-backend" aria-haspopup="dialog" onClick={() => setShowSettings(true)}>
           {backend === "ollama" ? <Cpu /> : <Bot />}
           <span><strong>{backendLabel(backend)}</strong><small>{selectedConfig.model || "Modèle à choisir"}</small></span>
           <ChevronDown />
         </button>
-        <button onClick={() => setShowSettings(true)} aria-label="Réglages du Chat libre">
+        <button onClick={() => setShowSettings(true)} aria-haspopup="dialog" aria-label="Réglages du Chat libre">
           <Settings2 />
         </button>
       </header>
 
-      <div className="free-chat-messages" ref={messagesRef} aria-live="polite">
+      <div className="free-chat-messages" ref={messagesRef} role="log" aria-label="Messages de la conversation" aria-live="polite" aria-relevant="additions text" onScroll={(event) => { const element = event.currentTarget; followMessagesRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80; }}>
         {!activeConversation ? (
           <div className="free-chat-empty">
             <span><MessageSquare /></span>
-            <h3>Une conversation vraiment libre</h3>
-            <p>Choisis une API ou un modèle Ollama local. Les conversations restent enregistrées sur cet appareil.</p>
+            <h3>Une question, une idée à explorer ?</h3>
+            <p>Révisez un concept ou préparez un exercice avec le modèle de votre choix. Vos conversations sont conservées sur cet appareil.</p><button className="studio-chat-configure" onClick={() => setShowSettings(true)}><Settings2 /> Choisir mon modèle</button>
             {contextPrompt && contextKey && (
               <button onClick={startWithCourseContext}>
                 <Plus /> Utiliser le contexte du cours
@@ -646,7 +621,7 @@ export function FreeChatPanel({
             </div>
           ) : (
             <article key={message.id} className={`free-chat-message is-${message.role}`}>
-              <span>{message.role === "assistant" ? <Bot /> : "L"}</span>
+              <span aria-label={message.role === "assistant" ? "Assistant" : "Vous"}>{message.role === "assistant" ? <Bot /> : "V"}</span>
               <div>
                 {message.role === "assistant" ? (
                   <div className="free-chat-markdown">
@@ -674,13 +649,14 @@ export function FreeChatPanel({
 
       {error && (!errorConversationId || errorConversationId === activeId) && !showHistory && !showSettings && <div className="free-chat-error" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Fermer l’erreur"><X /></button></div>}
 
-      <form className="free-chat-composer" onSubmit={(event) => void handleSend(event)}>
+      <form className="free-chat-composer" aria-busy={isSending} onSubmit={(event) => void handleSend(event)}>
         <textarea
           ref={inputRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleComposerKeyDown}
-          placeholder="Écris librement…"
+          placeholder="Posez votre question…"
+          aria-describedby="free-chat-compose-help"
           aria-label="Message du Chat libre"
           rows={1}
           disabled={isSending}
@@ -688,7 +664,7 @@ export function FreeChatPanel({
         <button type="submit" disabled={!draft.trim() || isSending} aria-label="Envoyer le message">
           {isSending ? <LoaderCircle /> : <Send />}
         </button>
-        <small>Entrée pour envoyer · Maj + Entrée pour une nouvelle ligne</small>
+        <small id="free-chat-compose-help">{isSending ? "Réponse en cours…" : "Entrée pour envoyer · Maj + Entrée pour une nouvelle ligne"}</small>
       </form>
 
       {showHistory && (
@@ -696,10 +672,10 @@ export function FreeChatPanel({
           <header><div><MessageSquare /><span><strong>Conversations</strong><small>{conversations.length} enregistrée{conversations.length > 1 ? "s" : ""}</small></span></div><button onClick={() => setShowHistory(false)} aria-label="Fermer l’historique"><X /></button></header>
           {error && (!errorConversationId || errorConversationId === activeId) && <div className="free-chat-error" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Fermer l’erreur"><X /></button></div>}
           <button className="free-chat-new" onClick={startBlankConversation}><Plus /> Nouvelle conversation</button>
-          <div className="free-chat-conversation-list">
+          <label className="studio-history-search"><span>Rechercher une conversation</span><input type="search" value={historyQuery} onChange={event => setHistoryQuery(event.target.value)} placeholder="Titre ou modèle…" /></label><div className="free-chat-conversation-list">
             {sortedConversations.length ? sortedConversations.map((conversation) => (
               <article key={conversation.id} className={conversation.id === activeId ? "is-active" : ""}>
-                <button onClick={() => openConversation(conversation)}>
+                <button aria-current={conversation.id === activeId ? "true" : undefined} onClick={() => openConversation(conversation)}>
                   <strong>{conversation.title}</strong>
                   <small>{backendLabel(conversation.backend)}{conversation.contextKey ? " · Cours lié" : ""} · {new Date(conversation.updatedAt).toLocaleDateString("fr-CH")}</small>
                 </button>
@@ -709,7 +685,7 @@ export function FreeChatPanel({
                   aria-label={`Supprimer ${conversation.title}`}
                 ><Trash2 /></button>
               </article>
-            )) : <p className="free-chat-drawer-empty">Aucune conversation pour le moment.</p>}
+            )) : <div className="free-chat-drawer-empty"><p>{historyQuery ? "Aucune conversation ne correspond." : "Votre première conversation apparaîtra ici."}</p>{historyQuery && <button onClick={() => setHistoryQuery("")}>Effacer la recherche</button>}</div>}
           </div>
         </div>
       )}

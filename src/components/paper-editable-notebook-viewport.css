@@ -1,0 +1,6 @@
+.paper-editable-notebook-viewport{position:relative;display:flex;flex:1 1 0;min-width:0;min-height:0;height:100%;overflow:hidden}
+.paper-editable-notebook-viewport .paper-canonical-text-host{z-index:100}
+.paper-editable-notebook-viewport:has(.paper-editable-page-input[style*="pointer-events: auto"]) .paper-canonical-text-host{pointer-events:none}
+.paper-viewport.paper-multipage-viewport{display:flex;padding:0;overflow:hidden;position:relative;flex:1;min-width:0;min-height:0}
+.paper-editable-notebook-viewport[data-page-input=ink] .paper-canonical-text-object{pointer-events:none!important}
+.paper-editable-notebook-viewport[data-page-input=reading] .paper-canonical-text-object{pointer-events:none!important}

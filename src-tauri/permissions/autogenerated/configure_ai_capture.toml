@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-configure-ai-capture"
+description = "Enables the configure_ai_capture command without any pre-configured scope."
+commands.allow = ["configure_ai_capture"]
+
+[[permission]]
+identifier = "deny-configure-ai-capture"
+description = "Denies the configure_ai_capture command without any pre-configured scope."
+commands.deny = ["configure_ai_capture"]

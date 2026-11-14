@@ -26,7 +26,6 @@ export const AI_PROVIDER_OPTIONS: ReadonlyArray<{
   { value: "claude", label: "Claude", category: "assistant" },
   { value: "gemini", label: "Gemini", category: "assistant" },
   { value: "mistral", label: "Mistral", category: "assistant" },
-  { value: "deepseek", label: "DeepSeek", category: "assistant" },
   { value: "kimi", label: "Kimi", category: "assistant" },
   { value: "freechat", label: "Chat libre", category: "custom" },
   { value: "duolingo", label: "Duolingo", category: "language" },
@@ -55,7 +54,7 @@ interface NativeImportedAssessmentPdfs {
   completed?: NativeAssessmentPdfMetadata;
 }
 
-export const isTauri = () => Boolean(window.__TAURI_INTERNALS__);
+export const isTauri = () => Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
 
 export const GOOGLE_CALENDAR_IMPORT_URL = "https://calendar.google.com/calendar/u/0/r/settings/export";
 export const GOOGLE_WEB_PROFILE_URL = "https://accounts.google.com/";
@@ -73,6 +72,79 @@ export interface NativeCapabilities {
 }
 
 export type MicrophoneAccessStatus = "authorized" | "denied" | "restricted" | "unsupported";
+
+export type CaptureProvider = Extract<
+  AiProvider,
+  "chatgpt" | "claude" | "gemini" | "mistral" | "deepseek" | "kimi"
+>;
+
+export type CaptureStatus = "complete" | "partial" | "unavailable";
+export type CaptureMessageRole = "user" | "assistant" | "system" | "tool";
+
+export type AiCaptureRuntimePhase =
+  | "capturing"
+  | "paused"
+  | "waiting-for-conversation"
+  | "limited"
+  | "unavailable";
+
+export interface AiCaptureRuntimeStatus {
+  generation: number;
+  phase: AiCaptureRuntimePhase;
+  detail: string;
+  lastPersistedMessages: number;
+}
+
+export interface AiCaptureConfiguration {
+  accountId: string;
+  formationId: string;
+  provider: AiProvider;
+  paused: boolean;
+}
+
+export interface ConversationScope {
+  accountId: string;
+  formationId: string;
+  provider: CaptureProvider;
+  conversationId: string;
+}
+
+export interface ConversationCaptureMessage {
+  messageId: string;
+  version: number;
+  position: number;
+  role: CaptureMessageRole;
+  content: string;
+  /** Older archives omit this field and are read as final by the native backend. */
+  state?: "partial" | "final";
+  capturedAt: string;
+  branchId: string | null;
+  attachmentNames: string[];
+}
+
+export interface ConversationCaptureInput extends ConversationScope {
+  sourceUrl: string;
+  status: CaptureStatus;
+  statusDetail: string | null;
+  messages: ConversationCaptureMessage[];
+}
+
+export interface ConversationArchive {
+  schemaVersion: 1;
+  scope: ConversationScope;
+  sourceUrl: string;
+  status: CaptureStatus;
+  statusDetail: string | null;
+  messages: ConversationCaptureMessage[];
+}
+
+export interface PersistConversationCaptureResult {
+  scope: ConversationScope;
+  insertedMessages: number;
+  duplicateMessages: number;
+  totalMessages: number;
+  status: CaptureStatus;
+}
 
 export interface CalendarTransferPayload {
   events: CalendarIcsEvent[];
@@ -392,6 +464,57 @@ export async function requestMicrophoneAccess(): Promise<MicrophoneAccessStatus>
   return invoke<MicrophoneAccessStatus>("request_microphone_access");
 }
 
+export async function persistConversationCapture(
+  input: ConversationCaptureInput
+): Promise<PersistConversationCaptureResult> {
+  if (!isTauri()) {
+    throw new Error("L’archivage des conversations est disponible uniquement dans l’application Dowze Academie.");
+  }
+  return invoke<PersistConversationCaptureResult>("persist_conversation_capture", { input });
+}
+
+export async function readConversationArchive(
+  scope: ConversationScope
+): Promise<ConversationArchive> {
+  if (!isTauri()) {
+    throw new Error("La lecture des conversations archivées est disponible uniquement dans l’application Dowze Academie.");
+  }
+  return invoke<ConversationArchive>("read_conversation_archive", { scope });
+}
+
+export async function deleteConversationArchive(scope: ConversationScope): Promise<boolean> {
+  if (!isTauri()) {
+    throw new Error("La suppression des conversations archivées est disponible uniquement dans l’application Dowze Academie.");
+  }
+  return invoke<boolean>("delete_conversation_archive", { scope });
+}
+
+export async function configureAiCapture(
+  configuration: AiCaptureConfiguration
+): Promise<AiCaptureRuntimeStatus> {
+  if (!isTauri()) {
+    return {
+      generation: 0,
+      phase: configuration.paused ? "paused" : "unavailable",
+      detail: "La capture directe requiert l’application native.",
+      lastPersistedMessages: 0
+    };
+  }
+  return invoke<AiCaptureRuntimeStatus>("configure_ai_capture", { ...configuration });
+}
+
+export async function pollAiCapture(): Promise<AiCaptureRuntimeStatus> {
+  if (!isTauri()) {
+    return {
+      generation: 0,
+      phase: "unavailable",
+      detail: "La capture directe requiert l’application native.",
+      lastPersistedMessages: 0
+    };
+  }
+  return invoke<AiCaptureRuntimeStatus>("poll_ai_capture");
+}
+
 export async function removeGoogleWebProfile(): Promise<GoogleWebProfileRemovalResult> {
   if (!isTauri()) {
     throw new Error("La suppression de la session Google est disponible dans l’application Dowze Academie sur macOS.");
@@ -470,9 +593,9 @@ export async function navigateAi(url: string) {
   await invoke("navigate_ai", { url });
 }
 
-export async function secureAiPanelForAccountTransition(provider: AiProvider): Promise<void> {
+export async function secureAiPanelForAccountTransition(provider: AiProvider, resumeAccountId?: string): Promise<void> {
   if (!isTauri()) return;
-  await invoke("secure_ai_panel_for_account_transition", { provider });
+  await invoke("secure_ai_panel_for_account_transition", { provider, resumeAccountId: resumeAccountId ?? null });
 }
 
 export async function startAiLesson(

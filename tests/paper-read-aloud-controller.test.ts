@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createPaperReadAloudController,MAX_PAPER_READ_ALOUD_TEXT,MAX_PAPER_READ_ALOUD_CHUNK,MAX_PAPER_READ_ALOUD_CHUNKS,type PaperReadAloudEngine,type PaperReadAloudAdmission,type PaperReadAloudUtterance} from '../src/lib/paperReadAloud.ts';
+import {MAX_PAPER_READ_ALOUD_TEXT as TEXT,MAX_PAPER_READ_ALOUD_CHUNK as CHUNK,MAX_PAPER_READ_ALOUD_CHUNKS as CHUNKS} from '../src/lib/paperReadAloudText.ts';
+
+function fixture(){
+ const requests:{text:string;voiceId:string;lang:string;rate:number;events:{start:()=>void;end:()=>void;error:(code:string)=>void};utterance:PaperReadAloudUtterance;disposed:boolean}[]=[],commands:string[]=[],identity={},busy={speaking:false,pending:false,paused:false};let enumerations=0,createFailure=false,speakFailure=false,cancelHook=()=>{};
+ const engine:PaperReadAloudEngine={identity,voices:()=>{enumerations++;return [{id:'voice-local',name:'Private local voice',lang:'fr-CH',localService:true,default:true}];},state:()=>({...busy}),create:(text,options,events)=>{if(createFailure)throw Error('create failed');const request={text,...options,events,disposed:false,utterance:{dispose:()=>{request.disposed=true;}}};requests.push(request);return request.utterance;},speak:()=>{if(speakFailure)throw Error('speak failed');commands.push('speak');busy.speaking=true;},cancel:()=>{commands.push('cancel');busy.speaking=false;busy.pending=false;cancelHook();},pause:()=>{commands.push('pause');busy.paused=true;},resume:()=>{commands.push('resume');busy.paused=false;}};
+ const finish=(index:number)=>{busy.speaking=false;busy.pending=false;requests[index].events.end();};
+ return {engine,identity,requests,commands,busy,finish,enumerations:()=>enumerations,failCreate:()=>{createFailure=true;},failSpeak:()=>{speakFailure=true;},onCancel:(hook:()=>void)=>{cancelHook=hook;}};
+}
+const admission=(overrides:Partial<PaperReadAloudAdmission>={}):PaperReadAloudAdmission=>({source:{},current:()=>true,chunks:['Premier fragment.','Deuxième fragment.'],voiceId:'voice-local',lang:'fr-CH',rate:1,...overrides});
+
+test('Only voluntary valid current admission can touch the engine; text bounds match extraction',()=>{
+ assert.equal(MAX_PAPER_READ_ALOUD_TEXT,TEXT);assert.equal(MAX_PAPER_READ_ALOUD_CHUNK,CHUNK);assert.equal(MAX_PAPER_READ_ALOUD_CHUNKS,CHUNKS);
+ const f=fixture(),controller=createPaperReadAloudController(f.engine),source={},old=admission({source,current:()=>false});assert.equal(controller.start(old),false);assert.deepEqual(f.commands,[]);assert.equal(f.enumerations(),0);
+ assert.equal(controller.start({...old,current:()=>true}),false,'A refused source token cannot reactivate');assert.equal(f.enumerations(),0);
+ for(const invalid of [admission({chunks:[]}),admission({chunks:['x'.repeat(CHUNK+1)]}),admission({chunks:Array.from({length:CHUNKS+1},()=> 'x')}),admission({chunks:Array.from({length:201},()=> 'x'.repeat(CHUNK))}),admission({rate:NaN}),admission({rate:3}),admission({lang:''})])assert.equal(controller.start(invalid),false);
+ assert.deepEqual(f.commands,[]);assert.equal(f.requests.length,0);controller.dispose();
+});
+test('Exact captured chunks are spoken one at a time with pause resume and terminal completion',()=>{
+ const f=fixture(),states:string[]=[],controller=createPaperReadAloudController(f.engine,state=>states.push(state.status)),chunks=['First exact source.','Second exact source.'],input=admission({chunks,rate:.75});assert.equal(controller.start(input),true);assert.equal(controller.snapshot().status,'starting');assert.equal(f.requests.length,1);assert.equal(f.requests[0].text,chunks[0]);
+ chunks[1]='Changed after admission';f.requests[0].events.start();assert.equal(controller.snapshot().status,'speaking');assert.equal(controller.pause(),true);assert.equal(controller.snapshot().status,'paused');assert.equal(controller.resume(),true);
+ f.finish(0);assert.equal(f.requests.length,2);assert.equal(f.requests[0].disposed,true);assert.equal(f.requests[1].text,'Second exact source.');assert.equal(f.requests[1].voiceId,'voice-local');assert.equal(f.requests[1].lang,'fr-CH');assert.equal(f.requests[1].rate,.75);
+ f.requests[0].events.end();f.requests[0].events.error('network');assert.equal(f.requests.length,2,'Late duplicate callbacks cannot skip the current chunk');f.finish(1);assert.deepEqual(controller.snapshot(),{status:'completed',message:'Lecture terminée.',completedChunks:2,totalChunks:2});assert.equal(f.requests[1].disposed,true);assert.deepEqual(f.commands,['speak','pause','resume','speak']);assert.ok(states.includes('paused'));controller.dispose();assert.equal(f.commands.includes('cancel'),false,'Completed release does not cancel another global queue');
+});
+test('An observed owner/API/document retirement is irreversible across false true and old callbacks',()=>{
+ const f=fixture(),controller=createPaperReadAloudController(f.engine);let current=true;const input=admission({current:()=>current});assert.equal(controller.start(input),true);const old=f.requests[0];current=false;assert.equal(controller.verifyAuthority(),false);assert.equal(controller.snapshot().status,'stopped');assert.deepEqual(f.commands,['speak','cancel']);current=true;
+ old.events.start();old.events.end();old.events.error('network');assert.equal(controller.resume(),false);assert.equal(controller.start(input),false);assert.deepEqual(f.commands,['speak','cancel']);assert.equal(f.requests.length,1);
+ assert.equal(controller.start(admission()),true,'A separate fresh explicit source may start');assert.equal(f.requests.length,2);old.events.end();assert.equal(f.requests.length,2);controller.dispose();assert.deepEqual(f.commands,['speak','cancel','speak','cancel']);
+});
+test('Registry protects the other note and external queues; stale stop cannot cancel a new owner',()=>{
+ const f=fixture(),a=createPaperReadAloudController(f.engine),b=createPaperReadAloudController({...f.engine,identity:f.identity});assert.equal(a.start(admission()),true);const old=f.requests[0];assert.equal(b.start(admission()),false);assert.deepEqual(f.commands,['speak']);assert.equal(f.requests.length,1);assert.equal(a.stop(),true);assert.equal(b.start(admission()),true);assert.equal(a.stop(),false);a.dispose();old.events.start();old.events.end();old.events.error('network');assert.deepEqual(f.commands,['speak','cancel','speak']);assert.equal(f.requests.length,2);
+ assert.equal(b.pause(),true);assert.equal(b.stop(),true);assert.deepEqual(f.commands,['speak','cancel','speak','pause','cancel','resume']);assert.equal(f.busy.paused,false,'Our paused queue is unpaused only while its exact ownership is still held');b.dispose();
+ for(const flag of ['speaking','pending','paused'] as const){const external=fixture();external.busy[flag]=true;const c=createPaperReadAloudController(external.engine);assert.equal(c.start(admission()),false);assert.deepEqual(external.commands,[]);assert.equal(external.requests.length,0);c.dispose();assert.deepEqual(external.commands,[]);}
+});
+test('Native unavailable error and thrown failures refuse explicitly without a continuation or source mutation',()=>{
+ const none=createPaperReadAloudController(null);assert.equal(none.start(admission()),false);assert.equal(none.snapshot().status,'error');none.dispose();
+ for(const failure of ['event','create','speak'] as const){const f=fixture(),controller=createPaperReadAloudController(f.engine),input=admission(),before=structuredClone({chunks:input.chunks,source:input.source,rate:input.rate});if(failure==='create')f.failCreate();if(failure==='speak')f.failSpeak();const accepted=controller.start(input);if(failure==='event'){assert.equal(accepted,true);f.requests[0].events.error('network');f.requests[0].events.end();}else assert.equal(accepted,false);assert.equal(controller.snapshot().status,'error');assert.ok(controller.snapshot().message.length>0);assert.equal(f.requests.length<=1,true);assert.deepEqual({chunks:input.chunks,source:input.source,rate:input.rate},before);controller.dispose();}
+});
+test('Disposal revokes before native cancellation reentry and cannot leave a live orphan',()=>{
+ const f=fixture(),controller=createPaperReadAloudController(f.engine);assert.equal(controller.start(admission()),true);let reentries=0;f.onCancel(()=>{reentries++;assert.equal(controller.start(admission()),false);});const old=f.requests[0];controller.dispose();controller.dispose();old.events.end();old.events.start();old.events.error('interrupted');assert.equal(controller.start(admission()),false);assert.equal(controller.verifyAuthority(),false);assert.equal(reentries,1);assert.deepEqual(f.commands,['speak','cancel']);assert.equal(f.requests.length,1);
+});

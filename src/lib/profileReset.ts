@@ -1,3 +1,4 @@
+import { appStorage } from "./appStorage";
 import { defaultEvents, defaultSubjects, defaultTasks } from "../data/seed";
 import { EMPTY_SUBJECT_NOTES_STORE } from "./subjectNotes";
 import {
@@ -51,7 +52,7 @@ function safeAssessmentRecordIds(value: unknown): string[] {
 }
 
 function persistedAssessmentRecordIds(accountId: string): string[] {
-  const raw = window.localStorage.getItem(workspaceStorageFor(accountId).assessments);
+  const raw = appStorage.getItem(workspaceStorageFor(accountId).assessments);
   if (raw === null) return [];
   try {
     return safeAssessmentRecordIds(JSON.parse(raw));

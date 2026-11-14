@@ -1,3 +1,9 @@
+# Historique
+
+## Consolidation — 2026-11-14
+
+Regroupement des sources bureau 0.12.7, PWA, API historique, site public, documentation et refontes non livrées. Sortie PWA rendue relative. Aucun changement de version distribuée, de base ou de service actif. Les entrées antérieures ci-dessous restent historiques.
+
 # Historique des versions
 
 Les changements notables de Dowze Academie sont consignés dans ce fichier. Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le projet utilise une numérotation compatible avec [Semantic Versioning](https://semver.org/lang/fr/).

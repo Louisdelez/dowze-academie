@@ -1,17 +1,13 @@
 import {
   ArrowRight,
   BookMarked,
-  CalendarRange,
   Check,
   ChevronRight,
   Clock3,
   GraduationCap,
-  Layers3,
-  Sparkles,
   Target
 } from "lucide-react";
 import { parseISO } from "date-fns";
-import energyLearningHero from "../assets/generated/energy-learning-hero.webp";
 import { useCurrentMinute } from "../hooks/useCurrentMinute";
 import { formatCalendarDate, timeLabel } from "../lib/date";
 import type { InstalledFormation } from "../lib/formations";
@@ -28,7 +24,6 @@ interface HomePageProps {
   onNavigate: (section: AppSection) => void;
   onSelectSubject: (id: string) => void;
   onToggleTask: (id: string) => void;
-  onOpenAi: () => void;
   onOpenEvent: (event: CalendarEvent) => void;
 }
 
@@ -57,7 +52,6 @@ export function HomePage({
   onNavigate,
   onSelectSubject,
   onToggleTask,
-  onOpenAi,
   onOpenEvent
 }: HomePageProps) {
   const now = useCurrentMinute();
@@ -84,13 +78,6 @@ export function HomePage({
     return dueKey >= weekStartKey && dueKey <= weekEndKey;
   });
   const weekDoneCount = weekTasks.filter((task) => task.completed).length;
-  const completedThisWeek = tasks.filter((task) => {
-    if (!task.completed) return false;
-    const completedDate = parseISO(task.completedAt ?? task.dueAt);
-    if (Number.isNaN(completedDate.getTime())) return false;
-    const completedKey = dateKeyAtTimeZone(completedDate, timeZone);
-    return completedKey >= weekStartKey && completedKey <= weekEndKey;
-  }).length;
   const weekOpenCount = weekTasks.length - weekDoneCount;
   const completion = weekTasks.length ? Math.round((weekDoneCount / weekTasks.length) * 100) : 0;
   const chapterCount = subjects.reduce(
@@ -108,6 +95,11 @@ export function HomePage({
     0
   );
 
+  const greetingName = displayName.trim();
+  const friendlyName = greetingName.length <= 28 && !greetingName.includes("@") && !/test|smoke|e2e/i.test(greetingName) ? greetingName : "";
+  const nextSubject = subjects.find((subject) => subject.modules.some((module) => module.items.some((item) => item.lessons?.length ? item.lessons.some((lesson) => !lesson.completed) : !item.completed)));
+  const nextChapter = nextSubject?.modules.flatMap((module) => module.items).find((item) => item.lessons?.length ? item.lessons.some((lesson) => !lesson.completed) : !item.completed);
+
   return (
     <main className="page home-page">
       <header className="page-heading home-heading">
@@ -115,48 +107,28 @@ export function HomePage({
           <p className="eyebrow">
             {formatCalendarDate(now, { weekday: "long", day: "numeric", month: "long" }, timeZone)}
           </p>
-          <h1>{getGreeting(now, timeZone)}, {displayName}</h1>
-          <p className="heading-subtitle">Ta formation « {manifest.shortName} » est prête.</p>
+          <h1>{getGreeting(now, timeZone)}{friendlyName ? `, ${friendlyName}` : ""}.</h1>
+          <p className="heading-subtitle">Un espace pour apprendre, avancer et organiser ta journée.</p>
         </div>
-        <button className="primary-button" onClick={onOpenAi}>
-          <Sparkles />
-          Demander à l’IA
-        </button>
       </header>
 
-      <section
-        className={`academic-banner ${formation.storageKind === "legacy-energy-year1" ? "" : "is-generic"}`}
-        aria-label="Cursus académique"
-        style={{ "--formation-color": manifest.theme.color, "--formation-accent": manifest.theme.accent } as React.CSSProperties}
-      >
-        <div className="academic-banner-title">
-          <span><GraduationCap /></span>
-          <div>
-            <p className="eyebrow">Parcours personnel · {manifest.yearLabel}</p>
-            <strong>{manifest.name}</strong>
-            <small>{manifest.motto ?? manifest.pedagogy.approach}</small>
-          </div>
+      <section className="desk-study-focus" aria-labelledby="study-focus-title">
+        <div className="desk-focus-copy">
+          <span className="desk-formation-name">{manifest.shortName} · {manifest.yearLabel}</span>
+          <h2 id="study-focus-title">{nextSubject ? 'Reprendre mon apprentissage' : 'Prêt pour la suite ?'}</h2>
+          <p>{nextSubject ? 'Un cours à la fois. Retrouve le programme de ta prochaine matière.' : 'Ouvre tes matières et choisis ce que tu veux étudier.'}</p>
+          <button className="primary-button" onClick={() => nextSubject ? onSelectSubject(nextSubject.id) : onNavigate('courses')}>{nextSubject ? 'Continuer cette matière' : 'Ouvrir mes cours'}<ArrowRight aria-hidden="true" /></button>
         </div>
-        {formation.storageKind === "legacy-energy-year1" && <img
-          className="academic-banner-art"
-          src={energyLearningHero}
-          alt=""
-          aria-hidden="true"
-          width="900"
-          height="600"
-          decoding="async"
-          draggable={false}
-        />}
-        <div className="academic-banner-stats">
-          <span><CalendarRange /><span><strong>{academicDateLabel(manifest.academicYear.startDate, manifest.locale, timeZone)}</strong><small>{academicDateLabel(manifest.academicYear.endDate, manifest.locale, timeZone)}</small></span></span>
-          <span><Layers3 /><span><strong>{subjects.length} matières</strong><small>{chapterCount} chapitres · {courseCount} cours</small></span></span>
+        <div className="desk-focus-lesson">
+          <BookMarked aria-hidden="true" />
+          <div><h3>{nextSubject?.name ?? 'Mes cours'}</h3><p>{nextChapter?.title ?? 'Les cours et leurs ressources sont réunis dans ton programme.'}</p></div>
+          <span>{subjects.length} matières · {courseCount} cours disponibles</span>
         </div>
       </section>
-
       <section className="dashboard-grid">
         <article className="surface-card focus-card">
           <div className="card-label-row">
-            <span className="card-label">À venir</span>
+            <h2 className="card-label">Prochains rendez-vous</h2>
             <button className="text-button" onClick={() => onNavigate("calendar")}>
               Planning <ChevronRight />
             </button>
@@ -187,25 +159,20 @@ export function HomePage({
               })}
             </div>
           ) : (
-            <div className="empty-compact">Aucun cours à venir.</div>
+            <div className="empty-compact">Aucun événement à venir. Ton planning reste disponible.</div>
           )}
         </article>
 
         <article className="surface-card progress-card">
           <div className="card-label-row">
-            <span className="card-label">Cette semaine</span>
+            <h2 className="card-label">Cette semaine</h2>
             <Target />
           </div>
           <div className="progress-hero">
-            <div className="progress-ring" style={{ "--progress": `${completion * 3.6}deg` } as React.CSSProperties}>
-              <div>
-                <strong>{completion}%</strong>
-                <small>réalisé</small>
-              </div>
-            </div>
+            <div className="desk-week-progress"><strong>{completion}<span>%</span></strong><progress value={completion} max={100} aria-label="Tâches de la semaine terminées" /></div>
             <div className="progress-copy">
               <strong>{weekTasks.length ? `${weekOpenCount} tâche${weekOpenCount > 1 ? "s" : ""} restante${weekOpenCount > 1 ? "s" : ""}` : "Aucune tâche prévue"}</strong>
-              <span>{weekTasks.length ? `${completedThisWeek} terminée${completedThisWeek > 1 ? "s" : ""} cette semaine` : "Ta semaine est libre pour le moment"}</span>
+              <span>{weekTasks.length ? `${weekDoneCount} sur ${weekTasks.length} terminée${weekDoneCount > 1 ? "s" : ""}` : "Ta semaine est libre pour le moment"}</span>
             </div>
           </div>
           <button className="soft-button full-width" onClick={() => onNavigate("tasks")}>
@@ -216,7 +183,7 @@ export function HomePage({
 
         <article className="surface-card subjects-card">
           <div className="card-label-row">
-            <span className="card-label">Mes matières</span>
+            <h2 className="card-label">Mes matières</h2>
             <button className="text-button" onClick={() => onNavigate("courses")}>
               Tout voir <ChevronRight />
             </button>
@@ -256,10 +223,11 @@ export function HomePage({
 
         <article className="surface-card tasks-card">
           <div className="card-label-row">
-            <span className="card-label">À faire</span>
+            <h2 className="card-label">À faire en priorité</h2>
             <BookMarked />
           </div>
           <div className="dashboard-tasks">
+            {openTasks.length === 0 && <div className="empty-compact">Aucune tâche en attente. Ajoute ton prochain objectif dans la liste.</div>}
             {openTasks.slice(0, 3).map((task) => {
               const subject = subjects.find((item) => item.id === task.subjectId);
               return (
@@ -267,6 +235,7 @@ export function HomePage({
                   <input
                     type="checkbox"
                     checked={task.completed}
+                    aria-label={`Terminer la tâche : ${task.title}`}
                     onChange={() => onToggleTask(task.id)}
                   />
                   <span className="task-check"><Check /></span>
@@ -289,6 +258,7 @@ export function HomePage({
           </button>
         </article>
       </section>
+      <footer className="desk-formation-footer"><GraduationCap aria-hidden="true" /><div><strong>{manifest.name}</strong><span>{academicDateLabel(manifest.academicYear.startDate, manifest.locale, timeZone)} au {academicDateLabel(manifest.academicYear.endDate, manifest.locale, timeZone)} · {chapterCount} chapitres</span></div><button className="text-button" onClick={() => onNavigate('formations')}>Mes formations<ChevronRight aria-hidden="true" /></button></footer>
     </main>
   );
 }

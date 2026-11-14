@@ -1,0 +1,53 @@
+/* N113 is a view projection only; all rules are confined to this reader. */
+.paper-notebook .paper-mobile-reading{box-sizing:border-box;flex:1;min-width:0;width:100%;max-width:100%;overflow:auto;overscroll-behavior:contain;padding:clamp(12px,3vw,28px);background:#fff;color:#24334f;font-size:18px;line-height:1.65;overflow-wrap:anywhere;scroll-padding-block:16px}
+.paper-mobile-reading>header,.paper-mobile-reading>article>header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;min-width:0}
+.paper-mobile-reading h2,.paper-mobile-reading h3{margin:0;line-height:1.35}.paper-mobile-reading h2{font-size:22px}.paper-mobile-reading h3{font-size:16px}
+.paper-notebook .paper-mobile-reading button{min-width:44px;min-height:44px;padding:8px 12px;white-space:normal;max-width:100%;border:1px solid #dce2ee;background:#f5f7fc;font-size:14px}
+.paper-mobile-reading :focus-visible{outline:2px solid #4461dc;outline-offset:2px}
+.paper-mobile-reading>article{width:100%;min-width:0;max-width:52rem;margin:24px auto;border-top:1px solid #dce2ee;padding-top:16px;box-sizing:border-box}
+.paper-mobile-reading-passage{width:100%;max-width:100%;min-width:0;box-sizing:border-box;margin-block:18px;overflow-x:auto;overflow-wrap:anywhere}
+.paper-mobile-reading-passage.is-sticky{padding:16px;border-radius:8px}
+.paper-mobile-reading .paper-flow-clip.is-continuous,.paper-mobile-reading .paper-flow-source{width:100%!important;height:auto;max-width:100%;min-width:0;transform:none!important;box-sizing:border-box}
+.paper-mobile-reading .paper-flow-source{font-size:inherit;line-height:inherit}.paper-mobile-reading .paper-flow-source p{margin:.75em 0;font-size:inherit!important;line-height:inherit!important}
+.paper-mobile-reading .paper-flow-source img{max-width:100%;height:auto;object-fit:contain}.paper-mobile-reading .paper-flow-source pre,.paper-mobile-reading .paper-flow-source table,.paper-mobile-reading .katex-display{display:block;max-width:100%;overflow-x:auto;box-sizing:border-box}
+.paper-mobile-reading .paper-flow-source pre{white-space:pre;overflow-wrap:normal}.paper-mobile-reading .paper-flow-source ul,.paper-mobile-reading .paper-flow-source ol{padding-inline-start:1.5em}
+.paper-mobile-reading-help,.paper-mobile-flow-label{font-size:14px;color:#586681}.paper-mobile-flow-label{margin:0 0 8px}
+.paper-mobile-original{width:100%;min-width:0;max-width:100%;overflow:hidden}.paper-mobile-original-frame{position:relative;overflow:hidden;margin-inline:auto}.paper-mobile-original-frame>.paper-page{transform-origin:top left}
+.paper-notebook.is-mobile-reading .paper-work-area{position:relative;min-width:0}.paper-notebook.is-mobile-reading .paper-viewport[hidden]{display:none!important}.paper-notebook.is-mobile-reading .paper-pages,.paper-notebook.is-mobile-reading .paper-flow-toolbar-slot{display:none}
+@media(max-width:650px){.paper-notebook .paper-mobile-reading{padding:12px max(12px,env(safe-area-inset-right)) 20px max(12px,env(safe-area-inset-left));font-size:18px}.paper-mobile-reading>article>header{justify-content:flex-start}.paper-mobile-reading>article>header h3{flex-basis:100%}}
+
+/* Reading focus requires the real retained reader, never the class alone.
+ * CSS changes presentation only: editor, audio and writer trees stay mounted. */
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading){position:relative}
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading) > .paper-status{display:none}
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading) > .paper-audio:not(:has(.paper-recording-indicator,.paper-audio-tracks,.paper-audio-editor[open])){display:none}
+/* Keep the temporary toolbar out of reader flow from the first frame.
+ * Escape focuses its real summary. Removing its focus later cannot move a
+ * reader button between pointerdown and pointerup. No modal is introduced. */
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading) > .paper-movable-toolbox{position:absolute;inset-block-start:0;inset-inline:0;z-index:6}
+/* An already opened popover and its focused summary stay visible until the
+ * real close action and focus departure; hiding them never changes layout. */
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading):not(:has(> .paper-toolbox-popover[data-toolbox-popover-open="true"])):not(:has(> .paper-movable-toolbox:focus-within)) > .paper-movable-toolbox{display:none}
+.paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading) > .paper-work-area{min-height:0}
+.paper-notebook .paper-mobile-reading{min-height:0;padding-top:0;scroll-padding-block:88px 24px}
+.paper-mobile-reading > header{position:sticky;top:0;z-index:5;min-height:68px;padding-block:12px;background:#fff;border-bottom:1px solid #dce2ee}
+.paper-mobile-reading > header > button{flex:0 0 auto;min-width:44px;min-height:44px}
+.paper-mobile-reading-help{margin-block:12px 0}
+
+/* The PWA single-note reader uses the document scroll surface. The exact
+ * direct main.workspace shell excludes desktop; split panes keep their own
+ * bounded layout. No fixed overlay, focus trap or global body style is added.
+ * Every shell override vanishes on return or authority retirement. */
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading){display:block;min-height:100svh;padding:0}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) > :is(header,aside){display:none}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) > main.workspace{max-width:none;padding:0}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) > main.workspace > .workspace-heading{display:none}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .notes-layout{gap:0;min-height:0;overflow:visible;border:0;border-radius:0}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-notebook-panes:not(.workspace-split){height:auto;min-height:0;overflow:visible}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]){height:auto;min-height:0;overflow:visible}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-note-pane:has(> .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading){height:auto;min-height:0;padding:0;gap:0;border:0;border-radius:0;box-shadow:none;overflow:visible}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-note-pane:has(> .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) > .pwa-note-heading{display:none}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-note-pane > .paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading){height:auto;min-height:100svh;flex:0 0 auto;overflow:visible;border:0;border-radius:0}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .pwa-note-pane > .paper-notebook.is-mobile-reading:has(> .paper-work-area > .paper-mobile-reading) > .paper-work-area{height:auto;min-height:0;flex:0 0 auto;overflow:visible}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading{height:auto;min-height:100svh;flex:0 0 auto;overflow:visible;overscroll-behavior:auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+.app-shell:has(> main.workspace .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) .paper-notebook.is-mobile-reading > .paper-work-area > .paper-mobile-reading) .paper-mobile-reading > header{padding-top:max(12px,env(safe-area-inset-top))}

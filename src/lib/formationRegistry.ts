@@ -1,3 +1,4 @@
+import { appStorage } from "./appStorage";
 import { EMPTY_SUBJECT_NOTES_STORE } from "./subjectNotes";
 import {
   formationRegistryStorageFor,
@@ -8,6 +9,7 @@ import {
   BUILTIN_ENERGY_FORMATION,
   isInstalledFormation,
   type FormationImportPreview,
+  type FormationManifest,
   type InstalledFormation
 } from "./formations";
 import {
@@ -18,6 +20,25 @@ import {
 
 const REGISTRY_SCHEMA_VERSION = 1 as const;
 const MAX_INSTALLED_FORMATIONS = 100;
+
+/** Update shared annual metadata while keeping the device's storage identity. */
+export function updateSharedFormationManifest(accountId: string, instanceId: string, manifest: FormationManifest, suppliedStorage?: Storage) {
+  const storage = storageOrWindow(suppliedStorage);
+  const keys = formationRegistryStorageFor(accountId);
+  const registry = parseRegistry(storage.getItem(keys.registry));
+  const existing = registry.formations.find(item => item.instanceId === instanceId);
+  if (!existing) throw new Error('Cette formation locale ne peut pas être modifiée.');
+  const next = { ...existing, manifest };
+  if (!isInstalledFormation(next) || manifest.id !== existing.packageId || manifest.packageVersion !== existing.packageVersion ||
+    manifest.academicYear.startDate !== existing.manifest.academicYear.startDate || manifest.academicYear.endDate !== existing.manifest.academicYear.endDate) {
+    throw new Error('Les métadonnées reçues appartiennent à un autre cursus ou une autre année.');
+  }
+  const updated = { ...registry, formations: registry.formations.map(item => item.instanceId === instanceId ? next : item) };
+  // Main registry remains authoritative if refreshing its recovery mirror fails.
+  verifiedSet(storage, keys.registry, JSON.stringify(updated));
+  syncRegistryBackup(storage, keys.registry, updated);
+  return next;
+}
 
 interface PersistedFormationRegistry {
   schemaVersion: typeof REGISTRY_SCHEMA_VERSION;
@@ -70,7 +91,7 @@ function storageOrWindow(storage?: Storage): Storage {
   if (typeof window === "undefined") {
     throw new Error("Le stockage local des formations est indisponible.");
   }
-  return window.localStorage;
+  return appStorage;
 }
 
 function verifiedSet(storage: Storage, key: string, value: string): void {
@@ -461,6 +482,9 @@ export function installFormationFromPreview(
   suppliedStorage?: Storage,
   options: { instanceId?: string; installedAt?: string } = {}
 ): InstalledFormation {
+  if (preview.manifest?.choices && !preview.manifest.choices.selected) {
+    throw new Error("Choisissez les matières de cette année avant son installation.");
+  }
   if (!preview.valid || !preview.manifest || !preview.compiled) {
     throw new Error("Seul un dossier entièrement validé peut être installé.");
   }

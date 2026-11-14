@@ -1,0 +1,59 @@
+/* Account, continuity and companion surfaces share the study-paper palette. */
+.settings-page { --account-ink:#20343b; --account-muted:#506b67; }
+.settings-page .settings-grid { display:flex; flex-direction:column; gap:28px; max-width:1080px; }
+.settings-page .settings-section { min-width:0; padding:26px 28px; border:1px solid #d8e2dc; border-radius:12px; background:#ffffff; box-shadow:none; scroll-margin-top:28px; }
+.settings-page .settings-title { padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid #e4e9e1; align-items:center; }
+.settings-page .settings-title h2 { color:var(--account-ink); font-size:19px; line-height:1.4; }
+.settings-page .settings-title p,.settings-page .sync-help,.settings-page .local-account-disclaimer { color:var(--account-muted); line-height:1.65; }
+.settings-page .settings-title > span:first-child { color:#236b62; background:#e8f0e9; border-radius:8px; }
+.settings-page .settings-jump-nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+.settings-jump-nav a { padding:9px 13px; border:1px solid #d4e0d9; border-radius:7px; color:#245d55; text-decoration:none; background:#f5f8f7; font-size:13px; }
+.settings-jump-nav a:hover { background:#e6eee4; }
+.settings-page .setting-row { gap:20px; padding-block:16px; }
+.settings-page .setting-row small { line-height:1.6; }
+.settings-page .server-settings-body,.settings-page .google-web-profile-content { max-width:900px; }
+.settings-page .sync-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.settings-page .sync-actions,.settings-page .app-update-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.settings-page .sync-conflict { padding:16px; border:1px solid #d8b989; border-radius:8px; background:#fff9ed; margin-top:14px; }
+.settings-page .sync-conflict summary { cursor:pointer; font-weight:600; color:#76561d; }
+.settings-page .sync-conflict pre { overflow:auto; max-height:280px; font-size:12px; padding:14px; background:#ffffff; border:1px solid #e4d8bf; border-radius:6px; }
+.settings-page .sync-notice,.settings-page .update-state { padding:14px 16px; margin-block:16px; border-radius:8px; background:#edf3eb; color:#254f47; line-height:1.6; }
+.settings-page .update-state progress { display:block; width:100%; max-width:480px; height:8px; accent-color:#2b7468; }
+.update-release-notes summary { padding-block:10px; cursor:pointer; color:#28695e; }
+.app-update-notes { white-space:pre-wrap; max-height:320px; overflow:auto; line-height:1.7; }
+.cloud-sync-bar { padding:8px 24px; background:transparent; }
+.cloud-sync-pill { border:1px solid #d5e1d8; color:#345f54; background:#f5f8f7; border-radius:6px; padding:7px 10px; gap:7px; min-height:32px; box-shadow:none; }
+.cloud-sync-pill.needs-attention { color:#75541c; border-color:#d6bc8d; background:#fff8e9; }
+.app-update-notice { margin:8px 24px; padding:10px 14px; border:1px solid #d7e3d6; background:#eef5e9; color:#315849; border-radius:7px; display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.auth-page { background:#f3f6f6; color:#20343b; }
+.auth-page .auth-access { background:transparent; }
+.auth-page .auth-shell { width:min(100%,520px); }
+.auth-page .auth-card { border:1px solid #d7ded2; border-radius:14px; padding:32px; background:#ffffff; box-shadow:0 10px 36px #20343b0b; }
+.auth-page .auth-brand strong { color:#25483f; }
+.auth-page .auth-brand small,.auth-page .auth-card-subtitle,.auth-page .auth-form small { color:#526d64; }
+.auth-page .auth-account-kind { font-size:12px; color:#526d64; margin:0 0 8px; }
+.auth-account-route { display:block; border:0; background:transparent; color:#176b62; padding:6px 0; min-height:36px; text-decoration:underline; text-underline-offset:3px; margin-bottom:20px; }
+.auth-page .auth-input-shell { background:#f8faf9; border-color:#cbd9cf; border-radius:8px; min-height:48px; }
+.auth-page .auth-input-shell input { color:#20343b; font-size:15px; }
+.auth-page .auth-input-shell:focus-within { border-color:#2a7566; box-shadow:0 0 0 2px #2a756619; }
+.auth-page .auth-submit { min-height:48px; border-radius:8px; color:#ffffff; background:#176b62; box-shadow:none; }
+.auth-page .auth-submit:hover { background:#10534d; transform:none; }
+.auth-page .auth-submit:disabled { opacity:.65; cursor:wait; }
+.auth-page .auth-switch button { color:#176b62; }
+.auth-page .auth-local-note { background:#f0f6f3; border:1px solid #dce5d6; border-radius:8px; color:#405f54; line-height:1.6; }
+.auth-page .auth-error { background:#fff0ea; color:#8c3a27; border:1px solid #e6c0b5; border-radius:8px; padding:12px; }
+.dowzy-startup { background:#f3f6f6; color:#2d5147; gap:18px; }
+.startup-identity { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.startup-identity strong { font-size:22px; font-weight:650; letter-spacing:-.025em; }
+.startup-identity span,.startup-percent { color:#556c61; font-size:13px; }
+.dowzy-startup .dowzy-progress { background:#dce6d7; height:5px; max-width:220px; }
+.dowzy-startup .dowzy-progress > span { background:#337762; }
+.dowzy-companion .dowzy-picker { border:1px solid #d4dfd1; background:#ffffff; color:#29473c; box-shadow:0 12px 32px #253c2b20; border-radius:12px; max-height:min(680px,calc(100vh - 110px)); overflow:auto; }
+.dowzy-companion .dowzy-color-grid button { min-height:48px; border-color:#dce4d6; background:#f4f8f6; color:#375346; }
+.dowzy-companion .dowzy-color-grid button[aria-pressed=true] { border-color:#337762; outline:1px solid #337762; background:#eaf2e4; }
+.dowzy-companion .dowzy-xp-bar::-webkit-progress-value { background:#337762; }
+.dowzy-companion .dowzy-xp-bar::-moz-progress-bar { background:#337762; }
+.dowzy-companion .dowzy-actions button { min-height:36px; color:#286450; background:#edf3e8; }
+@container workspace (max-width:650px) { .settings-page .settings-section { padding:20px; } .settings-page .sync-fields { grid-template-columns:1fr; } .settings-page .setting-row { flex-wrap:wrap; } }
+@media(max-width:540px) { .auth-page .auth-card { padding:24px 20px; } .auth-page .auth-shell { padding-inline:16px; } .cloud-sync-bar { padding-inline:14px; } .app-update-notice { margin-inline:14px; } }
+@media(prefers-reduced-motion:reduce) { .auth-page *, .dowzy-startup *, .cloud-sync-pill * { animation:none!important; transition:none!important; } }

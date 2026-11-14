@@ -1,3 +1,8 @@
+import "./account-surfaces.css";
+import { appStorage } from "../lib/appStorage";
+import { AppUpdateSettings } from './AppUpdateSettings';
+import { ServerSettings } from "./ServerSettings";
+import type { ServerSyncController } from "../hooks/useServerSync";
 import {
   AlertTriangle,
   BookOpenText,
@@ -42,7 +47,6 @@ const PROVIDERS: Array<{ value: AiProvider; label: string }> = [
   { value: "claude", label: "Claude" },
   { value: "gemini", label: "Gemini" },
   { value: "mistral", label: "Mistral" },
-  { value: "deepseek", label: "DeepSeek" },
   { value: "kimi", label: "Kimi" },
   { value: "freechat", label: "Chat libre" },
   { value: "duolingo", label: "Duolingo" },
@@ -55,33 +59,34 @@ const PROVIDERS: Array<{ value: AiProvider; label: string }> = [
 function SettingsProviderIcon({ provider }: { provider: AiProvider }) {
   switch (provider) {
     case "chatgpt":
-      return <Sparkles />;
+      return <Sparkles aria-hidden="true" />;
     case "claude":
       return <span>C</span>;
     case "gemini":
-      return <Gem />;
+      return <Gem aria-hidden="true" />;
     case "mistral":
-      return <Wind />;
+      return <Wind aria-hidden="true" />;
     case "deepseek":
-      return <BrainCircuit />;
+      return <BrainCircuit aria-hidden="true" />;
     case "kimi":
-      return <MoonStar />;
+      return <MoonStar aria-hidden="true" />;
     case "freechat":
-      return <MessagesSquare />;
+      return <MessagesSquare aria-hidden="true" />;
     case "duolingo":
-      return <Languages />;
+      return <Languages aria-hidden="true" />;
     case "khanacademy":
-      return <GraduationCap />;
+      return <GraduationCap aria-hidden="true" />;
     case "youtube":
-      return <Play />;
+      return <Play aria-hidden="true" />;
     case "tiktok":
-      return <Music2 />;
+      return <Music2 aria-hidden="true" />;
     case "notebooklm":
-      return <BookOpenText />;
+      return <BookOpenText aria-hidden="true" />;
   }
 }
 
 interface SettingsPageProps {
+  serverSync: ServerSyncController;
   account: LocalAccount;
   formation: InstalledFormation;
   workspaceRecoveryKeys: readonly string[];
@@ -103,6 +108,7 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({
+  serverSync,
   account,
   formation,
   workspaceRecoveryKeys,
@@ -122,6 +128,8 @@ export function SettingsPage({
   onLogout,
   onGoogleWebProfileRemovalSettled
 }: SettingsPageProps) {
+  const [group, setGroup] = useState('account');
+  const [exporting, setExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [openingGoogleProfile, setOpeningGoogleProfile] = useState(false);
   const [googleRemovalOpen, setGoogleRemovalOpen] = useState(false);
@@ -198,12 +206,15 @@ export function SettingsPage({
   };
 
   const exportData = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setExportStatus(null);
     const recoveryCopies: Record<string, string> = {};
     try {
-      for (let index = 0; index < window.localStorage.length; index += 1) {
-        const key = window.localStorage.key(index);
+      for (let index = 0; index < appStorage.length; index += 1) {
+        const key = appStorage.key(index);
         if (!key || !workspaceRecoveryKeys.includes(key)) continue;
-        const value = window.localStorage.getItem(key);
+        const value = appStorage.getItem(key);
         if (value !== null) recoveryCopies[key] = value;
       }
     } catch {
@@ -241,6 +252,8 @@ export function SettingsPage({
       setExportStatus(destination ? "Export enregistré." : null);
     } catch (error) {
       setExportStatus(`Échec de l’export : ${String(error)}`);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -248,25 +261,31 @@ export function SettingsPage({
     <main className={`page settings-page ${googleRemovalOpen ? "settings-page--google-removal-open" : ""}`}>
       <header className="page-heading">
         <div>
-          <p className="eyebrow">Préférences</p>
+          
           <h1>Réglages</h1>
           <p className="heading-subtitle">Personnalisez votre espace d’étude.</p>
         </div>
       </header>
 
-      <div className="settings-grid">
-        <section className="settings-section settings-account-section">
-          <div className="settings-title"><span className="settings-account-avatar">{account.displayName.trim().charAt(0).toLocaleUpperCase("fr") || "D"}</span><div><h2>Compte local</h2><p>Profil et session Dowze Academie</p></div></div>
+      <div className="desk-settings-layout">
+      <nav className="desk-settings-nav" aria-label="Rubriques des réglages">
+        {([['account','Compte et synchronisation'],['services','Services d’étude'],['data','Sauvegardes'],['updates','Mises à jour'],['privacy','Confidentialité']] as const).map(([id,label]) => <button type="button" key={id} aria-pressed={group === id} onClick={() => setGroup(id)}>{label}<span aria-hidden="true">›</span></button>)}
+      </nav>
+      <div className="settings-grid" data-settings-group={group}>
+        <AppUpdateSettings />
+        <ServerSettings sync={serverSync} />
+        <section id="settings-profile" className="settings-section settings-account-section">
+          <div className="settings-title"><span className="settings-account-avatar">{account.displayName.trim().charAt(0).toLocaleUpperCase("fr") || "D"}</span><div><h2>Session sur cet appareil</h2><p>Profil et session Dowze Academie</p></div></div>
           <div className="local-account-card">
             <div><strong>{account.displayName}</strong><small>@{account.username} · données privées de ce profil</small></div>
-            <button className="secondary-button" onClick={onLogout}><LogOut /> Se déconnecter</button>
+            <button className="secondary-button" onClick={onLogout}><LogOut aria-hidden="true" /> Se déconnecter</button>
           </div>
-          <p className="local-account-disclaimer"><ShieldCheck /> Ce compte reste sur cet appareil. Les sessions des sites ChatGPT, Claude ou Google appartiennent à leur WebView et ne sont pas des comptes Dowze Academie.</p>
+          <p className="local-account-disclaimer"><ShieldCheck aria-hidden="true" /> Votre session locale permet de retrouver votre espace hors ligne. Votre compte serveur et vos données synchronisées restent sur Dowze-01. Les connexions ChatGPT, Claude et Google sont indépendantes.</p>
         </section>
 
         <section className="settings-section google-web-profile-section" aria-labelledby="google-web-profile-title">
           <div className="settings-title">
-            <span><Globe2 /></span>
+            <span><Globe2 aria-hidden="true" /></span>
             <div>
               <h2 id="google-web-profile-title">Compte Google</h2>
               <p>Session du navigateur intégré sur cet appareil</p>
@@ -288,7 +307,7 @@ export function SettingsPage({
                 disabled={googleProfileBusy}
                 aria-describedby="google-web-profile-details"
               >
-                {openingGoogleProfile ? <LoaderCircle className="is-spinning" /> : <ExternalLink />}
+                {openingGoogleProfile ? <LoaderCircle aria-hidden="true" className="is-spinning" /> : <ExternalLink aria-hidden="true" />}
                 {openingGoogleProfile ? "Ouverture…" : "Se connecter / gérer Google"}
               </button>
               <button
@@ -298,14 +317,14 @@ export function SettingsPage({
                 disabled={googleProfileBusy || !googleRemovalSupported}
                 aria-describedby="google-web-profile-removal-hint"
               >
-                <Trash2 /> Retirer Google de Dowze Academie…
+                <Trash2 aria-hidden="true" /> Retirer Google de Dowze Academie…
               </button>
             </div>
           </div>
           <div id="google-web-profile-details" className="google-web-profile-details">
-            <p><ShieldCheck /> Dowze Academie ne lit ni votre adresse e-mail, ni votre mot de passe, ni vos cookies.</p>
-            <p><Info /> Chaque service garde sa propre connexion et peut demander de confirmer le compte Google choisi.</p>
-            <p id="google-web-profile-removal-hint"><Trash2 /> {googleRemovalSupported
+            <p><ShieldCheck aria-hidden="true" /> Dowze Academie ne lit ni votre adresse e-mail, ni votre mot de passe, ni vos cookies.</p>
+            <p><Info aria-hidden="true" /> Chaque service garde sa propre connexion et peut demander de confirmer le compte Google choisi.</p>
+            <p id="google-web-profile-removal-hint"><Trash2 aria-hidden="true" /> {googleRemovalSupported
               ? "Retirer efface uniquement les données Google conservées dans Dowze Academie, jamais le compte Google en ligne."
               : "La suppression ciblée des données Google intégrées est actuellement disponible sur macOS uniquement."}</p>
           </div>
@@ -319,8 +338,8 @@ export function SettingsPage({
           )}
         </section>
 
-        <section className="settings-section">
-          <div className="settings-title"><span><Monitor /></span><div><h2>Services d’étude</h2><p>Assistants, langues, cours, vidéos et carnet de sources</p></div></div>
+        <section id="settings-services" className="settings-section">
+          <div className="settings-title"><span><Monitor aria-hidden="true" /></span><div><h2>Services d’étude</h2><p>Assistants, langues, cours, vidéos et carnet de sources</p></div></div>
           <div className="setting-row">
             <div><strong>Service préféré</strong><small>Ouvert par défaut dans le panneau latéral.</small></div>
             <div className={`settings-provider-select settings-provider-select--${provider}`}>
@@ -354,12 +373,12 @@ export function SettingsPage({
           </div>
           <div className="setting-row">
             <div><strong>Prévisualiser le panneau</strong><small>Page officielle ou Chat libre intégré selon le service.</small></div>
-            <button className="secondary-button" onClick={onOpenAi}><PanelRight /> Afficher</button>
+            <button className="secondary-button" onClick={onOpenAi}><PanelRight aria-hidden="true" /> Afficher</button>
           </div>
         </section>
 
-        <section className="settings-section">
-          <div className="settings-title"><span><Database /></span><div><h2>Données locales</h2><p>Formation active · {formation.manifest.name}</p></div></div>
+        <section id="settings-data" className="settings-section">
+          <div className="settings-title"><span><Database aria-hidden="true" /></span><div><h2>Données et sauvegarde</h2><p>Formation active · {formation.manifest.name}</p></div></div>
           <div className="data-summary">
             <span><strong>{subjects.length}</strong> matières</span>
             <span><strong>{events.length}</strong> événements</span>
@@ -368,22 +387,23 @@ export function SettingsPage({
             <span><strong>{assessments.length}</strong> évaluations</span>
           </div>
           <div className="setting-row">
-            <div><strong>Exporter cette formation en JSON</strong><small>Exporte les programmes et vos données personnelles de l’année active uniquement. Ce fichier privé n’est pas un paquet de formation importable. Les PDF restent sur cet appareil.</small></div>
-            <button className="secondary-button" onClick={() => void exportData()}><Download /> Exporter</button>
+            <div><strong>Exporter cette formation</strong><small>Exporte les programmes et vos données personnelles de l’année active uniquement. Ce fichier privé n’est pas un paquet de formation importable. Les PDF ne sont pas inclus dans cet export JSON.</small></div>
+            <button className="secondary-button" disabled={exporting} onClick={() => void exportData()}>{exporting ? <LoaderCircle aria-hidden="true" className="is-spinning" /> : <Download aria-hidden="true" />} {exporting ? "Export…" : "Exporter"}</button>
           </div>
           {exportStatus && <p className="settings-inline-status" role="status">{exportStatus}</p>}
         </section>
 
-        <section className="settings-section settings-section--wide security-note">
-          <div className="settings-title"><span><ShieldCheck /></span><div><h2>Confidentialité</h2><p>Conçu pour ne garder que le nécessaire</p></div></div>
+        <section id="settings-privacy" className="settings-section settings-section--wide security-note">
+          <div className="settings-title"><span><ShieldCheck aria-hidden="true" /></span><div><h2>Confidentialité</h2><p>Conçu pour ne garder que le nécessaire</p></div></div>
           <div className="security-columns">
-            <p><Monitor /> Pour les services web, Dowze Academie affiche la page officielle sans lire vos messages, recherches ou carnets.</p>
-            <p><ShieldCheck /> Le Chat libre conserve ses conversations localement et les envoie uniquement à l’API ou au modèle Ollama que vous choisissez.</p>
-            <p><ShieldCheck /> Les clés du Chat libre restent dans le coffre sécurisé du système. Elles et les sessions web sont des réglages de cet appareil, partagés entre ses profils Dowze Academie.</p>
-            <p><Info /> Les liens, notes, appréciations et copies PDF que vous choisissez sont classés uniquement dans les données locales de Dowze Academie.</p>
+            <p><Monitor aria-hidden="true" /> Pour les services web, Dowze Academie affiche la page officielle sans lire vos messages, recherches ou carnets.</p>
+            <p><ShieldCheck aria-hidden="true" /> Le Chat libre conserve un cache sur cet appareil et synchronise ses conversations sur votre compte Dowze-01. Les demandes à l’assistant sont envoyées au fournisseur ou à Ollama que vous choisissez.</p>
+            <p><ShieldCheck aria-hidden="true" /> Les clés du Chat libre restent dans le coffre sécurisé du système. Elles et les sessions web sont des réglages de cet appareil, partagés entre ses profils Dowze Academie.</p>
+            <p><Info aria-hidden="true" /> Les notes, liens, appréciations et PDF sont conservés sur Dowze-01 lorsqu’ils sont synchronisés. Une copie locale permet de travailler hors ligne. Consultez l’état de synchronisation avant de changer d’appareil.</p>
           </div>
-          <a href="https://tauri.app/security/" target="_blank" rel="noreferrer">En savoir plus sur la sécurité Tauri <ExternalLink /></a>
+          <a href="https://tauri.app/security/" target="_blank" rel="noreferrer">En savoir plus sur la sécurité Tauri <ExternalLink aria-hidden="true" /></a>
         </section>
+      </div>
       </div>
       {googleRemovalOpen && (
         <Modal
@@ -393,7 +413,7 @@ export function SettingsPage({
           size="sm"
         >
           <div className="confirm-content google-web-profile-confirmation">
-            <span><AlertTriangle /></span>
+            <span><AlertTriangle aria-hidden="true" /></span>
             <p>
               Cette action supprime de l’application les cookies, caches et données locales Google
               pour tous les profils Dowze Academie de cet appareil. Google, Gemini, NotebookLM et YouTube seront
@@ -417,7 +437,7 @@ export function SettingsPage({
               onClick={() => void handleRemoveGoogleProfile()}
               disabled={removingGoogleProfile}
             >
-              {removingGoogleProfile ? <LoaderCircle className="is-spinning" /> : <Trash2 />}
+              {removingGoogleProfile ? <LoaderCircle aria-hidden="true" className="is-spinning" /> : <Trash2 aria-hidden="true" />}
               {removingGoogleProfile ? "Suppression…" : "Retirer de l’application"}
             </button>
           </div>

@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {automaticUpdateCycle} from '../src/lib/automaticUpdateCycle.ts';
+import {AppUpdates} from '../src/lib/appUpdates.ts';
+test('automatic download stages update without touching current work',async()=>{let installed=0,restarts=0,downloads=0;const c=new AppUpdates({check:async()=>({version:'0.6.2',download:async()=>{downloads++;},install:async()=>{installed++;},close:async()=>{}}),prepare:async()=>{},restart:async()=>{restarts++;}});await automaticUpdateCycle(c,true);assert.equal(c.snapshot().phase,'ready');await automaticUpdateCycle(c,true);assert.equal(downloads,1);assert.equal(installed,0);assert.equal(restarts,0);});
+test('invalid signature never becomes ready or installs',async()=>{let installed=0;const c=new AppUpdates({check:async()=>({version:'0.6.2',download:async()=>{throw Error('signature');},install:async()=>{installed++;},close:async()=>{}}),prepare:async()=>{},restart:async()=>{}});await automaticUpdateCycle(c,true);assert.equal(c.snapshot().phase,'error');assert.equal(installed,0);});

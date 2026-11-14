@@ -1,0 +1,96 @@
+/* PWA note presentation only. Paper/audio writers and the supplied footer
+ * stay mounted; neither local durability nor server sync is inferred here. */
+.editor.pwa-note-pane{padding:16px;gap:12px}
+.pwa-note-pane>.pwa-note-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;min-width:0}
+.pwa-note-pane>.pwa-note-heading>.pwa-notebook-library-back{display:inline-flex;align-items:center;justify-self:start;gap:5px;min-height:44px;margin:0;border:0;padding:8px 12px;background:var(--primary-soft);color:var(--primary)}
+.pwa-note-pane>.pwa-note-heading>.pwa-notebook-library-back svg{width:16px;height:16px}
+.pwa-note-pane>.pwa-note-heading>label{grid-column:1/-1;grid-row:2;min-width:0;font-size:11px;color:var(--muted)}
+.pwa-note-pane>.pwa-note-heading>label>input{width:100%;min-height:44px;border:0;padding:6px 0;font-size:25px;font-weight:750;letter-spacing:-.6px}
+.pwa-note-pane>.pwa-note-heading>.pwa-note-actions{grid-column:2;grid-row:1;justify-content:flex-end;gap:8px;min-height:44px;margin:0;padding:0;border:0}
+.pwa-note-pane .pwa-note-actions>span{max-width:18ch;font-size:11px;line-height:1.4}
+.pwa-note-pane .pwa-note-actions>button{min-height:44px;padding:8px 12px;font-size:12px}
+/* Neutralize only this note's inherited PWA details card. The native summary
+ * toggles the same permanent subtree, including the original file input. */
+.pwa-note-pane .paper-audio{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:4px 8px}
+.pwa-note-pane .paper-audio-actions{flex:1 1 auto;gap:4px;min-width:0}
+.pwa-note-pane .paper-audio-actions>button{min-width:44px;min-height:44px;padding:4px 8px}
+.pwa-note-pane details.paper-audio-editor{flex:0 0 auto;min-width:0;max-width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent}
+.pwa-note-pane details.paper-audio-editor>summary{display:flex;align-items:center;justify-content:center;gap:5px;box-sizing:border-box;min-width:44px;width:auto;height:44px;min-height:44px;margin:0;padding:4px 8px;list-style:none;font-size:12px;line-height:1.3;color:inherit}
+.pwa-note-pane details.paper-audio-editor>summary::-webkit-details-marker{display:none}
+.pwa-note-pane details.paper-audio-editor>summary::before{content:'\25b8';font-size:11px}
+.pwa-note-pane details.paper-audio-editor[open]>summary::before{content:'\25be'}
+.pwa-note-pane .paper-audio-editor-label{display:none}
+.pwa-note-pane .paper-audio-editor-compact-label[hidden]{display:inline}
+.pwa-note-pane details.paper-audio-editor[open]{flex-basis:100%}
+.pwa-note-pane details.paper-audio-editor[open]>summary{justify-content:flex-start;width:fit-content}
+.pwa-note-pane .paper-audio-edit-actions{padding:4px 0}
+.pwa-note-pane .paper-audio-edit-actions>button{min-width:44px;min-height:44px}
+.pwa-note-pane .paper-status{gap:6px;padding:4px 8px}
+.pwa-note-pane .paper-status select{width:auto;min-height:44px;padding:4px 8px}
+.pwa-note-pane .paper-status>div>button{min-width:44px;min-height:44px}
+@media(max-width:380px){.editor.pwa-note-pane{padding:10px}.pwa-note-pane>.pwa-note-heading{gap:6px}.pwa-note-pane .pwa-note-actions{flex-wrap:wrap}.pwa-note-pane .pwa-note-actions>span{max-width:12ch}}
+
+/* A note pane can be narrow even in a wide browser. Let its chrome grow in
+ * document flow and reserve a real, independently scrolling writing viewport. */
+.editor.pwa-note-pane>.paper-notebook{height:auto;min-height:0;flex:0 0 auto}
+.pwa-note-pane>.paper-notebook>.paper-work-area{flex:0 0 auto;height:clamp(320px,60svh,720px);min-height:320px}
+/* PWA's generic .editor card also matches Milkdown's ProseMirror.editor.
+ * Keep rich text in normal block flow, including the detached measurement
+ * copy (.paper-object.has-text-flow) used for the same logical pagination.
+ * This sheet is imported by PwaNotePane only; shared desktop CSS is unchanged. */
+.paper-object.has-text-flow .paper-flow-source .ProseMirror.editor{display:block;gap:normal;border:0;border-radius:0;background:transparent;box-shadow:none}
+/* Wrap by available pane width, without a window-width breakpoint. The
+ * timer remains its own control; the status can never collapse to one glyph. */
+.pwa-note-pane .paper-status{flex-wrap:wrap;justify-content:flex-start;min-width:0;gap:6px 12px}
+.pwa-note-pane .paper-status>span[role=status]{flex:1 1 20ch;min-width:min(100%,20ch);max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.pwa-note-pane .paper-status>div:not(.paper-work-timer){flex:1 1 100%;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-start;margin-left:0;white-space:normal}
+.pwa-note-pane .paper-status>div:not(.paper-work-timer)>select{max-width:100%;flex:0 1 auto}
+.pwa-note-pane .paper-status>div:not(.paper-work-timer)>button{flex:0 0 auto}
+
+/* Active Notes chrome only. Reading focus, library, courses and split geometry
+ * keep their existing rules. The same inputs, footer and writer tree remain. */
+.editor.pwa-note-pane:not(:has(.paper-mobile-reading)){container:notes-editor / inline-size;padding:12px;gap:8px;border:0;border-radius:0;box-shadow:none}
+.pwa-note-pane:not(:has(.paper-mobile-reading))>.pwa-note-heading>label{gap:2px}
+.pwa-note-pane:not(:has(.paper-mobile-reading))>.pwa-note-heading>label>input{height:44px;min-height:44px;font-size:22px;line-height:1.25}
+.pwa-note-pane:not(:has(.paper-mobile-reading))>.paper-notebook{border-radius:8px}
+.pwa-note-pane:not(:has(.paper-mobile-reading))>.paper-notebook>.paper-audio{padding-block:0}
+.pwa-note-pane:not(:has(.paper-mobile-reading)) .paper-flow-toolbar-slot .milkdown-top-bar button{min-width:44px;min-height:44px}
+@container notes-editor (min-width:680px){
+ .pwa-note-pane>.pwa-note-heading{grid-template-columns:auto minmax(0,1fr) auto;gap:8px 12px}
+ .pwa-note-pane>.pwa-note-heading>label{grid-column:2;grid-row:1;display:flex;align-items:center;gap:8px;min-width:0}
+ .pwa-note-pane>.pwa-note-heading>label>input{min-width:0;flex:1}
+ .pwa-note-pane>.pwa-note-heading>.pwa-note-actions{grid-column:3;grid-row:1;flex-wrap:nowrap}
+ .pwa-note-pane>.pwa-note-heading>.pwa-notebook-library-back{white-space:nowrap}
+}
+/* Replace the generic introduction with the actual note title; status/alerts
+ * are separate siblings and stay visible. No application-wide rule changes. */
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading))>main.workspace{padding:12px 16px}
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading))>main.workspace>.workspace-heading{display:none}
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout>.notebook-split-controls{min-height:48px;padding:2px 8px;gap:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout>.notebook-split-controls>label{flex:0 0 auto;flex-wrap:nowrap;white-space:nowrap}
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout>.notebook-split-controls select{width:auto;min-height:44px;min-width:160px}
+.app-shell:has(> main.workspace#panel-notes .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout>.notebook-split-controls button{flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px}
+/* A large single-note desktop viewport owns one paper scroll surface. At
+ * smaller heights/widths, in split view and in reader mode the old flow wins.
+ * Expanded assistance/audio can still scroll the notebook, never be clipped. */
+@media(min-width:1000px) and (min-height:760px){
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)){height:100svh;min-height:0;grid-template-rows:64px minmax(0,1fr);overflow:hidden}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading))>header{min-height:64px;padding:8px 20px}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading))>aside{min-height:0;overflow-y:auto}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading))>main.workspace{display:flex;flex-direction:column;min-height:0;max-width:none;overflow:hidden}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading))>main.workspace>.notice{flex:0 0 auto}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout{flex:1 1 0;min-height:0}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-notebook-panes:not(.workspace-split){flex:1 1 0;height:0;min-height:0}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-notebook-panes:not(.workspace-split)>.workspace-tab-panel:not([hidden])>.editor.pwa-note-pane{height:100%;min-height:0;overflow:hidden}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-note-pane>.pwa-note-heading{flex:0 0 auto}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-note-pane>.paper-notebook{flex:1 1 0;height:0;min-height:0;overflow-y:auto}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-note-pane>.paper-notebook>.paper-work-area{flex:1 1 0;height:0;min-height:172px}
+}
+
+/* Large active single-note shell: flex bases require a real flex parent at
+ * each level. Hidden tabs, split view, mobile and actual reader stay untouched. */
+@media(min-width:1000px) and (min-height:760px){
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .notes-layout{display:flex!important;flex-direction:column}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-notebook-panes:not(.workspace-split){display:flex;flex-direction:column}
+ .app-shell:has(> main.workspace#panel-notes .pwa-notebook-panes:not(.workspace-split) > .workspace-tab-panel:not([hidden]) > .pwa-note-pane):not(:has(.paper-mobile-reading)) .pwa-notebook-panes:not(.workspace-split)>.workspace-tab-panel:not([hidden]){display:flex;flex-direction:column;flex:1 1 0;min-height:0}
+}

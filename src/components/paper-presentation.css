@@ -1,0 +1,32 @@
+.paper-presentation{position:fixed;inset:0;box-sizing:border-box;width:100vw;width:100dvw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#0b0e15;color:#f3f5fa;overflow:hidden;z-index:2147483647;font:14px/1.4 system-ui,sans-serif}
+.paper-presentation[open]{display:block}
+.paper-presentation-surface{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;background:#0b0e15}
+.paper-presentation-surface:fullscreen{width:100vw;width:100dvw;height:100vh;height:100dvh;background:#0b0e15}
+.paper-presentation::backdrop{background:#0b0e15;opacity:1}
+.paper-presentation-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));padding-top:max(8px,env(safe-area-inset-top));background:#171d2a;border-bottom:1px solid #35415a;min-width:0}
+.paper-presentation-controls nav,.paper-presentation-controls>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.paper-presentation-controls button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:8px 12px;border:1px solid #61718b;border-radius:8px;background:#283449;color:#f3f5fa;font:inherit;cursor:pointer;white-space:normal}
+.paper-presentation-controls button:hover{background:#34455f}
+.paper-presentation-controls button:disabled{opacity:.45;cursor:default}
+.paper-presentation-controls button:focus-visible{outline:3px solid #8ecbff;outline-offset:2px}
+.paper-presentation-controls .paper-presentation-exit{border-color:#d5e0f2;background:#e4ecf9;color:#17223b;font-weight:650}
+.paper-presentation-viewport{display:grid;place-items:center;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;padding:16px max(8px,env(safe-area-inset-right)) 16px max(8px,env(safe-area-inset-left));background:#0b0e15}
+.paper-presentation-fit{position:relative;flex-shrink:0;overflow:hidden}
+.paper-presentation-page{position:relative;box-sizing:border-box;transform-origin:top left;overflow:hidden;isolation:isolate;box-shadow:none;color:#24334f;font:16px/1.6 system-ui,sans-serif}
+.paper-presentation-page>.paper-background{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.paper-presentation-page>.paper-pdf-background{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.paper-presentation-page>.paper-pdf-background canvas{display:block;width:100%;height:100%}
+.paper-presentation-object{position:absolute;box-sizing:border-box;overflow-wrap:anywhere;line-height:1.6}
+.paper-presentation-object p{margin:.5em 0}
+.paper-presentation-object img{display:block;width:100%;height:100%;max-height:100%;object-fit:contain}
+.paper-presentation-object.paper-sticky{padding:16px;box-shadow:0 4px 8px #0001}
+.paper-presentation-object table{border-collapse:collapse;max-width:100%}
+.paper-presentation-object th,.paper-presentation-object td{border:1px solid #a9b5c9;padding:4px 7px}
+.paper-presentation-object a{color:inherit;pointer-events:none}
+.paper-presentation-media-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:#24334f;font-size:16px}
+.paper-presentation-empty{max-width:34rem;margin:0;text-align:center;padding:20px;overflow-wrap:anywhere}
+.paper-presentation-notice{min-height:0;margin:0;text-align:center;padding:0 max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));color:#d9e4f7;font-size:12px}
+.paper-presentation-notice:empty{padding-top:0}
+.paper-presentation-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0;padding:0;border:0}
+@media(max-width:650px){.paper-presentation-controls{gap:6px;padding-inline:max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-right))}.paper-presentation-controls nav{flex:1}.paper-presentation-controls>div{justify-content:flex-end}.paper-presentation-controls button{padding:8px;max-width:170px}.paper-presentation-viewport{padding-block:8px}.paper-presentation-controls nav span{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.paper-presentation,.paper-presentation *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

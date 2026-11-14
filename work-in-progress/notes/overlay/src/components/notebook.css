@@ -1,0 +1,135 @@
+/* Shared notebook composition. A note is a page, not a choice of applications. */
+.notes-workspace{display:grid;grid-template-columns:286px minmax(0,1fr);height:100%;min-height:0;background:#fff;color:var(--ink,#18243f)}
+.notebook-list{display:flex;flex-direction:column;min-height:0;background:#f5f6f9;border-right:1px solid var(--line,#dee4ef);padding:20px 12px 0;overflow:hidden}
+.notebook-list>header{display:flex;justify-content:space-between;align-items:center;padding:0 8px 18px}.notebook-list h1{font-size:23px;letter-spacing:-.04em;margin:0 0 5px}.notebook-list header span{font-size:11px;color:#69738a}
+.notebook-new{width:36px;height:36px;border:1px solid #dae0ed;background:#fff;color:#3154b8;border-radius:9px;display:grid;place-items:center;cursor:pointer}.notebook-new svg{width:19px}
+.notebook-search{display:flex;align-items:center;gap:8px;padding:0 10px;height:36px;border:1px solid #dce2ef;background:#fff;border-radius:8px}.notebook-search svg{width:15px;color:#788199}.notebook-search input{width:100%;min-width:0;background:none;border:0;padding:0;color:inherit;font:inherit;font-size:12px;outline:none}.notebook-search:focus-within{outline:2px solid #3154b8;outline-offset:2px}
+.notebook-filter{display:flex;align-items:center;position:relative;margin:12px 4px}.notebook-filter select{width:100%;appearance:none;border:0;background:none;font:inherit;font-weight:650;font-size:12px;color:#5e6980;padding:8px 22px 8px 4px}.notebook-filter svg{position:absolute;right:3px;pointer-events:none;width:13px}
+.notebook-items{overflow:auto;flex:1;min-height:0;padding-bottom:18px}.notebook-item{display:grid;grid-template-columns:1fr auto;text-align:left;gap:5px 8px;width:100%;padding:15px 13px;background:none;border:0;border-bottom:1px solid #e4e7ee;border-radius:9px;color:inherit;cursor:pointer}.notebook-item.is-active{background:#e4eaff;border-color:transparent}.notebook-item strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.notebook-item time{font-size:10px;color:#6e7890;padding-top:2px}.notebook-item p{grid-column:1/-1;color:#6a7488;font-size:11px;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0;overflow-wrap:anywhere}.notebook-item small{font-size:10px;color:#3154b8;grid-column:1/-1}
+.notebook-item:hover{background:#ecf0fa}.notebook-list-empty{text-align:center;color:#748097;padding:26px 8px;font-size:12px}.notebook-list-empty>svg{width:26px}.notebook-list-empty button{background:#fff;border:1px solid #dce2ef;padding:8px 12px;border-radius:8px;color:#3154b8;font:inherit}
+.notebook-detail{min-width:0;min-height:0;overflow:auto;background:#fff}.notebook-back{display:none}.notebook-empty{height:100%;min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:#718098}.notebook-empty>svg{width:45px;height:45px;color:#bcc7dd;stroke-width:1.3}.notebook-empty h2{font-size:22px;color:#25334f;margin:4px 0}.notebook-empty p{font-size:13px;line-height:1.7;margin:0 0 8px}.notebook-empty button{display:flex;gap:8px;align-items:center}.notebook-empty button svg{width:17px}
+.notebook-detail .workspace-note-page{padding:24px clamp(20px,3vw,54px);overflow:visible;display:block;min-height:100%;background:white;border:0}.notebook-detail .workspace-note-header{gap:16px;flex-wrap:wrap}.notebook-detail .workspace-note-heading>svg{display:none}.notebook-detail .studio-eyebrow{display:none}.notebook-detail .workspace-note-title{font-size:26px;font-weight:700;letter-spacing:-.04em;background:transparent;border:0;box-shadow:none;padding:0;min-width:120px}.notebook-detail .workspace-note-metadata{margin-top:12px;padding:10px 0;border:0;background:none}.notebook-detail .studio-note-help{display:none}.notebook-detail .workspace-note-actions button{font-size:11px;min-height:34px;padding:8px}.notebook-detail .workspace-note-actions button>svg{width:15px}.notebook-detail .workspace-note-editor{background:white;box-shadow:none;border:0;margin-top:10px;border-radius:0;min-height:280px}.notebook-detail .workspace-note-statusbar{padding:18px 0;border-top:1px solid #edf0f5;color:#9199a9}
+.notebook-composition{min-width:0;display:block;background:#fff;color:#18243f}.notebook-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:8px 0 14px;border-bottom:1px solid #e8ecf4;margin-bottom:8px}.notebook-toolbar button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 10px;border:0;border-radius:7px;background:none;color:#56627a;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.notebook-toolbar button:hover{background:#f0f3fa}.notebook-toolbar button[aria-pressed=true]{background:#eaf0ff;color:#3154b8}.notebook-toolbar button:disabled{opacity:.5;cursor:not-allowed}.notebook-toolbar button svg{width:16px;height:16px}.notebook-writing-mode{display:flex;gap:2px}.notebook-tool-divider{height:18px;width:1px;background:#e1e6f0;margin:0 7px}
+.notebook-source{width:100%;min-height:280px;resize:vertical;border:0;border-radius:0;padding:18px 8px;font:13px/1.85 ui-monospace,SFMono-Regular,Consolas,monospace;color:#25334f;outline:none;background:#fff;box-shadow:none}.notebook-source:focus-visible{outline:2px solid #3154b8;outline-offset:2px}
+.notebook-composition .studio-editor-help{display:none}.notebook-composition .markdown-editor-shell{border:0;box-shadow:none;background:#fff}.notebook-composition .milkdown{background:white;--crepe-color-background:#fff;--crepe-color-surface:#f5f7fc}.notebook-composition .milkdown .ProseMirror{padding:22px 4px;min-height:220px}.notebook-composition .milkdown .milkdown-top-bar{background:white;border-color:#ecf0f6;padding:6px 0}
+.notebook-composition .note-media{border:0;box-shadow:none;background:none;padding:0;margin:16px 0 0;display:block}.notebook-composition .note-media:empty{display:none}.note-sketch{margin:18px 0;border:1px solid #e0e6f1;border-radius:12px;overflow:hidden}.note-sketch-heading{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #edf0f5;font-size:12px}.note-sketch-heading button{background:#f2f5fd;border:0;border-radius:6px;padding:7px 10px;font-size:11px;color:#3154b8}.notebook-composition .note-media .toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;padding:10px 12px;background:#f9faff}.notebook-composition .note-media .toolbar button{border:1px solid #e0e6f1;background:#fff;border-radius:6px;min-height:32px;padding:7px 9px;font-size:11px;color:#455470}.notebook-composition .note-media .toolbar>span{font-size:10px;color:#8790a2;margin-left:auto}.notebook-composition .note-media .drawing-pen-control{display:flex;align-items:center;gap:6px;font-size:11px;color:#5e6980}.notebook-composition .note-media .drawing-pen-control select{background:#fff;padding:7px 20px 7px 8px;border:1px solid #e0e6f1;min-height:32px;border-radius:6px;font-size:11px}
+.notebook-composition .note-media canvas{display:block;width:100%;height:320px;background:white;border:0;border-radius:0;touch-action:none;background-image:radial-gradient(#e4e8f2 .7px,transparent .7px);background-size:20px 20px}.notebook-composition .note-media.is-preview canvas{touch-action:auto;background:white}
+.notebook-composition .note-media .photo-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:0;margin:16px 0}.notebook-composition .note-media .photo-list li{background:#fff;padding:0;overflow:hidden;border:1px solid #e3e8f2;border-radius:10px;font-size:11px}.notebook-composition .note-media .photo-list img{width:100%;height:auto;max-height:360px!important;object-fit:contain;margin:0!important;background:#f8f9fc;border-radius:0}.note-image-caption{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px;color:#788299}.note-image-caption span{overflow-wrap:anywhere;min-width:0}.note-image-caption button{background:none;border:0;color:#8f5d64;padding:5px;font:inherit;cursor:pointer}.notebook-media-status{font-size:11px;color:#818ca2;line-height:1.6;padding:8px 0}.notebook-composition button:focus-visible,.notebook-list button:focus-visible{outline:2px solid #3154b8;outline-offset:2px}
+@media(max-width:1050px){.notes-workspace{grid-template-columns:236px minmax(0,1fr)}.notebook-detail .workspace-note-page{padding:22px}.notebook-detail .workspace-note-header{display:block}.notebook-detail .workspace-note-actions{margin-top:16px}.notebook-detail .workspace-note-title{font-size:23px}}
+@media(max-width:720px){.notes-workspace{display:block;overflow:auto}.notebook-list{height:100%;padding:20px 14px 0;border:0}.notes-workspace.has-active-note .notebook-list{display:none}.notes-workspace:not(.has-active-note) .notebook-detail{display:none}.notebook-detail{height:100%}.notebook-back{display:flex;align-items:center;gap:5px;border:0;background:none;color:#3154b8;padding:16px 20px 0;font:inherit;font-size:12px}.notebook-back svg{width:16px}.notebook-composition .note-media canvas{height:300px}.notebook-composition .note-media .photo-list{grid-template-columns:1fr}.notebook-toolbar{gap:2px}.notebook-toolbar button{font-size:11px;padding:8px}.notebook-tool-divider{margin:0 3px}.notebook-detail .workspace-note-page{padding:20px}.notebook-detail .workspace-note-title{font-size:24px}}
+.notebook-detail .studio-tools{--studio-ink:#18243f;--studio-primary:#3154b8;--studio-soft:#f1f5ff;--studio-line:#dfe5f0;--studio-muted:#738097;}
+.notebook-detail .workspace-note-heading .workspace-note-title{color:#18243f;}
+.notebook-composition .markdown-editor-root .milkdown .ProseMirror{padding:22px 4px!important;min-height:220px!important;}
+.notebook-composition .markdown-editor-root .milkdown{padding:0!important;}
+.notebook-composition .markdown-editor-root .milkdown .milkdown-top-bar{background:white!important;padding:6px 0!important;}
+/* The note itself is the only writing surface; ink is drawn over its paper. */
+.note-sheet{position:relative;min-height:1150px;background:#fff;isolation:isolate;}
+.note-paper-composition .markdown-editor-root .milkdown .ProseMirror{min-height:1100px!important;padding:30px 12px!important;}
+.note-paper-composition .note-unified-toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;flex-wrap:wrap;gap:4px;background:rgba(255,255,255,.97)!important;backdrop-filter:blur(12px);border-bottom:1px solid #e7ebf2;}
+.note-paper-tools-slot{display:contents;}.note-paper-tools{display:flex;align-items:center;gap:3px;border-left:1px solid #e4e8f0;padding-left:8px;margin-left:4px;}
+.note-paper-tools button{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:6px;background:none;color:#596780;cursor:pointer;}.note-paper-tools button:hover{background:#f1f4fa;}.note-paper-tools button[aria-pressed=true]{background:#eaf0ff;color:#3154b8;}.note-paper-tools svg{width:17px;height:17px;}
+.note-paper-tools select{font:11px inherit;background:#fff;border:0;width:66px;padding:6px;color:#65728a;}.note-ink-color{display:grid;place-items:center;width:30px;height:34px;}.note-ink-color input{width:20px;height:20px;border:0;padding:0;border-radius:50%;background:none;cursor:pointer;}
+.note-ink-layer{position:absolute;left:0;right:0;z-index:4;pointer-events:auto;}.note-ink-layer.is-passive{pointer-events:none;}
+.notebook-composition .note-page-ink{height:100%;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;}
+.note-page-ink .note-sketch{height:100%;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;}
+.notebook-composition .note-page-ink canvas{width:100%;height:100%;background:transparent!important;background-image:none!important;cursor:crosshair;}
+.is-eraser .note-page-ink canvas{cursor:cell;}
+.note-paper-composition .note-photo-node{max-width:100%;margin:16px 0;min-height:20px;position:relative;line-height:0;}
+.note-paper-composition .note-photo-node.is-selected{outline:2px solid #3154b8;outline-offset:3px;}
+.note-paper-composition .note-inline-photo{display:block;max-width:100%;max-height:650px;height:auto;width:auto;border-radius:4px;margin:0!important;}
+.note-photo-pending{display:block;padding:24px;background:#f6f8fc;color:#74819a;font:12px/1.5 Manrope,sans-serif;}
+.note-paper-composition .markdown-editor-shell{overflow:visible!important;}
+.note-paper-composition,.note-sheet,.note-paper-composition .markdown-editor-root,.note-paper-composition .markdown-editor-shell,.note-paper-composition .milkdown,.note-paper-composition .ProseMirror{min-width:0!important;max-width:100%;}
+.note-paper-composition .note-unified-toolbar .top-bar-inner{width:auto;flex:1 1 320px;min-width:0;}
+.note-paper-tools{flex-wrap:wrap;max-width:100%;min-width:0;}
+.note-paper-composition .note-unified-toolbar{flex-wrap:wrap!important;overflow:visible!important;max-width:100%;width:100%;}
+.note-paper-composition .note-unified-toolbar .top-bar-inner{width:auto!important;min-width:0!important;flex-wrap:wrap!important;flex:1 1 320px;max-width:100%;}
+@media(max-width:720px){.note-paper-composition .note-unified-toolbar .top-bar-inner{flex-basis:100%;}.note-paper-tools{border-left:0;margin:0;padding:2px 0;}.note-paper-tools button{width:36px;height:38px;}.note-paper-composition .note-unified-toolbar .top-bar-divider{margin:5px;}}
+.note-paper-composition .note-unified-toolbar:not(.is-expanded) button:is([data-note-format="3"],[data-note-format="4"],[data-note-format="5"],[data-note-format="6"],[data-note-format="8"],[data-note-format="11"],[data-note-format="12"],[data-note-format="13"],[data-note-format="14"]){display:none;}
+.note-paper-composition .note-unified-toolbar .top-bar-divider{display:none;}
+.note-paper-composition .note-unified-toolbar:not(.is-expanded) .top-bar-inner{flex:0 1 auto;}
+
+/* The writing and ink surfaces fill the note panel instead of shrinking to toolbar content. */
+.notebook-detail .workspace-note-page{padding-inline:24px;}
+.notebook-detail .workspace-note-editor{display:block;margin:10px 0 0;width:100%;}
+.note-paper-composition,.note-sheet,.note-paper-composition .markdown-editor-shell,.note-paper-composition .markdown-editor-root,.note-paper-composition .milkdown{width:100%;box-sizing:border-box;}
+.note-paper-composition .markdown-editor-root .milkdown .ProseMirror{width:100%;max-width:none;margin-inline:0;box-sizing:border-box;}
+@media(max-width:720px){.notebook-detail .workspace-note-page{padding-inline:16px;}}
+.notes-workspace.is-editor-only{grid-template-columns:minmax(0,1fr);width:100%;min-width:0}.notes-workspace.is-editor-only .notebook-detail{min-width:0;width:100%}.notes-workspace.is-editor-only .workspace-note-page{width:100%;max-width:none}
+
+/* Keep the document's scroll range inside its paper viewport. The former block
+   page allowed a continuous carnet to grow the whole tab to the page height. */
+.notes-workspace.has-active-note .notebook-detail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden}
+.notebook-detail .notebook-back{flex:0 0 auto;min-height:44px}
+.notebook-detail .workspace-note-page{display:flex;flex:1 1 0;flex-direction:column;height:auto;min-height:0;box-sizing:border-box;overflow:auto;padding:12px 24px;container:workspace-note / size}
+.notebook-detail .workspace-note-page .workspace-note-editor{display:flex;flex:1 1 0;flex-direction:column;height:0;min-height:0;margin:10px 0 0;overflow:hidden}
+.notebook-detail .workspace-note-editor>.paper-notebook{flex:1 1 0;height:100%;min-height:0!important;box-sizing:border-box}
+.notebook-detail .workspace-note-metadata{flex:0 0 auto;max-height:96px;overflow:auto}
+.notebook-detail .workspace-note-statusbar{flex:0 0 auto;padding:4px 0;min-height:24px}
+
+/* Query the actual note pane, including a vertically split pane. Keep every
+   command reachable rather than letting non-shrinking chrome erase the paper. */
+@container workspace-note (max-height:520px){
+ .notebook-detail .workspace-note-page .workspace-note-header{display:flex;flex-wrap:nowrap;min-height:0;padding:0;gap:8px}
+ .notebook-detail .workspace-note-page .workspace-note-title-block{gap:0}
+ .notebook-detail .workspace-note-page .workspace-note-title{height:44px;min-height:44px;font-size:20px}
+ .notebook-detail .workspace-note-page .workspace-note-save-status{min-height:14px;line-height:14px;font-size:10px;flex-wrap:nowrap;white-space:nowrap;overflow:auto}
+ .notebook-detail .workspace-note-page .workspace-note-actions{display:flex;flex:0 1 auto;flex-wrap:nowrap;width:auto;min-width:44px;max-width:50%;margin:0;overflow:auto}
+ .notebook-detail .workspace-note-page .workspace-note-actions>button{flex-shrink:0;min-width:44px;min-height:44px;padding:4px 8px}
+ .notebook-detail .workspace-note-page .workspace-note-metadata{display:flex;flex:0 0 44px;flex-direction:row;flex-wrap:nowrap;align-items:center;min-height:44px;max-height:44px;margin:0;padding:0;gap:8px;overflow:auto}
+ .notebook-detail .workspace-note-page :is(.workspace-note-subjects,.workspace-note-tags){flex:0 0 auto;flex-wrap:nowrap;width:auto;min-width:0}
+ .notebook-detail .workspace-note-page .workspace-note-metadata :is(button,input){min-width:44px;min-height:44px;box-sizing:border-box}
+ .notebook-detail .workspace-note-page .workspace-note-tag{padding-block:0;min-height:44px;box-sizing:border-box}
+ .notebook-detail .workspace-note-page .workspace-note-statusbar{display:flex;min-height:22px;max-height:22px;padding:0;flex-wrap:nowrap;white-space:nowrap;overflow:auto}
+ .notebook-detail .workspace-note-page .workspace-note-editor{margin-top:6px!important}
+
+ /* The formatting row and audio controls share one line. Expanded recovery,
+    audio or assistance panels remain in the grid and can scroll independently. */
+ .notebook-detail .workspace-note-editor>.paper-notebook{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,40%);grid-template-rows:auto auto minmax(172px,1fr) auto;grid-template-areas:"tools tools" "format audio" "paper paper" "status status";overflow:auto;scrollbar-width:thin}
+ .notebook-detail .workspace-note-editor>.paper-notebook>*{grid-column:1/-1;min-width:0}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-toolbar{grid-area:tools;min-height:44px;padding:0 4px;gap:4px}
+ .notebook-detail .workspace-note-editor>.paper-notebook .paper-primary-tools{padding-block:0}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-flow-toolbar-slot{grid-area:format;min-width:0;padding:0 4px!important;max-height:96px;overflow:auto;box-sizing:border-box}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-flow-toolbar-slot .milkdown-top-bar{flex-wrap:nowrap}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-audio{grid-area:audio;display:flex;align-items:center;gap:8px;min-width:0;max-height:96px;padding:0 4px;overflow:auto;box-sizing:border-box}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-audio>.paper-audio-actions{flex-shrink:0;flex-wrap:nowrap;white-space:nowrap}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-audio>.paper-audio-editor{flex-shrink:0;margin:0}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-audio>.paper-audio-editor>summary{display:flex;align-items:center;min-height:44px;white-space:nowrap}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-audio>.paper-audio-tracks{flex-shrink:0}
+ .notebook-detail .workspace-note-editor>.paper-notebook:not(:has(>.paper-flow-toolbar-slot:not(:empty)))>.paper-audio{grid-column:1/-1}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-work-area{grid-area:paper;min-height:172px;overflow:hidden}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-status{grid-area:status;flex-wrap:nowrap;gap:6px;min-height:44px;padding:0 4px}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-status>span{flex:1;min-width:0;max-width:none;max-height:44px;overflow:auto}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-status>div{min-width:0;max-width:65%}
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-status>div:not(.paper-work-timer){overflow:auto}
+ .notebook-detail .workspace-note-editor>.paper-notebook :is(.paper-toolbar,.paper-flow-toolbar-slot,.paper-audio,.paper-status) :is(button,summary,select){min-height:44px;min-width:44px;box-sizing:border-box}
+ .notebook-detail .workspace-note-editor>.paper-notebook .paper-flow-toolbar-slot button{width:44px}
+}
+
+/* On a narrow pane the action row may wrap, and the carnet itself scrolls if
+   that chrome plus the minimum writing area cannot fit in the available height. */
+@container workspace-note (max-height:520px) and (max-width:700px){
+ .notebook-detail .workspace-note-editor>.paper-notebook>.paper-toolbar{flex-wrap:wrap}
+ .notebook-detail .workspace-note-editor>.paper-notebook .paper-primary-tools{flex-basis:100%;width:100%}
+ .notebook-detail .workspace-note-editor>.paper-notebook .paper-toolbar-actions{max-width:100%;min-width:0;flex-wrap:wrap}
+}
+
+/* Desktop Notes counterpart: the title and existing actions share one compact
+ * row. Only this real selected-note shell changes; reader/other workspaces do not. */
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)){padding:8px 16px}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading))>.workspace-note-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 12px;padding:0}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-heading{min-width:0}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-title-block{display:grid;gap:2px;min-width:0;width:100%}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-title{height:44px;min-height:44px;font-size:22px;line-height:1.25}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-save-status{flex-wrap:wrap;line-height:1.35}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-actions{display:flex;flex-wrap:nowrap;min-width:44px;max-width:46cqw;margin:0;overflow-x:auto;scrollbar-width:thin}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-actions>button{flex:0 0 auto;min-width:44px;min-height:44px;padding:4px 8px;white-space:nowrap}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading))>.workspace-note-metadata{display:flex;flex:0 0 auto;flex-wrap:nowrap;align-items:center;gap:8px;min-height:44px;max-height:56px;margin:4px 0 0;padding:0;overflow:auto;scrollbar-width:thin}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-metadata :is(.workspace-note-subjects,.workspace-note-tags){flex:0 0 auto;flex-wrap:nowrap;min-width:0}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-metadata :is(button,input){min-width:44px;min-height:44px}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-editor{margin-top:6px}
+.notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .paper-flow-toolbar-slot .milkdown-top-bar button{min-width:44px;min-height:44px}
+@container workspace-note (max-width:680px){
+ .notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading))>.workspace-note-header{grid-template-columns:minmax(0,1fr)}
+ .notes-workspace.has-active-note .notebook-detail>.workspace-note-page:not(:has(.paper-mobile-reading)) .workspace-note-actions{max-width:100%;justify-self:start}
+}

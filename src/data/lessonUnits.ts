@@ -1,3 +1,4 @@
+import { appStorage } from "../lib/appStorage";
 import type { LessonUnit, ProgramItem, Subject } from "../types";
 
 /**
@@ -456,7 +457,7 @@ export function getLessonUnits(item: ProgramItem): LessonUnit[] {
 }
 
 /**
- * Hydrate un référentiel chargé depuis localStorage sans modifier les objets
+ * Hydrate un référentiel chargé depuis appStorage sans modifier les objets
  * d’origine ni les identifiants des matières, modules et blocs.
  */
 export function hydrateSubjectLessonUnits(subjects: Subject[]): Subject[] {

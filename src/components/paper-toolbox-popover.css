@@ -1,0 +1,6 @@
+/* A note-local overlay, independent of the toolbar's clipped/scrolling row. */
+.paper-notebook:has(>.paper-toolbox-popover){position:relative}
+.paper-notebook>.paper-toolbox-popover{position:absolute;right:auto;bottom:auto;transform:none;box-sizing:border-box;z-index:750;margin:0;min-width:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;flex-direction:column;gap:6px;padding:10px;border:.5px solid #cdd3df;border-radius:12px;background:#fff;box-shadow:0 8px 24px #17223a20}
+.paper-notebook>.paper-toolbox-popover>button,.paper-notebook>.paper-toolbox-popover>select,.paper-notebook>.paper-toolbox-popover .paper-option{min-height:44px;flex-shrink:0}
+.paper-notebook>.paper-toolbox-popover>button{justify-content:flex-start;padding:8px;font-size:12px}
+.paper-notebook>.paper-toolbox-popover>select{max-width:100%;width:100%;box-sizing:border-box}

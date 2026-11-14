@@ -1,0 +1,1004 @@
+openapi: 3.1.0
+info:
+  title: Dowze Academie NAS API
+  version: 0.2.0
+  description: API comptes, catalogue et synchronisation. Les identités serveur restent
+    distinctes des profils Desktop.
+servers:
+- url: http://127.0.0.1:8000
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: État minimal sans secret ni détail d'infrastructure
+      responses:
+        '200':
+          description: Service prêt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/accounts:
+    post:
+      operationId: createAccount
+      summary: Crée une identité serveur indépendante
+      parameters:
+      - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+      responses:
+        '201':
+          description: Compte créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+  /v1/sessions:
+    post:
+      operationId: createSession
+      summary: Authentifie et crée une session expirante
+      parameters:
+      - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+      responses:
+        '201':
+          description: Session créée ; le jeton opaque est placé dans un cookie HttpOnly
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+    delete:
+      operationId: revokeSession
+      summary: Révoque la session courante
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Session révoquée et cookie supprimé
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+  /v1/me:
+    get:
+      operationId: getCurrentAccount
+      summary: Retourne uniquement le compte de la session courante
+      security:
+      - cookieSession: []
+      responses:
+        '200':
+          description: Compte courant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/csrf:
+    get:
+      operationId: rotateCsrfToken
+      summary: Remplace et retourne le jeton CSRF d'une session valide après rechargement
+      security:
+      - cookieSession: []
+      responses:
+        '200':
+          description: Nouveau jeton
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/spaces/{space_id}:
+    put:
+      operationId: putAnnualSpace
+      summary: Crée idempotemment un espace annuel pour le compte de la session
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnualSpaceInput'
+      responses:
+        '200':
+          description: Espace identique déjà présent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnualSpace'
+        '201':
+          description: Espace créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnualSpace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+  /v1/spaces/{space_id}/changes:
+    get:
+      operationId: listSpaceChanges
+      summary: Lit dans l'ordre les versions et tombstones de l'espace annuel
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/Cursor'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+      responses:
+        '200':
+          description: Page ordonnée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/spaces/{space_id}/documents/{document_type}/{document_id}:
+    put:
+      operationId: putDocument
+      summary: Écrit une version si base_version correspond
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/DocumentType'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      responses:
+        '200':
+          description: Version persistée atomiquement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentChange'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '413':
+          description: Corps de requête trop volumineux
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteDocument
+      summary: Produit un tombstone versionné si base_version correspond
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/DocumentType'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/BaseVersion'
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Tombstone persisté atomiquement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentChange'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+  /v1/spaces/{space_id}/blobs:
+    post:
+      operationId: uploadBlob
+      summary: Dépose un JPEG, PNG, WebP ou PDF privé avec SHA-256 vérifié
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ContentSha256'
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Blob privé stocké sous un nom généré serveur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: Corps de requête trop volumineux
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/spaces/{space_id}/blobs/{blob_id}:
+    get:
+      operationId: getBlob
+      summary: Lit un blob uniquement pour son propriétaire authentifié
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/BlobId'
+      responses:
+        '200':
+          description: Octets vérifiés dans leur type déclaré
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteBlob
+      summary: Supprime un blob privé non référencé
+      security:
+      - cookieSession: []
+      parameters:
+      - $ref: '#/components/parameters/SpaceId'
+      - $ref: '#/components/parameters/BlobId'
+      - $ref: '#/components/parameters/Origin'
+      - $ref: '#/components/parameters/CsrfToken'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Blob supprimé
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '413':
+          description: Corps de requête trop volumineux
+  /v1/catalog:
+    get:
+      operationId: listCatalog
+      summary: Liste les formations publiées ; liste vide initialement
+      responses:
+        '200':
+          description: Catalogue public borné
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    maxItems: 100
+                    items:
+                      $ref: '#/components/schemas/CatalogEntry'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/catalog/{formation_id}/{version}/manifest:
+    get:
+      operationId: getManifest
+      parameters:
+      - $ref: '#/components/parameters/FormationId'
+      - $ref: '#/components/parameters/Version'
+      responses:
+        '200':
+          description: Manifeste immuable validé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageManifest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/catalog/{formation_id}/{version}/package:
+    get:
+      operationId: downloadPackage
+      parameters:
+      - $ref: '#/components/parameters/FormationId'
+      - $ref: '#/components/parameters/Version'
+      responses:
+        '200':
+          description: ZIP immuable ; le chemin disque n'est jamais fourni par le
+            client
+          headers:
+            Digest:
+              schema:
+                type: string
+                example: 'sha-256=:base64:'
+            Content-Length:
+              schema:
+                type: integer
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/spaces:
+    get:
+      operationId: listAnnualSpaces
+      summary: Liste paginée des années du compte connecté
+      security:
+      - cookieSession: []
+      parameters:
+      - name: after
+        in: query
+        schema:
+          type: string
+          maxLength: 128
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+      responses:
+        '200':
+          description: Années du compte
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnnualSpace'
+                  has_more:
+                    type: boolean
+                  next_after:
+                    type:
+                    - string
+                    - 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /v1/catalog/{formation_id}/{version}/content:
+    get:
+      operationId: getCourseContent
+      parameters:
+      - $ref: '#/components/parameters/FormationId'
+      - $ref: '#/components/parameters/Version'
+      responses:
+        '200':
+          description: Six fichiers JSON, contrôlés par empreinte avant lecture
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: object
+                    additionalProperties:
+                      type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          description: Intégrité du paquet invalide
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: dowze_session
+  parameters:
+    Origin:
+      name: Origin
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 256
+    FormationId:
+      name: formation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$
+    Version:
+      name: version
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+    SpaceId:
+      name: space_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SyncId'
+    DocumentType:
+      name: document_type
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - notesMarkdown
+        - whiteboard
+        - planning
+        - progression
+        - examens
+        - conversations
+        - tasks
+        - formation
+        - preferences
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SyncId'
+    BlobId:
+      name: blob_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    BaseVersion:
+      name: base_version
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
+    IdempotencyKey:
+      name: X-Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: ^[!-~]+$
+    ContentSha256:
+      name: X-Content-SHA256
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^[a-f0-9]{64}$
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          const: ok
+    AccountCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 1024
+    SessionCreate:
+      $ref: '#/components/schemas/AccountCreate'
+    Account:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - email
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      additionalProperties: false
+      required:
+      - expires_at
+      - csrf_token
+      properties:
+        expires_at:
+          type: string
+          format: date-time
+        csrf_token:
+          type: string
+          minLength: 32
+    CsrfToken:
+      type: object
+      additionalProperties: false
+      required:
+      - csrf_token
+      properties:
+        csrf_token:
+          type: string
+          minLength: 32
+    SyncId:
+      type: string
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$
+    AnnualSpaceInput:
+      type: object
+      additionalProperties: false
+      required:
+      - formation_id
+      - academic_year
+      - title
+      properties:
+        formation_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        academic_year:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{4}$
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+    AnnualSpace:
+      allOf:
+      - $ref: '#/components/schemas/AnnualSpaceInput'
+      - type: object
+        required:
+        - id
+        - created_at
+        properties:
+          id:
+            $ref: '#/components/schemas/SyncId'
+          created_at:
+            type: string
+            format: date-time
+    DocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+      - base_version
+      - content
+      properties:
+        base_version:
+          type: integer
+          minimum: 0
+        content:
+          type: object
+    DocumentChange:
+      type: object
+      additionalProperties: false
+      required:
+      - space_id
+      - document_type
+      - document_id
+      - version
+      - deleted
+      - content
+      - changed_at
+      properties:
+        sequence:
+          type: integer
+          minimum: 1
+        space_id:
+          $ref: '#/components/schemas/SyncId'
+        document_type:
+          type: string
+          enum:
+          - notesMarkdown
+          - whiteboard
+          - planning
+          - progression
+          - examens
+          - conversations
+          - tasks
+          - formation
+          - preferences
+        document_id:
+          $ref: '#/components/schemas/SyncId'
+        version:
+          type: integer
+          minimum: 1
+        deleted:
+          type: boolean
+        content: {}
+        changed_at:
+          type: string
+          format: date-time
+    ChangePage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - next_cursor
+      - has_more
+      properties:
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/DocumentChange'
+        next_cursor:
+          type: string
+        has_more:
+          type: boolean
+    Blob:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - space_id
+      - media_type
+      - size
+      - sha256
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        space_id:
+          $ref: '#/components/schemas/SyncId'
+        media_type:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - image/webp
+          - application/pdf
+        size:
+          type: integer
+          minimum: 1
+          maximum: 33554432
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        created_at:
+          type: string
+          format: date-time
+    CatalogEntry:
+      type: object
+      additionalProperties: false
+      required:
+      - formation_id
+      - version
+      - title
+      - package_size
+      - package_sha256
+      properties:
+        formation_id:
+          $ref: '#/components/parameters/FormationId/schema'
+        version:
+          $ref: '#/components/parameters/Version/schema'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        package_size:
+          type: integer
+          minimum: 1
+          maximum: 52428800
+        package_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    PackageFile:
+      type: object
+      additionalProperties: false
+      required:
+      - path
+      - size
+      - sha256
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 255
+        size:
+          type: integer
+          minimum: 0
+          maximum: 2097152
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    PackageManifest:
+      type: object
+      additionalProperties: false
+      required:
+      - formation_id
+      - version
+      - title
+      - package_size
+      - package_sha256
+      - files
+      properties:
+        formation_id:
+          $ref: '#/components/parameters/FormationId/schema'
+        version:
+          $ref: '#/components/parameters/Version/schema'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        package_size:
+          type: integer
+          minimum: 1
+          maximum: 52428800
+        package_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        files:
+          type: array
+          minItems: 6
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/PackageFile'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        current_version:
+          type: integer
+          minimum: 0
+  responses:
+    BadRequest:
+      description: Requête invalide, sans détail interne
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Identifiants ou session invalides, réponse uniforme
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Origine ou jeton CSRF refusé
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Ressource déjà existante ou blob encore référencé
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    VersionConflict:
+      description: base_version ne correspond pas ; la valeur existante est conservée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    StorageRejected:
+      description: Taille UTF-8, taille blob ou quota du compte dépassé
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unprocessable:
+      description: Clé d'idempotence réutilisée ou hash/référence blob invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: Type de blob hors JPEG, PNG, WebP et PDF
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unavailable:
+      description: Fichier privé absent ou intégrité incorrecte
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ressource absente, sans chemin interne
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Limite atteinte
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

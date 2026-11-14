@@ -1,0 +1,109 @@
+/* Shared identity, mobile-first arrangements for writing and learning. */
+body {font-family:'Dowze',sans-serif;color:var(--ink);background:var(--canvas);}
+button,input,select,textarea {font-family:inherit;}
+button {border-radius:8px;border-color:var(--line-strong);font-size:14px;}
+.primary,.photo-button {background:var(--primary);border-color:var(--primary);color:white;}
+@media(hover:hover) { .primary:not(:disabled):hover,.photo-button:hover {background:var(--primary-deep);} button:not(:disabled):hover {border-color:#bac9eb;background:var(--primary-soft);} }
+input,select,textarea {border-color:var(--line-strong);border-radius:8px;}
+:where(h1,h2,h3) {color:var(--ink);letter-spacing:-.7px;}
+:where(.eyebrow,.sidebar-caption) {display:none;}
+.auth-shell {background:var(--canvas);}
+.auth-card {border-radius:20px;box-shadow:var(--shadow-md);border-color:var(--line);padding:32px;}
+.auth-card h1 {font-size:32px;letter-spacing:-1px;}
+.brand .brand-mark {background:transparent;object-fit:contain;width:42px;height:42px;border-radius:0;}
+.brand strong {color:var(--ink);font-size:15px;}
+.brand small {color:var(--muted);}
+.app-shell>header {border-color:var(--line);min-height:72px;padding:14px 28px;background:white;}
+.app-shell>aside {background:#edf1f8;border-color:var(--line);padding:24px 16px;}
+.app-shell>aside>label {font-size:12px;color:var(--muted);}
+.app-shell>aside nav button {border-radius:7px;color:var(--muted);min-height:46px;padding:12px;font-size:13px;}
+.app-shell>aside nav button[aria-selected=true] {background:white;color:var(--primary);border-color:var(--line);box-shadow:var(--shadow-sm);}
+.app-shell>aside>button {background:white;border-color:var(--line-strong);font-size:12px;}
+.workspace {padding:32px;max-width:1400px;}
+.workspace-heading {padding-bottom:20px;margin-bottom:24px;border-bottom:1px solid var(--line);}
+.workspace-intro {font-size:14px;color:var(--muted);}
+.workspace-device {border:0;padding:0;color:var(--soft-muted);}
+.notes-layout {gap:0;border:1px solid var(--line);background:white;border-radius:12px;overflow:hidden;}
+.note-list,.editor {border:0;border-radius:0;box-shadow:none;}
+.note-list {background:#fafbff;border-right:1px solid var(--line);padding:22px;}
+.section-title h1 {font-size:25px;}
+.mobile-search {display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);background:white;border-radius:8px;padding:0 12px;margin:20px 0;color:var(--muted);}
+.mobile-search:focus-within {border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mobile-search svg {width:18px;height:18px;flex-shrink:0;}
+.mobile-search input {border:0;background:transparent;padding:10px 0;font-size:13px;min-height:44px;outline:none;}
+.note-item {border:0;border-radius:7px;background:transparent;padding:14px 12px;margin:4px 0;}
+.note-item.active {background:var(--primary-soft);box-shadow:none;border-color:transparent;}
+.note-item:hover {background:#eaf0fb;}
+.note-item strong {font-size:14px;line-height:1.5;}
+.note-item small {font-size:11px;line-height:1.6;}
+.editor {padding:28px;gap:20px;}
+.editor>label:first-of-type input {border:0;padding:10px 0;font-size:27px;font-weight:750;letter-spacing:-.6px;}
+.editor>label {color:var(--muted);font-size:11px;}
+.grow textarea {font-family:'Dowze',sans-serif;font-size:16px;line-height:1.8;border:0;padding:0;color:var(--ink);}
+.editor-footer {border-color:var(--line);}
+.mobile-notes-back {display:none;}
+.empty {box-shadow:none;border:0;background:transparent;min-height:340px;}
+.empty-symbol {color:var(--primary);width:36px;height:36px;margin-bottom:22px;}
+.empty h2 {font-size:23px;}
+.empty p {font-size:14px;line-height:1.75;max-width:40ch;}
+.course-card {border-color:var(--line);border-radius:12px;box-shadow:none;padding:24px;}
+.course-symbol {color:var(--primary);background:var(--primary-soft);border-radius:12px;}
+.course-status {color:var(--primary);text-transform:none;letter-spacing:0;}
+.course-copy h2 {font-size:19px;}
+.catalogue>.mobile-search {max-width:540px;}
+.drawing-panel {border-color:var(--line);box-shadow:none;border-radius:12px;}
+.drawing-panel h1 {font-size:26px;}
+.toolbar {gap:8px;background:#f6f8fc;padding:12px;border-radius:8px;}
+.toolbar button {font-size:12px;}
+.network {color:var(--success);background:var(--success-soft);}
+.network.offline {color:var(--warning);background:var(--warning-soft);}
+.notice {background:var(--primary-soft);color:var(--primary-deep);border-color:#d4dff7;font-size:13px;}
+.notice.conflict,.conflict {background:var(--warning-soft);border-color:#e7cf9e;color:var(--warning);}
+.card {border-color:var(--line);box-shadow:none;border-radius:12px;}
+.course-reader {font-family:'Dowze',sans-serif;}
+@media(max-width:1100px) and (min-width:761px) { .workspace {padding:26px;} .notes-layout {grid-template-columns:minmax(210px,35%) minmax(0,1fr);} }
+@media(max-width:760px) {
+ .app-shell>header {padding:calc(10px + env(safe-area-inset-top)) 16px 10px;min-height:70px;}
+ .brand .brand-mark {width:34px;height:34px;}
+ .brand strong {font-size:13px;}
+ .app-shell>aside {padding:16px 16px 0;background:transparent;}
+ .app-shell>aside nav {background:#fff;box-shadow:0 -2px 12px #18243f08;border-color:var(--line);padding-top:6px;}
+ .app-shell>aside nav button {font-size:10px;gap:5px;padding:9px 2px;}
+ .app-shell>aside nav button[aria-selected=true] {background:var(--primary-soft);color:var(--primary);border:0;box-shadow:none;}
+ .workspace {padding:24px 16px;}
+ .workspace-heading {padding-bottom:16px;margin-bottom:20px;}
+ .notes-layout {border:0;background:transparent;border-radius:0;}
+ .note-list {border:1px solid var(--line);border-radius:12px;background:white;max-height:none;margin:0;padding:20px;}
+ .notes-layout:not(.has-active-note) .editor {display:none;}
+ .notes-layout.has-active-note .note-list {display:none;}
+ .notes-layout.has-active-note .editor {border:1px solid var(--line);border-radius:12px;min-height:65svh;}
+ .mobile-notes-back {display:flex;align-items:center;gap:5px;align-self:flex-start;border:0;background:var(--primary-soft);color:var(--primary);font-size:12px;padding:8px 12px;}
+ .mobile-notes-back svg {width:16px;height:16px;}
+ .editor {padding:22px;}
+ .editor>label:first-of-type input {font-size:25px;}
+ .grow textarea {min-height:38svh;}
+ .empty {min-height:260px;}
+ .course-card {padding:20px;}
+ .drawing-panel {padding:20px;}
+ .toolbar {padding:10px;}
+ .auth-card {padding:26px;}
+}
+@media(prefers-reduced-motion:reduce) {button {transition:none;}}
+
+.editor :where(input,textarea):focus {outline:2px solid var(--primary);outline-offset:3px;}
+
+/* The notebook replaces the former Drawing application. */
+.app-shell>aside nav{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media(min-width:761px){.app-shell>aside nav{grid-template-columns:1fr;}}
+.editor .notebook-composition{width:100%;min-width:0;}
+.editor .notebook-source{min-height:280px;padding:14px 2px;}
+.editor .milkdown .ProseMirror{min-height:220px;padding:20px 4px;}
+.editor .notebook-toolbar{gap:2px;}
+.editor .notebook-toolbar button{font-size:11px;}
+.editor .notebook-tool-divider{margin:0 3px;}
+.editor-footer{flex-wrap:wrap;}
+
+/* Notes owns a full library route on every viewport. Keep its existing return
+ * action available on desktop/landscape as well as the mobile layout. */
+.editor>.pwa-notebook-library-back{display:flex;align-items:center;gap:5px;align-self:flex-start;min-height:44px;border:0;background:var(--primary-soft);color:var(--primary);padding:8px 12px}
+.editor>.pwa-notebook-library-back svg{width:16px;height:16px}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-start-ai-lesson"
+description = "Enables the start_ai_lesson command without any pre-configured scope."
+commands.allow = ["start_ai_lesson"]
+
+[[permission]]
+identifier = "deny-start-ai-lesson"
+description = "Denies the start_ai_lesson command without any pre-configured scope."
+commands.deny = ["start_ai_lesson"]

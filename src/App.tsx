@@ -1,3 +1,29 @@
+import {createManagedLibraryTrashAction} from './lib/notebookManagedLibraryActions';
+import {invoke} from '@tauri-apps/api/core';
+import {NotebookManagedControls} from './components/NotebookManagedControls';
+import {createNotebookManagedApplication} from './lib/notebookManagedApplication';
+import {createDesktopManagedNotebookMetadataBridge} from './lib/desktopManagedNotebookMetadata';
+import {createNativeManagedNotebookPort} from './lib/nativeManagedNotebookPort';
+import {openNotebookStateDatabase} from '../pwa/src/storage';
+import {useNativeNotebookScope} from './hooks/useNativeNotebookScope';
+import type {PaperSearchNavigation,PaperSearchOpenRequest} from './lib/notebookSearchNavigation';
+import {settleNotebookAccount,resumeNotebookAccount,disposeNotebookAccount,runNotebookOperation} from './lib/notebookSession';
+import {serverAccountTransition} from './lib/server';
+import { WorkspaceSearch } from './components/WorkspaceSearch';
+import { CloudSyncStatus } from "./components/CloudSyncStatus";
+import { DowzyMascot } from './components/DowzyMascot';
+import { useSlimeProgress } from './hooks/useSlimeProgress';
+import { SLIME_PROGRESS_ID, isSlimeProgress, mergeSlimeProgress } from './lib/slimeProgress';
+import { appStorage } from "./lib/appStorage";
+import { AppUpdateNotice } from './components/AppUpdateNotice';
+import { isRecord, isStoredConversations, isStoredFreeChatConversations, isStoredAssessments } from "./lib/studyValidation";
+import { listen } from "@tauri-apps/api/event";
+import { useAccountLibrary } from "./hooks/useAccountLibrary";
+import { useNativeAssetSync } from "./hooks/useNativeAssetSync";
+import { useServerSync } from "./hooks/useServerSync";
+import { sharedFormationManifest } from "./lib/sharedFormation";
+import { canonical, type RemoteDocument, type SyncDocument } from "./lib/serverSync";
+import {projectServerDocumentGroup,joinServerDocumentGroups} from "./lib/serverDocumentProjection";
 import { CheckCircle2, Info, X } from "lucide-react";
 import { strToU8, zipSync } from "fflate";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -20,7 +46,14 @@ import {
   NoteSubjectsDialog,
   WorkspaceNotePage
 } from "./components/WorkspaceNotePage";
+import { NotesWorkspace } from "./components/NotesWorkspace";
+import { LEGACY_NOTE_ID } from "./lib/notebook";
+import { nativeServerClient } from "./lib/nativeServerClient";
+import {useNotebookSplitWorkspace} from './hooks/useNotebookSplitWorkspace';
+import {NotebookSplitControls,NotebookSplitSeparator} from './components/NotebookSplitControls';
+import type {CSSProperties} from 'react';
 import { WorkspaceTabs } from "./components/WorkspaceTabs";
+import { PersistentWorkspacePanel } from "./components/PersistentWorkspacePanel";
 import {
   ACADEMIC_SCHEDULE_REVISION,
   defaultEvents,
@@ -59,13 +92,14 @@ import {
   activateInstalledFormation,
   assessmentDocumentRecordId,
   installFormationFromPreview,
+  updateSharedFormationManifest,
   loadFormationCatalog
 } from "./lib/formationRegistry";
 import {
   slugifyFormationName,
   validateAndCompileFormationPackage
 } from "./lib/formations";
-import type { FormationImportPreview, FormationPackageFilename, InstalledFormation } from "./lib/formations";
+import type { FormationImportPreview, FormationPackageFilename, FormationManifest, InstalledFormation } from "./lib/formations";
 import {
   buildFormationKitFiles,
   buildFormationTemplateFiles,
@@ -100,6 +134,7 @@ import {
   deleteAssessmentDocuments,
   importAssessmentPdfs,
   isConversationUrl,
+  isTauri,
   listenToAiNavigation,
   navigateAi,
   normalizeConversationUrl,
@@ -135,6 +170,7 @@ const CalendarPage = lazy(() => import("./components/CalendarPage")
   .then((module) => ({ default: module.CalendarPage })));
 const CoursesPage = lazy(() => import("./components/CoursesPage")
   .then((module) => ({ default: module.CoursesPage })));
+
 const GradesPage = lazy(() => import("./components/GradesPage")
   .then((module) => ({ default: module.GradesPage })));
 const SettingsPage = lazy(() => import("./components/SettingsPage")
@@ -295,130 +331,9 @@ function latestGeneralConversation(
     .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isRecordArray(value: unknown): value is Record<string, unknown>[] {
-  return Array.isArray(value) && value.every(isRecord);
-}
-
-function isOptionalString(value: unknown) {
-  return value === undefined || typeof value === "string";
-}
-
-function isIsoDate(value: unknown) {
-  return typeof value === "string" && Number.isFinite(Date.parse(value));
-}
-
-function isStoredLessonMode(value: unknown) {
-  return value === undefined || [
-    "course", "exercises", "chapter-test", "paper-assessment", "assessment-correction"
-  ].includes(value as string);
-}
-
-const PAPER_ASSESSMENT_KINDS = new Set([
-  "test", "control", "midterm", "exam", "final-exam",
-  "written-practical", "resit", "evaluation"
-]);
-
-function isStoredPaperAssessment(value: unknown): value is PaperAssessmentConfig | undefined {
-  if (value === undefined) return true;
-  if (!isRecord(value)) return false;
-  const chapterIds = value.chapterIds;
-  return typeof value.eventId === "string" && value.eventId.length > 0 &&
-    typeof value.kind === "string" && PAPER_ASSESSMENT_KINDS.has(value.kind) &&
-    typeof value.title === "string" && value.title.length > 0 &&
-    isIsoDate(value.scheduledAt) &&
-    typeof value.durationMinutes === "number" && Number.isInteger(value.durationMinutes) &&
-    value.durationMinutes >= 10 && value.durationMinutes <= 360 &&
-    Array.isArray(chapterIds) && chapterIds.length > 0 &&
-    chapterIds.every((id) => typeof id === "string" && id.length > 0) &&
-    new Set(chapterIds).size === chapterIds.length &&
-    typeof value.allowedMaterials === "string" && value.allowedMaterials.length > 0 &&
-    isOptionalString(value.instructions);
-}
-
-function isStoredConversations(value: unknown): value is Conversation[] {
-  return isRecordArray(value) && value.every((conversation) =>
-    typeof conversation.id === "string" &&
-    typeof conversation.subjectId === "string" &&
-    typeof conversation.provider === "string" && HISTORY_PROVIDERS.has(conversation.provider as AiProvider) &&
-    typeof conversation.url === "string" &&
-    isIsoDate(conversation.createdAt) &&
-    isOptionalString(conversation.moduleId) &&
-    isOptionalString(conversation.curriculumScope) &&
-    isOptionalString(conversation.itemId) &&
-    isOptionalString(conversation.lessonUnitId) &&
-    isStoredLessonMode(conversation.lessonMode) &&
-    isOptionalString(conversation.lessonTitle) &&
-    (conversation.kind === undefined || conversation.kind === "lesson" || conversation.kind === "general") &&
-    isStoredPaperAssessment(conversation.assessment) &&
-    isOptionalString(conversation.localConversationId) &&
-    isOptionalString(conversation.name) &&
-    isOptionalString(conversation.note)
-  );
-}
-
-function isStoredFreeChatConversations(value: unknown): value is StoredFreeChatConversation[] {
-  return isRecordArray(value) && value.every((conversation) =>
-    typeof conversation.id === "string" &&
-    typeof conversation.title === "string" &&
-    typeof conversation.backend === "string" && FREE_CHAT_BACKENDS.has(conversation.backend) &&
-    typeof conversation.model === "string" &&
-    isOptionalString(conversation.endpoint) &&
-    Array.isArray(conversation.messages) && conversation.messages.every((message) =>
-      isRecord(message) &&
-      typeof message.id === "string" &&
-      ["system", "user", "assistant"].includes(message.role as string) &&
-      typeof message.content === "string" &&
-      isOptionalString(message.reasoningContent) &&
-      isIsoDate(message.createdAt)
-    ) &&
-    isIsoDate(conversation.createdAt) &&
-    isIsoDate(conversation.updatedAt) &&
-    isOptionalString(conversation.name) &&
-    isOptionalString(conversation.note) &&
-    isOptionalString(conversation.contextKey) &&
-    isOptionalString(conversation.contextTitle) &&
-    isOptionalString(conversation.subjectId) &&
-    isOptionalString(conversation.curriculumScope) &&
-    isOptionalString(conversation.moduleId) &&
-    isOptionalString(conversation.itemId) &&
-    isOptionalString(conversation.lessonUnitId) &&
-    isStoredLessonMode(conversation.lessonMode)
-  );
-}
-
-function isStoredAssessments(value: unknown): value is AssessmentRecord[] {
-  return isRecordArray(value) && value.every((assessment) =>
-    typeof assessment.id === "string" &&
-    typeof assessment.subjectId === "string" &&
-    typeof assessment.title === "string" &&
-    typeof assessment.kind === "string" && RECORDED_ASSESSMENT_KINDS.has(assessment.kind) &&
-    isIsoDate(assessment.assessmentDate) &&
-    typeof assessment.score === "number" && Number.isFinite(assessment.score) &&
-    typeof assessment.maxScore === "number" && Number.isFinite(assessment.maxScore) && assessment.maxScore > 0 &&
-    (assessment.coefficient === undefined || (typeof assessment.coefficient === "number" && Number.isFinite(assessment.coefficient) && assessment.coefficient >= 0.1 && assessment.coefficient <= 20)) &&
-    typeof assessment.appreciation === "string" &&
-    isOptionalString(assessment.personalNote) &&
-    isOptionalString(assessment.conversationId) &&
-    isOptionalString(assessment.conversationUrl) &&
-    (assessment.provider === undefined || (typeof assessment.provider === "string" && HISTORY_PROVIDERS.has(assessment.provider as AiProvider))) &&
-    isStoredAssessmentPdf(assessment.blankPdf) &&
-    isStoredAssessmentPdf(assessment.completedPdf) &&
-    isIsoDate(assessment.createdAt) &&
-    isIsoDate(assessment.updatedAt)
-  );
-}
-
 const AI_PROVIDERS = new Set<AiProvider>([
-  "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
+  "chatgpt", "claude", "gemini", "mistral", "kimi",
   "freechat", "duolingo", "khanacademy", "youtube", "tiktok", "notebooklm"
-]);
-const HISTORY_PROVIDERS = new Set<AiProvider>([
-  "chatgpt", "claude", "gemini", "mistral", "deepseek", "kimi",
-  "freechat", "youtube", "tiktok", "notebooklm"
 ]);
 const CEFR_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
 function curriculumScopeForSubject(
@@ -446,21 +361,8 @@ function subjectForCurriculumScope(
   if (!subject || subject.curriculumKind !== "cefr-selectable") return subject;
   return projectEnglishSubject(subject, cefrLevelFromScope(scope));
 }
-const RECORDED_ASSESSMENT_KINDS = new Set([
-  "mini-test", "test", "control", "midterm", "exam", "final-exam",
-  "written-practical", "resit", "evaluation"
-]);
 const CALENDAR_VIEWS = new Set<CalendarView>(["year", "month", "week", "day"]);
-const FREE_CHAT_BACKENDS = new Set(["openai", "mistral", "deepseek", "kimi", "compatible", "ollama"]);
 
-function isStoredAssessmentPdf(value: unknown) {
-  return value === undefined || (
-    isRecord(value) &&
-    typeof value.originalName === "string" &&
-    typeof value.sizeBytes === "number" && Number.isFinite(value.sizeBytes) && value.sizeBytes >= 0 &&
-    isIsoDate(value.importedAt)
-  );
-}
 
 interface AppProps {
   account: LocalAccount;
@@ -471,6 +373,7 @@ interface AppProps {
 interface FormationWorkspaceAppProps extends AppProps {
   activeFormation: InstalledFormation;
   formations: readonly InstalledFormation[];
+  onSharedManifest: (manifest: FormationManifest) => void;
   onActivateFormation: (formation: InstalledFormation) => Promise<void>;
   onChooseFormationPackage: () => Promise<FormationImportPreview | null>;
   onInstallFormationPreview: (preview: FormationImportPreview) => Promise<void>;
@@ -485,6 +388,7 @@ function FormationWorkspaceApp({
   activeFormation,
   formations,
   onActivateFormation,
+  onSharedManifest,
   onChooseFormationPackage,
   onInstallFormationPreview,
   onDownloadFormationKit,
@@ -494,6 +398,7 @@ function FormationWorkspaceApp({
     () => formationStorageFor(account.id, activeFormation),
     [account.id, activeFormation]
   );
+  const notebookScope=useNativeNotebookScope(account.id,activeFormation.instanceId,storage.subjectNotes);
   const isLegacyFormation = activeFormation.storageKind === "legacy-energy-year1";
   const learningProviderContext = useMemo(() => ({
     legacyEnergyYear1: isLegacyFormation,
@@ -503,10 +408,19 @@ function FormationWorkspaceApp({
   const initialEvents = isLegacyFormation ? defaultEvents : [];
   const initialTasks = isLegacyFormation ? defaultTasks : [];
   const [section, setSection] = useState<AppSection>("home");
+  const [loggingOut,setLoggingOut]=useState(false);
   const [subjects, setSubjects] = usePersistentState<Subject[]>(storage.subjects, initialSubjects, isStoredSubjects);
   const activeSubjects = useMemo(
-    () => isLegacyFormation ? projectSubjectsForActiveCurricula(subjects) : subjects,
-    [isLegacyFormation, subjects]
+    () => {
+      if (isLegacyFormation) return projectSubjectsForActiveCurricula(subjects);
+      const choices = activeFormation.manifest.choices;
+      if (!choices?.selected) return subjects;
+      const options = choices.groups.flatMap(group => group.options);
+      const optional = new Set(options.flatMap(option => option.subjectIds));
+      const selected = new Set(options.filter(option => choices.selected!.includes(option.id)).flatMap(option => option.subjectIds));
+      return subjects.filter(subject => !optional.has(subject.id) || selected.has(subject.id));
+    },
+    [isLegacyFormation, subjects, activeFormation.manifest]
   );
   const [events, setEvents] = usePersistentState<CalendarEvent[]>(storage.events, initialEvents, isStoredEvents);
   const [tasks, setTasks] = usePersistentState<TaskItem[]>(storage.tasks, initialTasks, isStoredTasks);
@@ -523,10 +437,11 @@ function FormationWorkspaceApp({
     { allowEphemeralOnError: true }
   );
   const [assessments, setAssessments] = usePersistentState<AssessmentRecord[]>(storage.assessments, [], isStoredAssessments);
-  const [subjectNotesStore, setSubjectNotesStore] = usePersistentState<PersistedSubjectNotesStore>(
-    storage.subjectNotes,
+  const [subjectNotesStore, setSubjectNotesStore, refreshSubjectNotesStore] = usePersistentState<PersistedSubjectNotesStore>(
+    notebookScope.notesKey,
     EMPTY_SUBJECT_NOTES_STORE,
-    isPersistedSubjectNotesStore
+    isPersistedSubjectNotesStore,
+    {readCurrentCacheForUpdates:true}
   );
   const [provider, setProvider] = usePersistentState<AiProvider>(
     storage.provider,
@@ -534,12 +449,24 @@ function FormationWorkspaceApp({
     (value): value is AiProvider => typeof value === "string" && AI_PROVIDERS.has(value as AiProvider),
     { allowEphemeralOnError: true }
   );
+  const [navigationCompact, setNavigationCompact] = usePersistentState(`${storage.aiWidth}.navigationCompact`, false);
   const [aiVisible, setAiVisible] = usePersistentState(
     storage.aiVisible,
-    true,
+    false,
     undefined,
     { allowEphemeralOnError: true }
   );
+  const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    const searchShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && !event.altKey) {
+        if (document.querySelector('[role="dialog"]')) return;
+        event.preventDefault(); setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', searchShortcut);
+    return () => window.removeEventListener('keydown', searchShortcut);
+  }, []);
   const [formationSwitching, setFormationSwitching] = useState(false);
   const [aiWidth, setAiWidth] = usePersistentState(
     storage.aiWidth,
@@ -602,10 +529,155 @@ function FormationWorkspaceApp({
     () => normalizeSubjectNotesStore(subjectNotesStore),
     [subjectNotesStore]
   );
-  const activeWorkspaceNote = useMemo(
-    () => activeNoteDocument(safeSubjectNotesStore),
-    [safeSubjectNotesStore]
+  const [sharedDocuments, setSharedDocuments] = usePersistentState<SyncDocument[]>(
+    `${storage.subjectNotes}.shared-documents.v1`, [],
+    (value): value is SyncDocument[] => Array.isArray(value) && value.every(item => isRecord(item) &&
+      ['whiteboard', 'formation', 'preferences'].includes(String(item.type)) && typeof item.id === 'string' && isRecord(item.content))
   );
+  const [slimeProgress, setSlimeProgress] = useSlimeProgress(account.id, activeFormation.packageId, subjects, tasks, assessments);
+  // Each group follows the same immutable React inputs as the former single
+  // projection. A note title must not rewalk the unchanged formation/program.
+  const sharedServerDocuments = useMemo(() => projectServerDocumentGroup(
+    sharedDocuments.filter(item => !(item.type === 'preferences' && item.id === SLIME_PROGRESS_ID))
+  ), [sharedDocuments]);
+  const slimeServerDocuments = useMemo(() => projectServerDocumentGroup([
+    { type: 'preferences' as const, id: SLIME_PROGRESS_ID, content: { ...slimeProgress } }
+  ]), [slimeProgress]);
+  const formationServerDocuments = useMemo(() => projectServerDocumentGroup(
+    !sharedDocuments.some(item => item.type === 'formation' && item.id === activeFormation.packageId)
+      ? [{ type: 'formation' as const, id: activeFormation.packageId, content: { schema: 1, manifest: activeFormation.manifest, subjectIds: subjects.map(subject => subject.id) } }] : []
+  ), [activeFormation, sharedDocuments, subjects]);
+  const taskServerDocuments = useMemo(() => projectServerDocumentGroup(
+    tasks.map(task => ({ type: 'tasks' as const, id: task.id, content: { ...task } }))
+  ), [tasks]);
+  const conversationServerDocuments = useMemo(() => projectServerDocumentGroup([
+    ...conversations.map(conversation => ({ type: 'conversations' as const, id: `web-${conversation.id}`, content: { kind: 'web', conversation } })),
+    ...freeChatConversations.map(conversation => ({ type: 'conversations' as const, id: `chat-${conversation.id}`, content: { kind: 'chat', conversation } }))
+  ]), [conversations, freeChatConversations]);
+  const noteServerDocuments = useMemo(() => projectServerDocumentGroup(
+    safeSubjectNotesStore.documents.map(note => ({ type: 'notesMarkdown' as const, id: note.id, content: { ...note } }))
+  ), [safeSubjectNotesStore]);
+  const planningServerDocuments = useMemo(() => projectServerDocumentGroup(
+    events.map(event => ({ type: 'planning' as const, id: event.id, content: { ...event } }))
+  ), [events]);
+  const progressionServerDocuments = useMemo(() => projectServerDocumentGroup(
+    subjects.map(subject => ({ type: 'progression' as const, id: subject.id, content: { ...subject } }))
+  ), [subjects]);
+  const assessmentServerDocuments = useMemo(() => projectServerDocumentGroup(
+    assessments.map(assessment => ({ type: 'examens' as const, id: assessment.id, content: { ...assessment } }))
+  ), [assessments]);
+  const serverProjection = useMemo(() => joinServerDocumentGroups([
+    sharedServerDocuments, slimeServerDocuments, formationServerDocuments,
+    taskServerDocuments, conversationServerDocuments, noteServerDocuments,
+    planningServerDocuments, progressionServerDocuments, assessmentServerDocuments
+  ]), [sharedServerDocuments, slimeServerDocuments, formationServerDocuments,
+    taskServerDocuments, conversationServerDocuments, noteServerDocuments,
+    planningServerDocuments, progressionServerDocuments, assessmentServerDocuments]);
+  const serverDocuments = serverProjection.documents;
+  const applyServerDocument = useCallback((remote: RemoteDocument): boolean => {
+    const id = remote.document_id, value = remote.content;
+    if (remote.document_type === 'preferences' && id === SLIME_PROGRESS_ID) {
+      if (remote.deleted || !isSlimeProgress(value)) return false;
+      return setSlimeProgress(current => mergeSlimeProgress(current, value));
+    }
+    if (remote.document_type === 'tasks') {
+      if (!remote.deleted && (!value || value.id !== id || !isStoredTasks([value]))) return false;
+      return setTasks(current => remote.deleted ? current.filter(item => item.id !== id) : [...current.filter(item => item.id !== id), value as unknown as TaskItem]);
+    }
+    if (remote.document_type === 'conversations') {
+      if (id.startsWith('web-')) {
+        const originalId = id.slice(4);
+        if (!remote.deleted && (!value || value.kind !== 'web' || !isStoredConversations([value.conversation]) || (value.conversation as Conversation).id !== originalId)) return false;
+        return setConversations(current => remote.deleted ? current.filter(item => item.id !== originalId) : [...current.filter(item => item.id !== originalId), value!.conversation as Conversation]);
+      }
+      if (id.startsWith('chat-')) {
+        const originalId = id.slice(5);
+        if (!remote.deleted && (!value || value.kind !== 'chat' || !isStoredFreeChatConversations([value.conversation]) || (value.conversation as StoredFreeChatConversation).id !== originalId)) return false;
+        return setFreeChatConversations(current => remote.deleted ? current.filter(item => item.id !== originalId) : [...current.filter(item => item.id !== originalId), value!.conversation as StoredFreeChatConversation]);
+      }
+      return false;
+    }
+    if (remote.document_type === 'formation' && !remote.deleted) {
+      const manifest = sharedFormationManifest(value);
+      if (!manifest || manifest.id !== id) return false;
+      if (id === activeFormation.packageId && activeFormation.storageKind === 'formation-v1' && canonical(manifest) !== canonical(activeFormation.manifest)) {
+        onSharedManifest(manifest);
+      }
+    }
+    if (['whiteboard', 'formation', 'preferences'].includes(remote.document_type)) {
+      if (!remote.deleted && !isRecord(value)) return false;
+      return setSharedDocuments(current => {
+        const remaining = current.filter(item => item.type !== remote.document_type || item.id !== id);
+        return remote.deleted ? remaining : [...remaining, { type: remote.document_type, id, content: value! }];
+      });
+    }
+    if (remote.document_type === 'notesMarkdown') {
+      if (!remote.deleted && (!value || typeof value.markdown !== 'string' || typeof value.title !== 'string')) return false;
+      let valid = true;
+      const stored = setSubjectNotesStore(current => {
+        const normalized = normalizeSubjectNotesStore(current);
+        if (remote.deleted) return deleteSubjectNote(normalized, id);
+        const old = normalized.documents.find(note => note.id === id);
+        const now = new Date().toISOString();
+        const note = { id, title: value!.title, markdown: value!.markdown,
+          subjectIds: value!.subjectIds ?? old?.subjectIds ?? [], tags: value!.tags ?? old?.tags ?? [],
+          createdAt: value!.createdAt ?? old?.createdAt ?? now, updatedAt: value!.updatedAt ?? now };
+        const next = { ...normalized, documents: [...normalized.documents.filter(note => note.id !== id), note] };
+        if (!isPersistedSubjectNotesStore(next)) { valid = false; return current; }
+        return next;
+      });
+      return valid && stored;
+    }
+    if (remote.document_type === 'planning') {
+      if (!remote.deleted && (!value || value.id !== id || !isStoredEvents([value]))) return false;
+      return setEvents(current => remote.deleted ? current.filter(item => item.id !== id) : [...current.filter(item => item.id !== id), value as unknown as CalendarEvent]);
+    }
+    if (remote.document_type === 'progression') {
+      if (!remote.deleted && (!value || value.id !== id || !isStoredSubjects([value]))) return false;
+      return setSubjects(current => remote.deleted ? current.filter(item => item.id !== id) : [...current.filter(item => item.id !== id), value as unknown as Subject]);
+    }
+    if (remote.document_type === 'examens') {
+      if (!remote.deleted && (!value || value.id !== id || !isStoredAssessments([value]))) return false;
+      return setAssessments(current => remote.deleted ? current.filter(item => item.id !== id) : [...current.filter(item => item.id !== id), value as unknown as AssessmentRecord]);
+    }
+    return false;
+  }, [activeFormation, onSharedManifest, setSlimeProgress, setSharedDocuments, setTasks, setConversations, setFreeChatConversations, setSubjectNotesStore, setEvents, setSubjects, setAssessments]);
+  const pristineDocument = useCallback((document: SyncDocument) => {
+    if (!isLegacyFormation) return false;
+    const original = document.type === 'progression' ? defaultSubjects.find(item => item.id === document.id)
+      : document.type === 'planning' ? defaultEvents.find(item => item.id === document.id)
+      : document.type === 'tasks' ? defaultTasks.find(item => item.id === document.id) : undefined;
+    return original !== undefined && canonical(original) === canonical(document.content);
+  }, [isLegacyFormation]);
+  const serverSync = useServerSync(account.id, activeFormation, serverDocuments, applyServerDocument, pristineDocument,notebookScope.prepareTarget,serverProjection.signature);
+  const notebookApi = useMemo(() => serverSync.linked ? nativeServerClient(account.id,serverSync.linked.id) : undefined,[account.id,serverSync.linked?.id]);
+  const notebookMedia = useMemo(() => ({api:serverSync.linked?.id===notebookScope.identity.accountId&&serverSync.remoteSpace===notebookScope.identity.spaceId?notebookApi:undefined,accountId:notebookScope.identity.accountId,spaceId:notebookScope.identity.spaceId}),[notebookApi,serverSync.remoteSpace,serverSync.linked?.id,notebookScope.identity.accountId,notebookScope.identity.spaceId]);
+  const notebookOperationScope=useRef('');notebookOperationScope.current=`${notebookMedia.accountId}|${notebookMedia.spaceId}|${notebookScope.notesKey}`;
+  const notebookWriteIdentity=JSON.stringify([notebookMedia.accountId,notebookMedia.spaceId,notebookScope.notesKey]);
+  const notebookWriteEpochRef=useRef({identity:notebookWriteIdentity,value:0});
+  if(notebookWriteEpochRef.current.identity!==notebookWriteIdentity)notebookWriteEpochRef.current={identity:notebookWriteIdentity,value:notebookWriteEpochRef.current.value+1};
+  const notebookWriteEpoch=notebookWriteEpochRef.current.value;
+  const notebookOperationAlive=useRef(true);useEffect(()=>{notebookOperationAlive.current=true;return()=>{notebookOperationAlive.current=false;};},[]);
+  const notebookExportSourceRef=useRef({identity:notebookWriteIdentity,api:notebookMedia.api,profileId:account.id,ready:notebookScope.ready,closing:loggingOut});
+  if(notebookExportSourceRef.current.identity!==notebookWriteIdentity||notebookExportSourceRef.current.api!==notebookMedia.api||notebookExportSourceRef.current.profileId!==account.id||notebookExportSourceRef.current.ready!==notebookScope.ready||notebookExportSourceRef.current.closing!==loggingOut)notebookExportSourceRef.current={identity:notebookWriteIdentity,api:notebookMedia.api,profileId:account.id,ready:notebookScope.ready,closing:loggingOut};
+  const notebookExportSource=notebookExportSourceRef.current;
+  const notebookManagedNotesRef=useRef(safeSubjectNotesStore.documents);notebookManagedNotesRef.current=safeSubjectNotesStore.documents;
+  const notebookManagedCurrent=()=>notebookOperationAlive.current&&notebookExportSourceRef.current===notebookExportSource&&notebookExportSource.ready&&!notebookExportSource.closing&&!serverAccountTransition(notebookExportSource.profileId);
+  const createNotebookManaged=(componentCurrent:()=>boolean)=>{
+   const source=notebookExportSource,api=notebookMedia.api,current=()=>componentCurrent()&&notebookManagedCurrent();
+   if(!current()||!api)throw Error('Connectez le compte de cette note avant sa synchronisation.');
+   const metadata=createDesktopManagedNotebookMetadataBridge({scope:{accountId:notebookMedia.accountId,spaceId:notebookMedia.spaceId},notesKey:notebookScope.notesKey,sourceRef:source,currentSource:()=>notebookExportSourceRef.current,currentNote:id=>notebookManagedNotesRef.current.find(note=>note.id===id),openDatabase:openNotebookStateDatabase});
+   return createNotebookManagedApplication({scope:{accountId:notebookMedia.accountId,spaceId:notebookMedia.spaceId},api,current,currentApi:()=>notebookExportSourceRef.current.api??api,openDatabase:openNotebookStateDatabase,captureDesktopMetadata:metadata.capture,prepareDesktopMetadata:metadata.preparePrivate,mirrorDesktopMetadata:metadata.mirror,disposeMetadata:metadata.dispose,openPort:checked=>createNativeManagedNotebookPort({enabled:import.meta.env.VITE_DOWZE_MANAGED_NATIVE_VALIDATED==='1',accountId:source.profileId,serverAccountId:notebookMedia.accountId,api,current:checked,currentApi:()=>notebookExportSourceRef.current.api??api,commands:{invoke:(command,args)=>invoke(command,args)}})});
+  };
+  const notebookManagedTrash=notebookMedia.api?createManagedLibraryTrashAction({scope:{accountId:notebookMedia.accountId,spaceId:notebookMedia.spaceId},current:notebookManagedCurrent,create:createNotebookManaged}):undefined;
+  const notebookManagedControls=notebookMedia.api?<NotebookManagedControls source={notebookExportSource} current={notebookManagedCurrent} notes={safeSubjectNotesStore.documents} create={createNotebookManaged} onChanged={async()=>{if(notebookManagedCurrent())await refreshSubjectNotesStore();}}/>:undefined;
+
+  const [notebookSearchNavigation,setNotebookSearchNavigation]=useState<PaperSearchNavigation|null>(null);
+  const activeWorkspaceNote = useMemo(
+    () => notebookScope.ready?activeNoteDocument(safeSubjectNotesStore):undefined,
+    [safeSubjectNotesStore,notebookScope.ready]
+  );
+  const splitNotes=useNotebookSplitWorkspace(notebookMedia,activeWorkspaceNote?.id,safeSubjectNotesStore.documents.map(note=>note.id),safeSubjectNotesStore.openDocumentIds);
   const [activeLesson, setActiveLesson] = useState<ActiveLesson | null>(null);
   const [pendingCapture, setPendingCapture] = useState<PendingCapture | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
@@ -618,15 +690,21 @@ function FormationWorkspaceApp({
   const resetInProgressRef = useRef(false);
 
   const activateWorkspacePage = useCallback(() => {
-    setSubjectNotesStore((current) => ({
-      ...normalizeSubjectNotesStore(current),
-      activeDocumentId: null
-    }));
-  }, [setSubjectNotesStore]);
+    const captured = `${notebookMedia.accountId}|${notebookMedia.spaceId}|${notebookScope.notesKey}`;
+    if (!notebookOperationAlive.current || notebookWriteEpochRef.current.value !== notebookWriteEpoch || notebookOperationScope.current !== captured || serverAccountTransition(account.id)) return;
+    // An unopened workspace has no note to deactivate. Keep an absent cache
+    // absent while the notebook scope captures its original metadata.
+    if (appStorage.getItem(notebookScope.notesKey) === null) return;
+    setSubjectNotesStore((current) => {
+      const normalized = normalizeSubjectNotesStore(current);
+      return normalized.activeDocumentId === null ? current : { ...normalized, activeDocumentId: null };
+    });
+  }, [account.id, notebookMedia.accountId, notebookMedia.spaceId, notebookScope.notesKey, notebookWriteEpoch, setSubjectNotesStore]);
 
   const navigateToSection = useCallback((nextSection: AppSection) => {
-    setSection(nextSection);
+    setSection(nextSection === "drawing" ? "notes" : nextSection);
     activateWorkspacePage();
+    window.requestAnimationFrame(() => document.getElementById("workspace-content")?.focus({ preventScroll: true }));
   }, [activateWorkspacePage]);
 
   const trackPdfOperation = useCallback(<Result,>(operation: Promise<Result>): Promise<Result> => {
@@ -725,6 +803,15 @@ function FormationWorkspaceApp({
   }, []);
 
   useEffect(() => {
+    if (!isTauri()) return;
+    let disposed = false;
+    const listening = listen<string>("capture-save-error", event => {
+      if (!disposed) addToast({ title: "Fermeture suspendue", detail: event.payload, tone: "warning" });
+    });
+    return () => { disposed = true; void listening.then(unlisten => unlisten()); };
+  }, [addToast]);
+
+  useEffect(() => {
     if (!startupNotice) return;
     addToast(startupNotice);
   }, [addToast, startupNotice]);
@@ -778,45 +865,118 @@ function FormationWorkspaceApp({
   }, [account.id, addToast, assessments, setAssessments, trackPdfOperation]);
 
   const handleCreateWorkspaceNote = useCallback(() => {
+    const source=notebookExportSource;
+    const current=()=>notebookOperationAlive.current&&notebookExportSourceRef.current===source&&source.ready&&!source.closing&&!serverAccountTransition(source.profileId);
+    if(!current())return false;
+    const apiCurrent=notebookMedia.api?.captureSessionAuthority(notebookMedia.accountId);
+    if(!current()||apiCurrent&&!apiCurrent())return false;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     return setSubjectNotesStore((current) => createSubjectNote(
       normalizeSubjectNotesStore(current),
       { id, now }
     ).store);
-  }, [setSubjectNotesStore]);
+  }, [notebookExportSource,notebookMedia,setSubjectNotesStore]);
 
-  const handleOpenWorkspaceNote = useCallback((noteId: string) => {
-    return setSubjectNotesStore((current) => openSubjectNote(
-      normalizeSubjectNotesStore(current),
+  const handleWorkspaceDuplicate=useCallback(async(id:string,resume:boolean,presentationCurrent:()=>boolean=()=>true,history?:import('./lib/paperHistoryVersions').PaperHistorySelection)=>{
+    const source=notebookExportSource,key=notebookScope.notesKey;
+    const viewCurrent=()=>notebookOperationAlive.current&&notebookExportSourceRef.current===source&&source.ready&&!source.closing&&!serverAccountTransition(source.profileId)&&(!history||presentationCurrent());
+    if(!viewCurrent())throw Error('Ouvrez votre carnet avant de copier une note.');
+    const apiCurrent=notebookMedia.api?.captureSessionAuthority(notebookMedia.accountId),current=()=>viewCurrent()&&(!apiCurrent||apiCurrent());
+    if(!current())throw Error('La connexion a changé avant la copie.');
+    const m=await import('./lib/notebookDuplicatePublication');if(!current())throw Error('Le carnet a changé avant la copie.');
+    const metadata=m.desktopNotebookDuplicateMetadata(appStorage,key);
+    const note=await (resume?m.resumeNotebookDuplicatePublication(id,notebookMedia,metadata,current):m.createNotebookDuplicate(id,notebookMedia,metadata,current,history));
+    if(!current())return;
+    if(!history&&presentationCurrent())await m.openDesktopNotebookDuplicate(appStorage,key,note.id,()=>current()&&presentationCurrent());
+    if(!current())return;
+    await refreshSubjectNotesStore();
+  },[notebookExportSource,notebookScope.notesKey,notebookMedia,refreshSubjectNotesStore]);
+  const handleDuplicateWorkspaceNote=useCallback((id:string,current?:()=>boolean,history?:import('./lib/paperHistoryVersions').PaperHistorySelection)=>handleWorkspaceDuplicate(id,false,current,history),[handleWorkspaceDuplicate]);
+  const handleResumeWorkspaceDuplicate=useCallback((id:string,current?:()=>boolean)=>handleWorkspaceDuplicate(id,true,current),[handleWorkspaceDuplicate]);
+
+  const handleExportWorkspaceNotes=useCallback(async(selectedIds:readonly string[])=>{
+    const source=notebookExportSource,metadataKey=notebookScope.notesKey;
+    const viewCurrent=()=>notebookOperationAlive.current&&notebookExportSourceRef.current===source&&source.ready&&!source.closing&&!serverAccountTransition(source.profileId);
+    if(!viewCurrent())throw Error('Ouvrez votre carnet avant cet export.');
+    const apiCurrent=notebookMedia.api?.captureSessionAuthority(notebookMedia.accountId);
+    const current=()=>viewCurrent()&&(!apiCurrent||apiCurrent());
+    if(!current())throw Error('La connexion a changé avant l’export.');
+    const ids=[...selectedIds];
+    const {preparePaperNotebookBundle}=await import('./lib/paperNotebookBundle');if(!current())throw Error('Le carnet a changé avant l’export.');
+    const prepared=await preparePaperNotebookBundle({media:notebookMedia,selectedIds:ids,current,metadata:{current,read:async(id:string)=>{
+      const raw=await appStorage.readCurrentItem(metadataKey);if(!current())throw Error('Le carnet a changé pendant l’export.');
+      const value:unknown=raw===null?null:JSON.parse(raw);if(!isPersistedSubjectNotesStore(value))throw Error('Les métadonnées du carnet doivent être récupérées avant cet export.');
+      return normalizeSubjectNotesStore(value).documents.find(note=>note.id===id);
+    }}});
+    const saved=await prepared.save();if(saved&&current())addToast({title:isTauri()?'Collection enregistrée':'Téléchargement demandé',detail:`${prepared.manifest.notes.length} notes enregistrées dans une collection ZIP. Chaque fichier .dowze peut être importé séparément.`,tone:'success'});
+  },[notebookExportSource,notebookMedia,notebookScope.notesKey,addToast]);
+
+  const handleArchiveWorkspaceNote=useCallback(async(input:File|string)=>runNotebookOperation(notebookMedia.accountId,async()=>{
+    const captured=notebookOperationScope.current,current=()=>notebookOperationAlive.current&&notebookOperationScope.current===captured&&!serverAccountTransition(account.id),metadataKey=notebookScope.notesKey;
+    const m=await import('./lib/importNotebookArchive');const id=typeof input==='string'?input:crypto.randomUUID();
+    const note=typeof input==='string'?(await m.readNotebookArchiveImport(id,notebookMedia)).note:await m.stageNotebookArchive(input,id,notebookMedia,current);
+    const merge=()=>{const raw=appStorage.getItem(metadataKey);const parsed=raw?JSON.parse(raw):EMPTY_SUBJECT_NOTES_STORE;if(!isPersistedSubjectNotesStore(parsed))throw Error('Votre carnet doit être récupéré avant de terminer l’importation.');const store=normalizeSubjectNotesStore(parsed);return {...store,documents:store.documents.some(n=>n.id===id)?store.documents:[note,...store.documents]};};
+    let committed=false;for(let attempt=0;attempt<3;attempt++){if(!current())throw Error('Le carnet a changé pendant l’importation.');const prepared=JSON.stringify(merge());appStorage.setItem(metadataKey,prepared);await appStorage.flush();if(current()&&appStorage.getItem(metadataKey)===prepared){committed=true;break;}}
+    if(!committed)throw Error('L’importation est conservée. Reprenez sa finalisation après votre modification.');
+    await m.confirmNotebookArchiveMetadata(id,notebookMedia,current);await m.activateNotebookArchive(id,notebookMedia,current);if(!current())throw Error('L’importation a été conservée dans son carnet d’origine.');
+    if(!setSubjectNotesStore(()=>openSubjectNote(merge(),id)))throw Error('Les onglets de l’importation attendent leur enregistrement.');await appStorage.flush();
+  }),[account.id,notebookMedia,notebookScope.notesKey,setSubjectNotesStore]);
+  const handleImportWorkspaceArchive=useCallback((file:File)=>handleArchiveWorkspaceNote(file),[handleArchiveWorkspaceNote]);
+  const handleResumeWorkspaceArchive=useCallback((id:string)=>handleArchiveWorkspaceNote(id),[handleArchiveWorkspaceNote]);
+
+  const handleOpenWorkspaceNote = useCallback((noteId: string,search?:PaperSearchOpenRequest) => {
+    const source=notebookExportSource;
+    const sourceCurrent=()=>notebookOperationAlive.current&&notebookExportSourceRef.current===source&&source.ready&&!source.closing&&!serverAccountTransition(source.profileId);
+    if(!sourceCurrent())return false;
+    const apiCurrent=search?notebookMedia.api?.captureSessionAuthority(notebookMedia.accountId):undefined;
+    const current=()=>sourceCurrent()&&(!apiCurrent||apiCurrent());
+    if(!current()||search&&search.hit.binding?.noteId!==noteId)return false;
+    if(!splitNotes.beforeActivate(noteId))return false;
+    const opened=setSubjectNotesStore((store) => openSubjectNote(
+      normalizeSubjectNotesStore(store),
       noteId
     ));
-  }, [setSubjectNotesStore]);
+    if(opened&&current())setNotebookSearchNavigation(search?{...search,requestId:crypto.randomUUID(),current}:null);
+    return opened;
+  }, [setSubjectNotesStore,splitNotes,notebookExportSource,notebookMedia]);
 
   const handleActivateWorkspaceNote = useCallback((noteId: string) => {
+    if(!splitNotes.beforeActivate(noteId))return;
     setSubjectNotesStore((current) => activateSubjectNote(
       normalizeSubjectNotesStore(current),
       noteId
     ));
-  }, [setSubjectNotesStore]);
+  }, [setSubjectNotesStore,splitNotes]);
 
   const handleCloseWorkspaceNote = useCallback((noteId: string) => {
+    if(noteId===splitNotes.secondaryId)splitNotes.close();
     setSubjectNotesStore((current) => closeSubjectNote(
       normalizeSubjectNotesStore(current),
       noteId
     ));
-  }, [setSubjectNotesStore]);
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(".workspace-tab.is-active")?.focus();
+    });
+  }, [setSubjectNotesStore,splitNotes]);
 
-  const handleUpdateWorkspaceNote = useCallback((
+  const handleUpdateWorkspaceNote = useCallback(async (
     noteId: string,
-    patch: Partial<Pick<SubjectNoteDocument, "title" | "markdown" | "tags" | "subjectIds">>
+    patch: Partial<Pick<SubjectNoteDocument, "title" | "markdown" | "tags" | "subjectIds">>,
+    expected?:{expectedMarkdown:string}
   ) => {
-    setSubjectNotesStore((current) => updateSubjectNote(
-      normalizeSubjectNotesStore(current),
-      noteId,
-      patch
-    ));
-  }, [setSubjectNotesStore]);
+    const captured=`${notebookMedia.accountId}|${notebookMedia.spaceId}|${notebookScope.notesKey}`;
+    const current=()=>notebookOperationAlive.current&&notebookWriteEpochRef.current.value===notebookWriteEpoch&&notebookOperationScope.current===captured&&!serverAccountTransition(account.id);
+    if(!current())return false;
+    let accepted=true;
+    const stored=setSubjectNotesStore(value=>{
+      const normalized=normalizeSubjectNotesStore(value),note=normalized.documents.find(item=>item.id===noteId);
+      if(!note||expected&&note.markdown!==expected.expectedMarkdown){accepted=false;return value;}
+      return updateSubjectNote(normalized,noteId,patch);
+    });
+    if(!stored||!accepted)return false;
+    try{await appStorage.flush();return current();}catch{return false;}
+  }, [account.id,notebookMedia,notebookScope.notesKey,notebookWriteEpoch,setSubjectNotesStore]);
 
   useEffect(() => {
     const reportPersistenceError = (event: Event) => {
@@ -1651,7 +1811,7 @@ function FormationWorkspaceApp({
 
       // Confirme la persistance avant d'annoncer un succès : un stockage plein ne
       // doit jamais donner l'illusion qu'une note et ses références PDF sont sauvées.
-      localStorage.setItem(storage.assessments, JSON.stringify(nextAssessments));
+      appStorage.setItem(storage.assessments, JSON.stringify(nextAssessments));
       setAssessments(nextAssessments);
       setModal(null);
       navigateToSection("grades");
@@ -1998,18 +2158,22 @@ function FormationWorkspaceApp({
   const noteForSubjectsDialog = modal?.type === "note-subjects"
     ? safeSubjectNotesStore.documents.find((note) => note.id === modal.noteId)
     : undefined;
+  const selectSplitNote=(id:string|null)=>{if(!splitNotes.current())return;if(!id){splitNotes.close();return;}const opened=setSubjectNotesStore(current=>{const next=openSubjectNote(normalizeSubjectNotesStore(current),id);return {...next,activeDocumentId:activeWorkspaceNote?.id??null};});if(opened)splitNotes.choose(id);};
   const renderedAiWidth = Math.min(aiWidth, aiWidthLimit);
   const renderedAiVisible = aiVisible && !formationSwitching;
 
   return (
-    <div className={`app-shell ${renderedAiVisible ? "has-ai" : ""}`}>
+    <div aria-busy={loggingOut} inert={loggingOut||undefined} className={`app-shell ${renderedAiVisible ? "has-ai" : ""}`}>
+      <a className="workspace-skip-link" href="#workspace-content">Aller au contenu</a>
+      <DowzyMascot key={account.id} accountId={account.id} progress={slimeProgress} onOpenAssistant={() => setAiVisible(true)} />
       <Sidebar
         section={section}
         pageActive={safeSubjectNotesStore.activeDocumentId === null}
-        aiVisible={renderedAiVisible}
         profileName={account.displayName}
         onSectionChange={navigateToSection}
-        onToggleAi={() => setAiVisible((value) => !value)}
+        onSearch={() => setSearchOpen(true)}
+        compact={navigationCompact}
+        onToggleNavigation={() => setNavigationCompact((value) => !value)}
       />
 
       <div className="main-workspace">
@@ -2018,21 +2182,23 @@ function FormationWorkspaceApp({
           documents={safeSubjectNotesStore.documents}
           openDocumentIds={safeSubjectNotesStore.openDocumentIds}
           activeDocumentId={safeSubjectNotesStore.activeDocumentId}
+          secondaryDocumentId={splitNotes.secondaryId}
           onActivatePage={activateWorkspacePage}
           onActivateNote={handleActivateWorkspaceNote}
           onCloseNote={handleCloseWorkspaceNote}
-          onOpenLibrary={() => setModal({ type: "note-library" })}
+          onCreateNote={handleCreateWorkspaceNote}
+          creatingDisabled={!notebookScope.ready||serverSync.preparingNotes}
         />
-        <div className="workspace-active-panel">
-          {activeWorkspaceNote ? (
-            <WorkspaceNotePage
-              note={activeWorkspaceNote}
-              subjects={activeSubjects}
-              storageKey={storage.subjectNotes}
-              onUpdateNote={handleUpdateWorkspaceNote}
-              onOpenSubjects={(note) => setModal({ type: "note-subjects", noteId: note.id })}
-              onDeleteNote={(note) => setModal({ type: "delete-subject-note", note })}
-            />
+        <AppUpdateNotice onOpen={() => navigateToSection("settings")} />
+        <CloudSyncStatus sync={serverSync} onOpen={() => navigateToSection("settings")} />
+        {activeWorkspaceNote&&<NotebookSplitControls notes={safeSubjectNotesStore.documents} controller={splitNotes} disabled={!notebookScope.ready||loggingOut} onChoose={selectSplitNote} onSwap={()=>{if(splitNotes.secondaryId)handleActivateWorkspaceNote(splitNotes.secondaryId);}}/>}
+        <div className={`workspace-active-panel ${splitNotes.split?'workspace-split':''}`} ref={splitNotes.containerRef} data-split-orientation={splitNotes.axis} style={{'--notebook-split-ratio':`${splitNotes.ratio}%`} as CSSProperties} id="workspace-content" tabIndex={-1}>
+          {splitNotes.split&&<NotebookSplitSeparator controller={splitNotes}/>}
+          <PersistentWorkspacePanel key={`${activeFormation.instanceId}:page`} id="workspace-panel-page" labelledBy="workspace-tab-page" active={!activeWorkspaceNote}>
+          {!notebookScope.ready&&safeSubjectNotesStore.activeDocumentId?<section className="paper-opening" role="status"><p>{notebookScope.error||"Préparation de votre carnet…"}</p>{notebookScope.error&&<button onClick={notebookScope.retry}>Réessayer</button>}</section>:section === "notes" || section === "drawing" ? (
+            !notebookScope.ready?<section className="paper-opening" role="status"><p>{notebookScope.error||"Préparation de votre carnet…"}</p>{notebookScope.error&&<button onClick={notebookScope.retry}>Réessayer</button>}</section>:<NotesWorkspace onManagedTrash={notebookManagedTrash} syncControls={notebookManagedControls} documents={safeSubjectNotesStore.documents} activeNote={undefined} subjects={activeSubjects} storageKey={notebookScope.notesKey} media={notebookMedia} searchNavigation={notebookSearchNavigation??undefined} onCreate={handleCreateWorkspaceNote} onDuplicate={handleDuplicateWorkspaceNote} onResumeDuplicate={handleResumeWorkspaceDuplicate} onExport={handleExportWorkspaceNotes} onImport={handleImportWorkspaceArchive} onResumeImport={handleResumeWorkspaceArchive} onOpen={handleOpenWorkspaceNote} onBack={()=>navigateToSection("notes")} onOpenLegacy={()=>{
+              setSubjectNotesStore(current=>{const store=normalizeSubjectNotesStore(current);return store.documents.some(note=>note.id===LEGACY_NOTE_ID)?openSubjectNote(store,LEGACY_NOTE_ID):createSubjectNote(store,{id:LEGACY_NOTE_ID,title:"Dessins et photos existants"}).store;});
+            }} onUpdateNote={handleUpdateWorkspaceNote} onOpenSubjects={note=>setModal({type:"note-subjects",noteId:note.id})} onDeleteNote={note=>setModal({type:"delete-subject-note",note})}/>
           ) : (
           <Suspense fallback={(
           <main className="page section-loading" aria-live="polite" aria-busy="true">
@@ -2054,7 +2220,6 @@ function FormationWorkspaceApp({
               completed: !task.completed,
               completedAt: task.completed ? undefined : new Date().toISOString()
             } : task))}
-            onOpenAi={() => setAiVisible(true)}
             onOpenEvent={handleOpenCalendarEvent}
           />
           )}
@@ -2101,7 +2266,7 @@ function FormationWorkspaceApp({
             onDeleteConversation={(conversation) => setModal({ type: "delete-conversation", conversation })}
           />
           )}
-          {section === "grades" && (
+          {section === "grades" && (<>
           <GradesPage
             assessments={assessments}
             subjects={activeSubjects}
@@ -2112,7 +2277,8 @@ function FormationWorkspaceApp({
             onOpenPdf={(assessment, variant) => void handleOpenAssessmentPdf(assessment, variant)}
             onOpenConversation={handleOpenAssessmentConversation}
           />
-          )}
+
+          </>)}
           {section === "tasks" && (
           <TasksPage
             tasks={tasks}
@@ -2130,6 +2296,7 @@ function FormationWorkspaceApp({
           )}
           {section === "formations" && (
           <FormationsPage
+            accountId={account.id}
             formations={formations}
             activeFormation={activeFormation}
             onActivate={handleActivateFormation}
@@ -2141,12 +2308,14 @@ function FormationWorkspaceApp({
           )}
           {section === "settings" && (
           <SettingsPage
+            serverSync={serverSync}
             account={account}
             formation={activeFormation}
             workspaceRecoveryKeys={formationRecoveryKeys(account.id, activeFormation)}
             provider={provider}
             aiWidth={renderedAiWidth}
             maxAiWidth={aiWidthLimit}
+            onOpenAi={() => setAiVisible(true)}
             subjects={subjects}
             events={events}
             conversations={conversations}
@@ -2156,7 +2325,6 @@ function FormationWorkspaceApp({
             tasks={tasks}
             onProviderChange={handleProviderChange}
             onAiWidthChange={(width) => setAiWidth(clampAiPanelWidth(width, window.innerWidth))}
-            onOpenAi={() => setAiVisible(true)}
             onGoogleWebProfileRemovalSettled={() => {
               cancelScheduledAiAction();
               pendingRef.current = null;
@@ -2170,8 +2338,10 @@ function FormationWorkspaceApp({
               }
             }}
             onLogout={() => {
-              resetInProgressRef.current = true;
-              void onLogout().catch((error) => {
+              resetInProgressRef.current = true;setLoggingOut(true);
+              serverAccountTransition(account.id,true);
+              void (async()=>{await settleNotebookAccount(notebookMedia.accountId);await appStorage.flush();await onLogout();disposeNotebookAccount(notebookMedia.accountId);serverAccountTransition(account.id,false);})().catch((error) => {
+                resumeNotebookAccount(notebookMedia.accountId);serverAccountTransition(account.id,false);setLoggingOut(false);
                 resetInProgressRef.current = false;
                 addToast({
                   title: "Déconnexion impossible",
@@ -2184,6 +2354,16 @@ function FormationWorkspaceApp({
           )}
           </Suspense>
           )}
+          </PersistentWorkspacePanel>
+          {notebookScope.ready&&safeSubjectNotesStore.openDocumentIds.map(noteId => {
+            const note = safeSubjectNotesStore.documents.find(item => item.id === noteId);
+            if (!note) return null;
+            return <PersistentWorkspacePanel key={`${activeFormation.instanceId}:${notebookMedia.accountId}:${notebookMedia.spaceId}:${note.id}`} id={`workspace-panel-${note.id}`} labelledBy={`workspace-tab-${note.id}`} active={activeWorkspaceNote?.id === note.id||splitNotes.secondaryId===note.id} splitSlot={activeWorkspaceNote?.id===note.id?'primary':splitNotes.secondaryId===note.id?'secondary':undefined}>
+              <NotesWorkspace onManagedTrash={notebookManagedTrash} syncControls={notebookManagedControls} documents={safeSubjectNotesStore.documents} activeNote={note} subjects={activeSubjects} storageKey={notebookScope.notesKey} media={notebookMedia} searchNavigation={notebookSearchNavigation??undefined} onCreate={handleCreateWorkspaceNote} onDuplicate={handleDuplicateWorkspaceNote} onResumeDuplicate={handleResumeWorkspaceDuplicate} onExport={handleExportWorkspaceNotes} onImport={handleImportWorkspaceArchive} onResumeImport={handleResumeWorkspaceArchive} onOpen={handleOpenWorkspaceNote} onBack={()=>navigateToSection("notes")} onOpenLegacy={()=>{
+              setSubjectNotesStore(current=>{const store=normalizeSubjectNotesStore(current);return store.documents.some(note=>note.id===LEGACY_NOTE_ID)?openSubjectNote(store,LEGACY_NOTE_ID):createSubjectNote(store,{id:LEGACY_NOTE_ID,title:"Dessins et photos existants"}).store;});
+            }} onUpdateNote={handleUpdateWorkspaceNote} onOpenSubjects={note=>setModal({type:"note-subjects",noteId:note.id})} onDeleteNote={note=>setModal({type:"delete-subject-note",note})}/>
+            </PersistentWorkspacePanel>;
+          })}
         </div>
 
         {modal?.type === "note-library" && (
@@ -2210,6 +2390,8 @@ function FormationWorkspaceApp({
       </div>
 
       <AiPanel
+        captureAccountId={account.id}
+        captureFormationId={activeFormation.instanceId}
         visible={renderedAiVisible}
         width={renderedAiWidth}
         provider={provider}
@@ -2233,6 +2415,7 @@ function FormationWorkspaceApp({
         onCopyLessonPrompt={() => void copyLessonPrompt()}
       />
 
+      {searchOpen && <WorkspaceSearch subjects={activeSubjects} notes={safeSubjectNotesStore.documents} tasks={tasks} events={events} onSubject={handleSelectSubject} onNote={handleOpenWorkspaceNote} onEvent={event => setModal({ type: 'event', event, date: new Date(event.start) })} onNavigate={navigateToSection} onClose={() => setSearchOpen(false)} />}
       {modal?.type === "calendar-export" && (
         <CalendarExportModal
           events={events}
@@ -2379,7 +2562,7 @@ function FormationWorkspaceApp({
             try {
               // Retire d'abord la fiche de façon durable, puis nettoie ses copies.
               // L'ordre inverse pouvait perdre les PDF tout en conservant la note.
-              localStorage.setItem(storage.assessments, JSON.stringify(remainingAssessments));
+              appStorage.setItem(storage.assessments, JSON.stringify(remainingAssessments));
               setAssessments(remainingAssessments);
               setModal(null);
               try {
@@ -2433,8 +2616,8 @@ function FormationWorkspaceApp({
       )}
       {modal?.type === "delete-subject-note" && (
         <ConfirmDialog
-          title="Supprimer cette note Markdown ?"
-          detail={`« ${modal.note.title.trim() || "Sans titre"} » et tout son contenu seront supprimés définitivement de cet appareil.`}
+          title="Supprimer cette note ?"
+          detail={`« ${modal.note.title.trim() || "Sans titre"} » sera retirée de votre carnet. Les copies de récupération des dessins et images sont conservées.`}
           onClose={() => setModal(null)}
           onConfirm={() => {
             if (!setSubjectNotesStore((current) => deleteSubjectNote(
@@ -2442,7 +2625,7 @@ function FormationWorkspaceApp({
               modal.note.id
             ))) return;
             setModal(null);
-            addToast({ title: "Note Markdown supprimée" });
+            addToast({ title: "Note supprimée" });
           }}
         />
       )}
@@ -2472,6 +2655,14 @@ function App(props: AppProps) {
     setCatalog(next);
     return next;
   }, [account.id]);
+
+  const applySharedManifest = useCallback((manifest: FormationManifest) => {
+    updateSharedFormationManifest(account.id, activeFormation.instanceId, manifest);
+    refreshCatalog();
+  }, [account.id, activeFormation.instanceId, refreshCatalog]);
+
+  const libraryNotice = useAccountLibrary(account.id, refreshCatalog);
+  const assetNotice = useNativeAssetSync(account.id);
 
   const chooseFormationPackage = useCallback(async () => {
     const files = await pickFormationPackage(account.id);
@@ -2521,10 +2712,11 @@ function App(props: AppProps) {
               detail: catalog.workspaceWarning,
               tone: "warning"
             }
-          : props.startupNotice
+          : assetNotice || libraryNotice ? { title: "Synchronisation du compte", detail: assetNotice || libraryNotice, tone: "default" } : props.startupNotice
         : null}
       activeFormation={activeFormation}
       formations={catalog.formations}
+      onSharedManifest={applySharedManifest}
       onActivateFormation={activateFormation}
       onChooseFormationPackage={chooseFormationPackage}
       onInstallFormationPreview={installFormationPreview}

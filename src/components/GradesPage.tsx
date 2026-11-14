@@ -171,7 +171,7 @@ export function GradesPage({
       <header className="page-heading grades-heading">
         <div>
           <p className="eyebrow">Résultats académiques</p>
-          <h1>Notes</h1>
+          <h1>Mes résultats</h1>
           <p className="heading-subtitle">
             {assessments.length} évaluation{assessments.length === 1 ? "" : "s"} enregistrée{assessments.length === 1 ? "" : "s"}.
           </p>
@@ -181,14 +181,14 @@ export function GradesPage({
         </button>
       </header>
 
-      <section className="grades-correction-guide" aria-label="Parcours de correction">
-        <p><strong>Après l’épreuve</strong><span>Un parcours simple, sans ressaisir le contexte.</span></p>
+      <details className="grades-correction-guide">
+        <summary>Comment enregistrer une épreuve corrigée ?</summary>
         <ol>
           <li><span><ScanLine /></span><p><strong>Scannez la copie</strong><small>Toutes les pages, nettes et dans l’ordre</small></p></li>
           <li><span><Bot /></span><p><strong>Corriger ma copie</strong><small>Depuis l’historique IA de l’épreuve</small></p></li>
           <li><span><ClipboardPaste /></span><p><strong>Enregistrez le résultat</strong><small>Note, appréciation et deux PDF</small></p></li>
         </ol>
-      </section>
+      </details>
 
       <section className="grades-overview" aria-label="Synthèse des résultats">
         <article className="grade-summary-card grade-summary-card--average">
@@ -199,7 +199,7 @@ export function GradesPage({
               {generalAverage === null ? "—" : averageFormatter.format(generalAverage)}
               <em>/{scoreFormatter.format(scaleMax)}</em>
             </strong>
-            <span>Indicateur · ne valide pas l’année</span>
+            <span>Moyenne des matières évaluées, à poids égal</span>
           </span>
         </article>
         <article className="grade-summary-card">
@@ -246,7 +246,7 @@ export function GradesPage({
           <div className="grade-subject-grid">
             {subjectAverages.map(({ subjectId, subject, records, average }) => {
               const isNonCompensable = subject?.validation?.toLocaleLowerCase("fr").includes("non compensable") ?? false;
-              const validationStatus = average === null ? "Non calculable" : average >= passMark ? "Validée" : "À rattraper";
+              const validationStatus = average === null ? "Non calculable" : average >= passMark ? "Seuil atteint" : "Sous le seuil";
               return <article className="grade-subject-card" key={subjectId}>
                 {subject ? (
                   <SubjectIcon subject={subject} size="sm" />

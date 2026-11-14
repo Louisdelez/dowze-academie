@@ -1,3 +1,4 @@
+import { useDialogFocus } from "../hooks/useDialogFocus";
 import { AlertTriangle, Bot, CalendarDays, FileText, Link2, Plus, RotateCcw, Sparkles, Trash2, X } from "lucide-react";
 import { FormEvent, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -35,6 +36,7 @@ import type {
   TaskItem
 } from "../types";
 import type { FormationManifest } from "../lib/formations";
+import "../dialogs-redesign.css";
 
 export function Modal({ title, subtitle, children, onClose, size = "md" }: {
   title: string;
@@ -44,68 +46,10 @@ export function Modal({ title, subtitle, children, onClose, size = "md" }: {
   size?: "sm" | "md" | "lg";
 }) {
   const dialogRef = useRef<HTMLElement>(null);
-  const onCloseRef = useRef(onClose);
   const titleId = useId();
   const subtitleId = useId();
 
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    const dialog = dialogRef.current;
-    const focusableSelector = [
-      "button:not([disabled])",
-      "a[href]",
-      "input:not([disabled])",
-      "select:not([disabled])",
-      "textarea:not([disabled])",
-      "[contenteditable='true']",
-      "[tabindex]:not([tabindex='-1'])"
-    ].join(",");
-    const focusableElements = () => Array.from(
-      dialog?.querySelectorAll<HTMLElement>(focusableSelector) ?? []
-    ).filter((element) => element.getClientRects().length > 0 && element.getAttribute("aria-hidden") !== "true");
-
-    const focusFrame = window.requestAnimationFrame(() => {
-      if (!dialog?.contains(document.activeElement)) {
-        (focusableElements()[0] ?? dialog)?.focus();
-      }
-    });
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = focusableElements();
-      if (!focusable.length) {
-        event.preventDefault();
-        dialog?.focus();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      window.removeEventListener("keydown", onKey);
-      previouslyFocused?.focus();
-    };
-  }, []);
+  useDialogFocus(dialogRef, onClose);
 
   const content = (
     <div
@@ -126,9 +70,9 @@ export function Modal({ title, subtitle, children, onClose, size = "md" }: {
             <h2 id={titleId}>{title}</h2>
             {subtitle && <p id={subtitleId}>{subtitle}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label={`Fermer « ${title} »`}><X /></button>
+          <button type="button" onClick={onClose} aria-label={`Fermer « ${title} »`}><X aria-hidden="true" /></button>
         </header>
-        {children}
+        <div className="dialog-content">{children}</div>
       </section>
     </div>
   );
@@ -312,7 +256,7 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
         {formError && <p className="form-validation-error" role="alert">{formError}</p>}
         {type === "exam" && onGeneratePaper && (
           <div className="paper-exam-callout">
-            <FileText />
+            <FileText aria-hidden="true" />
             <p>
               <strong>Épreuve écrite sur papier</strong>
               <span>L’IA générera un sujet PDF A4 sans réponses et un corrigé PDF séparé.</span>
@@ -321,15 +265,15 @@ export function EventEditor({ event, date, subjects, onSave, onDelete, onGenerat
               const nextEvent = buildEvent();
               if (nextEvent) onGeneratePaper(nextEvent);
             }}>
-              <Sparkles /> Préparer les PDF
+              <Sparkles aria-hidden="true" /> Préparer les PDF
             </button>
           </div>
         )}
         <div className="modal-actions">
-          {event && onDelete && <button type="button" className="delete-button" onClick={() => onDelete(event.id)}><Trash2 /> Supprimer</button>}
+          {event && onDelete && <button type="button" className="delete-button" onClick={() => onDelete(event.id)}><Trash2 aria-hidden="true" /> Supprimer</button>}
           <span />
           <button type="button" className="secondary-button" onClick={onClose}>Annuler</button>
-          <button className="primary-button"><CalendarDays /> {event ? "Enregistrer" : "Ajouter"}</button>
+          <button className="primary-button"><CalendarDays aria-hidden="true" /> {event ? "Enregistrer" : "Ajouter"}</button>
         </div>
       </form>
     </Modal>
@@ -437,7 +381,7 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
     >
       <form className="modal-form paper-assessment-form" onSubmit={submit}>
         <div className="paper-assessment-intro">
-          <FileText />
+          <FileText aria-hidden="true" />
           <p>
             <strong>Deux documents réellement imprimables</strong>
             <span>Le sujet élève restera sans réponses. Le barème et les solutions seront placés dans un second PDF réservé à la correction.</span>
@@ -538,11 +482,11 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
         </p>
 
         <div className="modal-actions">
-          <button type="button" className="secondary-button" onClick={onEditEvent}><CalendarDays /> Modifier l’événement</button>
+          <button type="button" className="secondary-button" onClick={onEditEvent}><CalendarDays aria-hidden="true" /> Modifier l’événement</button>
           <span />
           <button type="button" className="secondary-button" onClick={onClose}>Annuler</button>
           <button className="primary-button" disabled={!selectedSubject || !chapterIds.length || !validDuration || promptTooLarge}>
-            <Sparkles /> Générer les deux PDF
+            <Sparkles aria-hidden="true" /> Générer les deux PDF
           </button>
         </div>
       </form>
@@ -551,6 +495,7 @@ export function PaperAssessmentEditor({ event, subjects, onGenerate, onEditEvent
 }
 
 const subjectColors = ["#5c6ce5", "#169c83", "#d98932", "#9a63d8", "#e35f70", "#2f86cf"];
+const subjectColorNames: Record<string, string> = { "#5c6ce5": "Indigo", "#169c83": "Vert", "#d98932": "Orange", "#9a63d8": "Violet", "#e35f70": "Rose", "#2f86cf": "Bleu" };
 
 export function SubjectEditor({ onSave, onClose }: { onSave: (subject: Subject) => void; onClose: () => void }) {
   const [name, setName] = useState("");
@@ -573,8 +518,8 @@ export function SubjectEditor({ onSave, onClose }: { onSave: (subject: Subject) 
         <label className="form-field"><span>Nom de la matière</span><input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Philosophie" required /></label>
         {formError && <p className="form-validation-error" role="alert">{formError}</p>}
         <div className="form-row"><label className="form-field"><span>Enseignant</span><input value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="Mme Dupont" /></label><label className="form-field"><span>Salle</span><input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="A101" /></label></div>
-        <fieldset className="color-field"><legend>Couleur</legend><div>{subjectColors.map((item) => <button type="button" key={item} className={color === item ? "is-active" : ""} style={{ background: item }} onClick={() => setColor(item)} aria-label={`Choisir ${item}`}>{color === item && <CheckIcon />}</button>)}</div></fieldset>
-        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Plus /> Ajouter</button></div>
+        <fieldset className="color-field"><legend>Couleur</legend><div>{subjectColors.map((item) => <button type="button" key={item} className={color === item ? "is-active" : ""} style={{ background: item }} onClick={() => setColor(item)} aria-label={`Choisir ${subjectColorNames[item]}`} aria-pressed={color === item}>{color === item && <CheckIcon />}</button>)}</div></fieldset>
+        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Plus aria-hidden="true" /> Ajouter</button></div>
       </form>
     </Modal>
   );
@@ -586,14 +531,14 @@ export function ConversationEditor({ conversation, onSave, onClose }: { conversa
   const [name, setName] = useState(conversation.name ?? "");
   const [note, setNote] = useState(conversation.note ?? "");
   return (
-    <Modal title="Détails de la conversation" subtitle="Le nom et la note restent privés sur cet appareil." onClose={onClose}>
+    <Modal title="Détails de la conversation" subtitle="Un nom et une note pour retrouver facilement cet échange." onClose={onClose}>
       <form className="modal-form" onSubmit={(event) => { event.preventDefault(); onSave({ ...conversation, name: name.trim() || undefined, note: note.trim() || undefined }); }}>
         <label className="form-field"><span>Nom personnalisé <em>facultatif</em></span><input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Révisions sur les suites" /></label>
         <label className="form-field"><span>Note <em>facultative</em></span><textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce que vous voulez retrouver rapidement…" rows={5} /></label>
         {conversation.provider === "freechat" ? (
-          <div className="association-callout"><Bot /><p><strong>Chat libre</strong><span>Conversation enregistrée localement dans Dowze Academie, sans lien externe.</span></p></div>
+          <div className="association-callout"><Bot aria-hidden="true" /><p><strong>Chat libre</strong><span>Conversation enregistrée localement dans Dowze Academie, sans lien externe.</span></p></div>
         ) : (
-          <label className="form-field"><span>Lien enregistré</span><div className="readonly-link"><Link2 /><input value={conversation.url} readOnly /></div></label>
+          <label className="form-field"><span>Lien enregistré</span><div className="readonly-link"><Link2 aria-hidden="true" /><input value={conversation.url} readOnly /></div></label>
         )}
         <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button">Enregistrer</button></div>
       </form>
@@ -606,9 +551,9 @@ export function LinkConversationEditor({ subject, provider, initialUrl, onSave, 
   return (
     <Modal title="Associer une conversation" subtitle={`Elle sera classée dans ${subject.name}.`} onClose={onClose}>
       <form className="modal-form" onSubmit={(event) => { event.preventDefault(); onSave(url.trim()); }}>
-        <div className="association-callout"><Bot /><p><strong>{providerLabel(provider)}</strong><span>Collez le lien complet de la conversation, du notebook, de la recherche ou de la vidéo ouverte.</span></p></div>
+        <div className="association-callout"><Bot aria-hidden="true" /><p><strong>{providerLabel(provider)}</strong><span>Collez le lien complet de la conversation, du notebook, de la recherche ou de la vidéo ouverte.</span></p></div>
         <label className="form-field"><span>Lien à conserver</span><input autoFocus type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={`${providerHome(provider)}…`} required /></label>
-        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Link2 /> Associer</button></div>
+        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Link2 aria-hidden="true" /> Associer</button></div>
       </form>
     </Modal>
   );
@@ -659,7 +604,7 @@ export function TaskEditor({ task, subjects, onSave, onClose, timeZone = "Europe
         {formError && <p className="form-validation-error" role="alert">{formError}</p>}
         <label className="form-field"><span>Échéance</span><input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} required /></label>
         <div className="form-row"><label className="form-field"><span>Matière</span><select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}><option value="">Aucune</option>{subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label><label className="form-field"><span>Priorité</span><select value={priority} onChange={(e) => setPriority(e.target.value as TaskItem["priority"])}><option value="low">Basse</option><option value="medium">Normale</option><option value="high">Haute</option></select></label></div>
-        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Plus /> {task ? "Enregistrer" : "Ajouter"}</button></div>
+        <div className="modal-actions"><span /><button type="button" className="secondary-button" onClick={onClose}>Annuler</button><button className="primary-button"><Plus aria-hidden="true" /> {task ? "Enregistrer" : "Ajouter"}</button></div>
       </form>
     </Modal>
   );
@@ -667,14 +612,18 @@ export function TaskEditor({ task, subjects, onSave, onClose, timeZone = "Europe
 
 export function ConfirmDialog({ title, detail, onConfirm, onClose, confirmLabel = "Supprimer", destructive = true }: { title: string; detail: string; onConfirm: () => void | Promise<void>; onClose: () => void; confirmLabel?: string; destructive?: boolean }) {
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const confirm = async () => {
     if (busy) return;
     setBusy(true);
+    setError(null);
     try {
       await onConfirm();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "L’action n’a pas abouti. Réessayez.");
     } finally {
       setBusy(false);
     }
   };
-  return <Modal title={title} onClose={busy ? () => undefined : onClose} size="sm"><div className="confirm-content"><span><AlertTriangle /></span><p>{detail}</p></div><div className="modal-actions confirm-actions"><span /><button className="secondary-button" onClick={onClose} disabled={busy}>Annuler</button><button className={destructive ? "delete-button solid" : "primary-button"} onClick={() => void confirm()} disabled={busy}>{destructive ? <Trash2 /> : <RotateCcw />} {busy ? "Traitement…" : confirmLabel}</button></div></Modal>;
+  return <Modal title={title} onClose={busy ? () => undefined : onClose} size="sm"><div className="confirm-content"><span><AlertTriangle aria-hidden="true" /></span><p>{detail}</p></div>{error && <p className="form-validation-error" role="alert">{error}</p>}<div className="modal-actions confirm-actions"><span /><button className="secondary-button" onClick={onClose} disabled={busy}>Annuler</button><button className={destructive ? "delete-button solid" : "primary-button"} onClick={() => void confirm()} disabled={busy}>{destructive ? <Trash2 aria-hidden="true" /> : <RotateCcw aria-hidden="true" />} {busy ? "Traitement…" : confirmLabel}</button></div></Modal>;
 }
