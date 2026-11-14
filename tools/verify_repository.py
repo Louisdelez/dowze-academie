@@ -59,7 +59,7 @@ def check():
     notes = json.loads((ROOT / 'work-in-progress/notes/manifest.json').read_text())
     if len(notes['changes']) != 53 or len(notes['expectedSourceFiles']) != 619 or notes['unresolvedSources']:
         errors.append({'path': 'work-in-progress/notes/manifest.json', 'type': 'incompleteNotesManifest'})
-    report = {'date': '2026-11-14', 'scope': 'source-consolidation-only', 'status': 'pass' if not errors else 'fail', 'applicationVersion': version, 'filesInspected': len(all_files), 'checks': counts, 'errors': errors, 'notRun': ['application builds', 'functional suites', 'desktop GUI', 'production database inspection', 'physical Pencil/tablet tests']}
+    report = {'date': '2026-11-14', 'scope': 'source-consolidation-only', 'status': 'pass' if not errors else 'fail', 'applicationVersion': version, 'filesInspected': len(all_files), 'checks': counts, 'errors': errors, 'notRun': ['application builds', 'functional suites', 'desktop GUI', 'database restore test', 'physical Pencil/tablet tests']}
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return report
 

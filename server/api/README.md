@@ -1,6 +1,6 @@
 # API Dowze Académie
 
-33 modules Python récupérés avec correspondance SHA-256 à une preuve de livraison du 16 octobre 2026. Leur présence ne certifie pas le code actuellement exécuté sur Epic‑01. Le nom historique `dowze-nas-api` du manifeste Python ne signifie pas que le NAS héberge encore ce service.
+33 modules Python récupérés directement de l’API active sur Epic‑01 le 14 novembre 2026 et comparés par SHA-256 aux sources du dépôt. Ils correspondent également à la preuve de livraison du 16 octobre. Le scellement, le validateur et son runtime ont été récupérés et vérifiés. Le nom historique `dowze-nas-api` du manifeste Python ne signifie pas que le NAS héberge encore ce service.
 
 ## Développement local
 
@@ -11,7 +11,7 @@ python3 -m venv .venv
 . .venv/bin/activate
 pip install --require-hashes -r requirements.lock
 # Option PostgreSQL seulement :
-# pip install --require-hashes -r requirements-postgres.lock
+# pip install --require-hashes -r postgres-requirements.lock
 # Définir les variables décrites dans .env.example, sans commiter leurs valeurs.
 python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
@@ -26,6 +26,6 @@ Les tests conservés sont un socle historique, pas toute la qualification des 33
 
 ## Production
 
-`app.notebook_startup:create_managed_app` vérifie les artefacts scellés avant création de l’API. Le Dockerfile de référence nécessite son image parent, son manifeste et son runtime validateur absents de ce paquet source. Conserver ces garanties ; ne pas remplacer la factory de production par `app.main:app` pour contourner un échec.
+`app.notebook_startup:create_managed_app` vérifie les artefacts scellés avant création de l’API. Le Dockerfile de référence nécessite son image parent, son manifeste et son runtime validateur. Les sources du runtime sont dans `runtime/`, le binaire Node et les images dans le dossier local ignoré. Le contexte complet peut être reconstitué avec `tools/materialize_api_release.py` ; voir `docs/SERVER-RECOVERY.md`. Conserver ces garanties ; ne pas remplacer la factory de production par `app.main:app` pour contourner un échec.
 
 La variante de 37 modules est rangée dans `../../work-in-progress/server-api37/` depuis la racine du dépôt, sans être activée.

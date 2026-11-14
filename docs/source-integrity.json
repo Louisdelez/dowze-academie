@@ -3,6 +3,31 @@
   "date": "2026-11-14",
   "files": [
     {
+      "path": "infra/epic-01/academie-nginx.conf",
+      "bytes": 2442,
+      "sha256": "46eaed70a8d19c2e6ce42688afdefb6cbf8baa2983b2dfc6c7f6cafbc7b5cc76"
+    },
+    {
+      "path": "infra/epic-01/academie.compose.json",
+      "bytes": 5184,
+      "sha256": "69b37fcde9205f47c979d8bdbcb040f258d7c7fed80338608ea678d67377566e"
+    },
+    {
+      "path": "infra/epic-01/systemd/dw-native-academie.service",
+      "bytes": 712,
+      "sha256": "345683a916519b1d6516694a52723a48c5e379d39385968d0e156bb56842efd1"
+    },
+    {
+      "path": "infra/epic-01/systemd/restbackup-dw-native.service",
+      "bytes": 464,
+      "sha256": "dc921833a15a2700982e70d4957d79418f2501d7f88ccddeb84a3480584e2fc4"
+    },
+    {
+      "path": "infra/epic-01/systemd/restbackup-dw-native.timer",
+      "bytes": 190,
+      "sha256": "b2f897ab9589b75f1a3549765462a9e24da5dec55e6dbbe1fd218f4d04a27254"
+    },
+    {
       "path": "server/api/app/__init__.py",
       "bytes": 64,
       "sha256": "4b0f4485d330e905bd21b608c3b54c40fafd86db121d58f88a38f0f051b8bac6"
@@ -93,6 +118,11 @@
       "sha256": "8b563c46975a3ca4f9fe48724470aed9d27958db427613667b43741394d72583"
     },
     {
+      "path": "server/api/app/notebook_release.sha256",
+      "bytes": 65,
+      "sha256": "653cc70055fc03c7e8a2caf9009172fc54ae3182682e81cca06fe1e12fe57e5c"
+    },
+    {
       "path": "server/api/app/notebook_retention.py",
       "bytes": 9847,
       "sha256": "8b348c86c2854bed619748ed66041d49607e363e8571ed0261796fa93d0767dd"
@@ -166,6 +196,201 @@
       "path": "server/api/app/sync.py",
       "bytes": 23259,
       "sha256": "abe636130c4473aaa16752155f75a293427c8504c3ff9206071f6680d8e7e15b"
+    },
+    {
+      "path": "server/api/runtime/fixture.json",
+      "bytes": 2099,
+      "sha256": "c8c0728e19a285063ee2f09ca7b6a942a0978aed236c14c01cc9d7b1507ec6af"
+    },
+    {
+      "path": "server/api/runtime/release.json",
+      "bytes": 3549,
+      "sha256": "6f491323c974e30b1dfa7e6a66ad86514c4041e2c6c4d92ba0d49b5738a3d99d"
+    },
+    {
+      "path": "server/api/runtime/worker.mjs",
+      "bytes": 273831,
+      "sha256": "1c544ecacc34c9c0698b672b25e02f86f5c6daccfe0c0a6dc8aae50da8e98239"
+    },
+    {
+      "path": "server/api/verify-notebook-runtime.py",
+      "bytes": 421,
+      "sha256": "f6301a4d62f42daec91db2b497e65a620d18fb404e762c23118570f4278bc7df"
+    },
+    {
+      "path": "server/database/dowze_academie.schema.sql",
+      "bytes": 34246,
+      "sha256": "517634fa2264e8d3f4ee5798306d011b94206c9a58fccf1ac2ef0c23b16c3bf7"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/Dockerfile",
+      "bytes": 403,
+      "sha256": "2581cebf5ae4e322dfe7e080bee2fd1c21fdaf3ebaf475c1608382173f608b59"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/Dockerfile.test",
+      "bytes": 240,
+      "sha256": "6e20ffd12afad90bb9d2efa318a678f7dc6023a46e752267ce6007cde1410589"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/README.md",
+      "bytes": 561,
+      "sha256": "b3f5caa7df137de70a19b48092a1df9502a3ea4267942fe7eedb3b360ff87cca"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/__init__.py",
+      "bytes": 64,
+      "sha256": "4b0f4485d330e905bd21b608c3b54c40fafd86db121d58f88a38f0f051b8bac6"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/backup_bundle.py",
+      "bytes": 7666,
+      "sha256": "eff409d9dda4b95c9dd3a5f9e3efa24174697971d15889af1c85781563c090cc"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/catalog.py",
+      "bytes": 7315,
+      "sha256": "7886cc5e7185c90bb9cd6eee5f1bea38e4e4a64933328da0657fb5a7e12ded9f"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/config.py",
+      "bytes": 4852,
+      "sha256": "29de3bfafd7842658eeca0587575a4a77b8396f60cceccfc2acf67a2747037c4"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/db.py",
+      "bytes": 11782,
+      "sha256": "0591ae181f11b9853fe0393d5a8da7b4da209a36165729e4ede72fcdc0b65fbf"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/main.py",
+      "bytes": 21920,
+      "sha256": "27121742c1f36287026790bd37cc17193f0e6e5ebe16fce8bbd2d0f258cc3b26"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/manage.py",
+      "bytes": 3808,
+      "sha256": "c68f7d045fa0da7880727f928f3ba24925759af7d5af518355ffcf223cf235e8"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/models.py",
+      "bytes": 953,
+      "sha256": "ed82e6b737930c03dafff191d3f3852a743a55eaba613b11aab6b1e948f8a977"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/security.py",
+      "bytes": 5324,
+      "sha256": "3948b182f6b38333dcf82d17475144be1fc94b78c0f0855eafd9de9d4bf37584"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/app/sync.py",
+      "bytes": 21872,
+      "sha256": "724b01949234d2e5abd8451f088e6ca4671e598a14d98c100ec8c98feb94b651"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/cutover.py",
+      "bytes": 3802,
+      "sha256": "8a93b2391c8f6653c6188495333097d74eb31537af1502c506af1b8dcb6b20da"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/migrate.py",
+      "bytes": 6446,
+      "sha256": "db24e864581d60f0d5171e445a720a7f5c69e4f37ab75b96e4af5b77068aab69"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/openapi.yaml",
+      "bytes": 27659,
+      "sha256": "1d62b984263823e929330f99a53a5f36aa0c71f2c129f25fc32d741847bd9001"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/postgres-requirements.lock",
+      "bytes": 5817,
+      "sha256": "07d58cce7f8d79c8732b4b634aaa710c3c9feb2acff6ef02c0b1dcbde318d6d1"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/preflight.py",
+      "bytes": 1927,
+      "sha256": "502cb6877bc1692e9e44fa6903192ffd454d7a2898d492c96b6c893867f43ecb"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/pyproject.toml",
+      "bytes": 376,
+      "sha256": "8a46fe8ab1c54554cca4c3f73e6acad88b27a4866d6aaa0e9dc21d2d92946560"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/qualify.py",
+      "bytes": 3141,
+      "sha256": "fd6eb375b9aca5fa9816bf283ece0e2e7af833ecc149dc8e336238f9fe72783b"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/requirements.lock",
+      "bytes": 54881,
+      "sha256": "97ef53751dbaa71c3d4707f6438a3eb5fb01d572702d9e8b4556bed18b95f1a0"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/conftest.py",
+      "bytes": 1970,
+      "sha256": "df9b8f56fb143ea6fd159dc9450a0cfc79f09210230383235e2597a92cd4c082"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/smoke_loopback.py",
+      "bytes": 2787,
+      "sha256": "558c60b2337aceb0bd51f76630ae9ad7ea1a655d0c8428f2e61738845cba18ee"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_api.py",
+      "bytes": 6902,
+      "sha256": "addc96ecf8319328d4365b53b6b169bba3a06b4371a7c40e798aafdf2c136cdb"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_backup.py",
+      "bytes": 1138,
+      "sha256": "f6279452ee5b12c6d94fcae309e9d4820c134ca91f589d80e921ee15b60bb9f7"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_backup_bundle.py",
+      "bytes": 3205,
+      "sha256": "38d077537628e2d6bf30751f05bfc7e2e5196bfe142575d06429b8ffa8d147d6"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_config.py",
+      "bytes": 972,
+      "sha256": "bc5345955203cbb914532eab0d4adc30fdb192f74f000a3090c0a0e62bf358b2"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_contract.py",
+      "bytes": 1388,
+      "sha256": "cf930f693f4ada14ec17d1a78ccb0813a6781250e8b5d45d98ba4d5082ca19ab"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_packages.py",
+      "bytes": 9402,
+      "sha256": "67b5c8066767f347cba260df35f624dba564ac504d71178648be34d819050009"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_sync.py",
+      "bytes": 18743,
+      "sha256": "ebf3b1c852aada3453009e52d6115379a0d580a8129caa5e12a53c92d20df365"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/tests/test_sync_limits.py",
+      "bytes": 1133,
+      "sha256": "6a427eb607ebffb0b739c65c3c972dbfdd03f1e2071e04baee7098b2c66ccb3e"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/verify-import.py",
+      "bytes": 1589,
+      "sha256": "aac36f6f28ac9a41020c078b04c3587f0e41f13dbca59461cd3b0b6bdbd1086d"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/verify-live.py",
+      "bytes": 3055,
+      "sha256": "c37010cfcd0661063efe639905825f2bbd83dab517535272f0a0696c48a81f67"
+    },
+    {
+      "path": "server/migrations/supabase-20261006/verify-postgres-restore.py",
+      "bytes": 4990,
+      "sha256": "2e29be45457e32892320807cb5ae85e8160ad77b2cc6aa852ee0ffe689945f6f"
     },
     {
       "path": "server/public-site/SHA256SUMS.txt",
@@ -246,6 +471,31 @@
       "path": "work-in-progress/notes/overlay/pwa/src/pwa-note-chrome.css",
       "bytes": 11299,
       "sha256": "c02d609c6752c35fc48864767d0751f68ff75b56045837284c2e22c4cb06efe8"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.lock",
+      "bytes": 148675,
+      "sha256": "20792a9ccb6b583bd0934028d53f532f2f14d2b20d16cfee6454ad17f139284e"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.toml",
+      "bytes": 2100,
+      "sha256": "14da82cbd4a959babd3d5c08696ed4522ed001790094a69c4cfb9a2af522d145"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link.rs",
+      "bytes": 27659,
+      "sha256": "eca231c1c781f35b5f65f58b0df17530199dd224370387aeda7b6e931fea61b7"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link/managed.rs",
+      "bytes": 32702,
+      "sha256": "94cf3700844a876edf7a7f9f019b540fcb99f1c3a36135bb5c2677cbf8168f38"
+    },
+    {
+      "path": "work-in-progress/notes/overlay/src-tauri/tauri.conf.json",
+      "bytes": 2696,
+      "sha256": "5a9e00c4ef6ac2e7455785ce3fd851f1ab11d8decda32d53f2603b7ed5d2ee34"
     },
     {
       "path": "work-in-progress/notes/overlay/src/App.tsx",
@@ -443,34 +693,44 @@
       "sha256": "15517b15dcd02e8e5eac1e9737c3de066cdad35e34258bb8cc78cd8819911fc5"
     },
     {
-      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.lock",
-      "bytes": 148675,
-      "sha256": "20792a9ccb6b583bd0934028d53f532f2f14d2b20d16cfee6454ad17f139284e"
-    },
-    {
-      "path": "work-in-progress/notes/overlay/src-tauri/Cargo.toml",
-      "bytes": 2100,
-      "sha256": "14da82cbd4a959babd3d5c08696ed4522ed001790094a69c4cfb9a2af522d145"
-    },
-    {
-      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link/managed.rs",
-      "bytes": 32702,
-      "sha256": "94cf3700844a876edf7a7f9f019b540fcb99f1c3a36135bb5c2677cbf8168f38"
-    },
-    {
-      "path": "work-in-progress/notes/overlay/src-tauri/src/server_link.rs",
-      "bytes": 27659,
-      "sha256": "eca231c1c781f35b5f65f58b0df17530199dd224370387aeda7b6e931fea61b7"
-    },
-    {
-      "path": "work-in-progress/notes/overlay/src-tauri/tauri.conf.json",
-      "bytes": 2696,
-      "sha256": "5a9e00c4ef6ac2e7455785ce3fd851f1ab11d8decda32d53f2603b7ed5d2ee34"
-    },
-    {
       "path": "work-in-progress/notes/overlay/vite.pwa.config.ts",
       "bytes": 5174,
       "sha256": "12d164c9514edd61a72391f4b3ceae5e8ad7c45b123dbb4c68847569d6b7701b"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperBuiltInTemplates.tsx",
+      "bytes": 3790,
+      "sha256": "56cded6690ed43fa59f092547013c9866c391a4e1ec1cbe7a11d2e0c2b79d9a4"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperPageSettings.tsx",
+      "bytes": 3399,
+      "sha256": "57eab814c26126a9125d8570604cadadef62bdfebab96b0dff6205b18baf5391"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/src/components/paper-built-in-templates.css",
+      "bytes": 3140,
+      "sha256": "5f6877ebd730ac64cde8b0ac3edc5d700fe771c66a6895f132d5f2387f57c295"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/build-paper-built-in-templates.mjs",
+      "bytes": 4340,
+      "sha256": "becb7ecbaedd1627682a4682b25481468c965ef970bf67e0368572165de6dc25"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/mounted-cleanup.mjs",
+      "bytes": 2702,
+      "sha256": "ea2f6dc642e01a6c324cf76536a68600cc624e8f6281307c0b55aeacc148bab8"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/paper-built-in-templates-entry.tsx",
+      "bytes": 439,
+      "sha256": "4e29181dd0f2e81b0bcfee5aa4fb0bba85f9c629f092aac87ccc463fe4fe20b0"
+    },
+    {
+      "path": "work-in-progress/paper-template-gallery/overlay/tests/run-paper-built-in-templates.mjs",
+      "bytes": 13676,
+      "sha256": "6d01fe3be8976a517158f4030528a20d6d868c9c9d9045848ad870d46737c4c4"
     },
     {
       "path": "work-in-progress/server-api37/app/__init__.py",
@@ -656,41 +916,6 @@
       "path": "work-in-progress/server-api37/app/sync.py",
       "bytes": 23806,
       "sha256": "cff1298908a688a24a269f9617c6443a84b5ec084ffe80e9cf2993c214867819"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperBuiltInTemplates.tsx",
-      "bytes": 3790,
-      "sha256": "56cded6690ed43fa59f092547013c9866c391a4e1ec1cbe7a11d2e0c2b79d9a4"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/src/components/PaperPageSettings.tsx",
-      "bytes": 3399,
-      "sha256": "57eab814c26126a9125d8570604cadadef62bdfebab96b0dff6205b18baf5391"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/src/components/paper-built-in-templates.css",
-      "bytes": 3140,
-      "sha256": "5f6877ebd730ac64cde8b0ac3edc5d700fe771c66a6895f132d5f2387f57c295"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/tests/build-paper-built-in-templates.mjs",
-      "bytes": 4340,
-      "sha256": "becb7ecbaedd1627682a4682b25481468c965ef970bf67e0368572165de6dc25"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/tests/mounted-cleanup.mjs",
-      "bytes": 2702,
-      "sha256": "ea2f6dc642e01a6c324cf76536a68600cc624e8f6281307c0b55aeacc148bab8"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/tests/paper-built-in-templates-entry.tsx",
-      "bytes": 439,
-      "sha256": "4e29181dd0f2e81b0bcfee5aa4fb0bba85f9c629f092aac87ccc463fe4fe20b0"
-    },
-    {
-      "path": "work-in-progress/paper-template-gallery/overlay/tests/run-paper-built-in-templates.mjs",
-      "bytes": 13676,
-      "sha256": "6d01fe3be8976a517158f4030528a20d6d868c9c9d9045848ad870d46737c4c4"
     }
   ]
 }

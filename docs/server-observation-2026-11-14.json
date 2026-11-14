@@ -1,0 +1,190 @@
+{
+  "date": "2026-11-14",
+  "host": "Epic-01",
+  "readOnlyAudit": true,
+  "currentApiMatched": true,
+  "pythonModules": 33,
+  "missingReleaseSealRecovered": true,
+  "runtime": {
+    "node": {
+      "bytes": 124836408,
+      "sha256": "3517c2df0b2f8cd7f422b4b8450ef81c6889f08eb03e281d6de9079b15e6a327",
+      "version": "22.23.2"
+    },
+    "worker": {
+      "bytes": 273831,
+      "sha256": "1c544ecacc34c9c0698b672b25e02f86f5c6daccfe0c0a6dc8aae50da8e98239"
+    },
+    "fixture": {
+      "bytes": 2099,
+      "sha256": "c8c0728e19a285063ee2f09ca7b6a942a0978aed236c14c01cc9d7b1507ec6af"
+    },
+    "nodeStoredLocallyOnly": true
+  },
+  "containers": [
+    {
+      "name": "dw-dowze-academie-api",
+      "imageID": "sha256:e66a61e69ab54881542de9a0582e5f678ce59a7de927ab4c603fa1a2943bf9ac",
+      "status": "running"
+    },
+    {
+      "name": "dw-dowze-academie-public",
+      "imageID": "sha256:ef8676b33d681f272ba429b27658bdd7e640963279714c96bddf1dc76307f7b6",
+      "status": "running"
+    }
+  ],
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "17.6",
+    "database": "postgres",
+    "schema": "dowze_academie",
+    "tables": [
+      "accounts",
+      "annual_spaces",
+      "app_metadata",
+      "catalog_packages",
+      "notebook_admission_nonces",
+      "notebook_grants",
+      "notebook_invitations",
+      "notebook_receipts",
+      "notebook_resources",
+      "notebook_trash_cycles",
+      "notebook_uploads",
+      "notebook_version_blobs",
+      "notebook_version_sources",
+      "notebook_versions",
+      "sessions",
+      "sync_blob_refs",
+      "sync_blobs",
+      "sync_changes",
+      "sync_documents",
+      "sync_idempotency"
+    ],
+    "tableCount": 20,
+    "schemaOnlyExport": true,
+    "userRowsPublished": false
+  },
+  "backupService": {
+    "Result": "success",
+    "ExecMainStartTimestamp": "Sat 2026-11-14 12:56:52 CET",
+    "ExecMainStatus": "0",
+    "ActiveState": "inactive"
+  },
+  "backupTimer": {
+    "NextElapseUSecRealtime": "Sat 2026-11-14 16:56:12 CET",
+    "Result": "success",
+    "ActiveState": "active"
+  },
+  "newRestoreTestPerformed": false,
+  "productionChanged": false,
+  "packages": [
+    {
+      "name": "PyYAML",
+      "version": "6.0.3"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1"
+    },
+    {
+      "name": "argon2-cffi",
+      "version": "25.1.0"
+    },
+    {
+      "name": "argon2-cffi-bindings",
+      "version": "26.1.0"
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1"
+    },
+    {
+      "name": "click",
+      "version": "8.5.0"
+    },
+    {
+      "name": "dnspython",
+      "version": "2.8.0"
+    },
+    {
+      "name": "email-validator",
+      "version": "2.3.0"
+    },
+    {
+      "name": "fastapi",
+      "version": "0.116.1"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "name": "httptools",
+      "version": "0.8.0"
+    },
+    {
+      "name": "idna",
+      "version": "3.20"
+    },
+    {
+      "name": "pip",
+      "version": "25.0.1"
+    },
+    {
+      "name": "psycopg",
+      "version": "3.3.6"
+    },
+    {
+      "name": "psycopg-binary",
+      "version": "3.3.6"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.11.7"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.33.2"
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.3"
+    },
+    {
+      "name": "starlette",
+      "version": "0.47.3"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.35.0"
+    },
+    {
+      "name": "uvloop",
+      "version": "0.22.1"
+    },
+    {
+      "name": "watchfiles",
+      "version": "1.3.0"
+    },
+    {
+      "name": "websockets",
+      "version": "17.1"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 - Le frontal HTTPS sert `academie.dowze.ch` et relaie vers Epic‑01.
 - Le répertoire de service est `/srv/epicube/dowze/academie` ; le marqueur de migration est daté du 4 novembre.
-- Les fichiers publics, le catalogue de distribution et le shell PWA sont lisibles. Les releases nommées `notes-managed-20261016` et `notebook-reference-20261013` existent ; leur contenu privé n’a pas été inspecté.
+- Les fichiers publics, le catalogue de distribution et le shell PWA sont lisibles. Les releases nommées `notes-managed-20261016` et `notebook-reference-20261013` existent ; leurs sources utiles et le contexte scellé ont ensuite été récupérés avec l’accès administrateur.
 - Le NAS ne montre plus de conteneur Dowze/Académie ni l’ancien répertoire de projet vérifié. Le site « Dossier de Formation » est distinct.
 - L’ancien hôte Dowze‑01 n’est pas joignable depuis le Dell par la route SSH configurée.
 
@@ -12,7 +12,7 @@
 
 Le site et la PWA sont des ressources statiques. L’API dépend de la base, des blobs, des secrets et du validateur des carnets. Copier du JavaScript ne migre pas une base ; changer un DNS ne vérifie pas une sauvegarde.
 
-`server/api/Dockerfile.development` fournit uniquement un conteneur de développement SQLite. Le Dockerfile historique de production est conservé sous `Dockerfile.production-reference`. Il nécessite une image de base par digest, le runtime Node scellé, son worker, ses fixtures et son manifeste. Ces dépendances privées ne sont pas toutes récupérées ; ce dépôt n’est donc pas présenté comme un redéploiement autonome de la production.
+`server/api/Dockerfile.development` fournit uniquement un conteneur de développement SQLite. Le Dockerfile historique de production est conservé sous `Dockerfile.production-reference`. Il nécessite une image de base par digest, le runtime Node scellé, son worker, ses fixtures et son manifeste. Le contexte scellé et ses artefacts sont maintenant récupérés. Le binaire Node et les images de l’API, du web et de l’image de base sont conservés localement hors Git ; le schéma SQL est versionné. Une nouvelle base, son rôle et le fichier de connexion privé doivent être configurés sur une machine de reprise ; aucune donnée ni clé privée n’est fournie publiquement. Voir `SERVER-RECOVERY.md`.
 
 ## Procédure pour une future livraison
 

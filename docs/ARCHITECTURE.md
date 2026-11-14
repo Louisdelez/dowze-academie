@@ -17,7 +17,7 @@ flowchart LR
     PWA --> Browser[(Stockage privé navigateur)]
 ```
 
-Le frontal HTTPS et le répertoire public Epic‑01 ont été observés directement. La base effective, les volumes privés, l’image API et leurs sauvegardes n’ont pas pu être inspectés avec les accès ordinaires. Le schéma représente les responsabilités du code, sans certifier ces détails d’exploitation actuels.
+Le frontal, l’image API active, les volumes montés et la connexion PostgreSQL ont été inspectés avec l’accès administrateur autorisé. L’API utilise PostgreSQL 17.6 dans Supabase, base `postgres`, schéma `dowze_academie` de 20 tables. Les blobs restent dans le volume Dowze distinct. La sauvegarde planifiée rapporte un dernier succès ; aucune nouvelle restauration n’a été déclenchée durant cet audit.
 
 ## Frontières
 
@@ -39,5 +39,7 @@ Le frontal HTTPS et le répertoire public Epic‑01 ont été observés directem
 | `server/api/app/main.py` | Construction de l’API et routes |
 | `server/api/app/notebook_startup.py` | Vérification du runtime des carnets gérés |
 | `server/api/app/config.py` | Configuration de stockage et limites |
+| `server/database/` | Schéma PostgreSQL actif sans données |
+| `server/migrations/supabase-20261006/` | Migration historique et ses tests, conservés sans exécution |
 
 Les identifiants historiques `com.etude.desktop` sont conservés pour la continuité des profils. Les anciens runtimes Hermes/mémoire volumineux ne sont pas des ressources de cette application (`bundle.resources` vide) et ne sont pas réintroduits.

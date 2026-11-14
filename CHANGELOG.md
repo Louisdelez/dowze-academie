@@ -1,5 +1,9 @@
 # Historique
 
+## Complément serveur vérifié — 2026-11-14
+
+Accès administratif Epic‑01 rétabli avec la référence actuelle. Comparaison des 33 modules à l’image active ; récupération du scellement, du validateur, des configurations Compose/nginx/systemd, du schéma SQL des 20 tables et des sources de migration Supabase. Export local des trois images de serveur et du binaire Node, hors Git. Contexte scellé de 42 fichiers reconstitué et vérifié sans activation. Aucun secret ni ligne utilisateur publié.
+
 ## Consolidation — 2026-11-14
 
 Regroupement des sources bureau 0.12.7, PWA, API historique, site public, documentation et refontes non livrées. Sortie PWA rendue relative. Aucun changement de version distribuée, de base ou de service actif. Les entrées antérieures ci-dessous restent historiques.

@@ -1,0 +1,171 @@
+{
+  "name": "dw-native-academie",
+  "services": {
+    "api": {
+      "image": "sha256:e66a61e69ab54881542de9a0582e5f678ce59a7de927ab4c603fa1a2943bf9ac",
+      "pull_policy": "never",
+      "container_name": "dw-dowze-academie-api",
+      "environment": {
+        "DOWZE_ALLOWED_ORIGINS": "https://academie.dowze.ch,https://academie.delez.ovh",
+        "PATH": "/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "GPG_KEY": "7169605F62C751356D054A26A821E680E5FA6305",
+        "PYTHON_VERSION": "3.12.13",
+        "DOWZE_SYNC_REQUEST_LIMIT_PER_MINUTE": "1200",
+        "DOWZE_REQUEST_LIMIT_PER_MINUTE": "240",
+        "DOWZE_ENV": "production",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "DOWZE_DATABASE_SCHEMA": "dowze_academie",
+        "DOWZE_DATABASE_PATH": "/srv/dowze/data/api.sqlite3",
+        "PYTHONUNBUFFERED": "1",
+        "DOWZE_PACKAGE_DIR": "/srv/dowze/data/packages",
+        "DOWZE_DATABASE_URL_FILE": "/run/dowze-postgres-url",
+        "DOWZE_SYNC_MAX_DOCUMENT_BYTES": "4194304",
+        "DOWZE_SYNC_ACCOUNT_QUOTA_BYTES": "2147483648",
+        "DOWZE_BLOB_DIR": "/srv/dowze/data/blobs",
+        "LANG": "C.UTF-8",
+        "PYTHON_SHA256": "c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684"
+      },
+      "restart": "unless-stopped",
+      "labels": {
+        "org.dowze.api.version": "0.4.1",
+        "org.dowze.application.version": "0.4.0",
+        "org.dowze.database": "supabase-postgresql",
+        "org.dowze.migration": "nas-to-dowze01-20261006",
+        "org.dowze.release": "0.2.0-v2",
+        "org.dowze.stage11.cutover": "6e8f8d93-8cea-4960-8d1a-20426edec4a7"
+      },
+      "entrypoint": [
+        "python3",
+        "-I",
+        "-B",
+        "-m",
+        "uvicorn"
+      ],
+      "command": [
+        "app.notebook_startup:create_managed_app",
+        "--factory",
+        "--app-dir",
+        "/srv/dowze/app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "30582",
+        "--workers",
+        "1",
+        "--no-access-log"
+      ],
+      "user": "10001:10001",
+      "working_dir": "/srv/dowze/app",
+      "hostname": "63e2e95eb4bd",
+      "read_only": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges",
+        "label=level:s0:c102,c369"
+      ],
+      "shm_size": 67108864,
+      "pids_limit": 64,
+      "mem_limit": 805306368,
+      "cpus": 1.0,
+      "tmpfs": [
+        "/tmp:rw,nosuid,nodev,noexec,size=16m"
+      ],
+      "logging": {
+        "driver": "local",
+        "options": {
+          "max-file": "5",
+          "max-size": "20m"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:30582/health',timeout=2).read()\""
+        ],
+        "interval": "30000000000ns",
+        "timeout": "3000000000ns",
+        "start_period": "10000000000ns",
+        "retries": 3
+      },
+      "volumes": [
+        "/srv/epicube/dowze/academie/config/secrets/postgres-url:/run/dowze-postgres-url:ro,z",
+        "/srv/epicube/dowze/academie/backups:/srv/dowze/backups:rw,z",
+        "/srv/epicube/dowze/academie/data:/srv/dowze/data:rw,z"
+      ],
+      "ports": [
+        {
+          "target": 30582,
+          "published": "30582",
+          "host_ip": "127.0.0.1",
+          "protocol": "tcp"
+        }
+      ],
+      "network_mode": "supabase_default"
+    },
+    "public": {
+      "image": "sha256:ef8676b33d681f272ba429b27658bdd7e640963279714c96bddf1dc76307f7b6",
+      "pull_policy": "never",
+      "container_name": "dw-dowze-academie-public",
+      "environment": {
+        "NGINX_VERSION": "1.30.5",
+        "PKG_RELEASE": "1",
+        "DYNPKG_RELEASE": "1",
+        "NJS_VERSION": "1.0.1",
+        "NJS_RELEASE": "1",
+        "ACME_VERSION": "0.4.1",
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      },
+      "restart": "unless-stopped",
+      "labels": {
+        "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>",
+        "org.dowze.migration": "nas-to-dowze01-20261006",
+        "org.dowze.release": "dowze-public-020-v2"
+      },
+      "entrypoint": [
+        "nginx"
+      ],
+      "command": [
+        "-g",
+        "daemon off;"
+      ],
+      "user": "101:101",
+      "working_dir": "/",
+      "hostname": "dowze-01",
+      "stop_signal": "SIGQUIT",
+      "read_only": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges"
+      ],
+      "shm_size": 67108864,
+      "pids_limit": 64,
+      "mem_limit": 134217728,
+      "cpus": 0.5,
+      "tmpfs": [
+        "/tmp:rw,nosuid,nodev,size=48m,mode=1777"
+      ],
+      "logging": {
+        "driver": "local",
+        "options": {
+          "max-file": "5",
+          "max-size": "20m"
+        }
+      },
+      "volumes": [
+        "/srv/epicube/dowze/academie/public:/public:ro,z",
+        "/srv/epicube/migrations/dowze-20261104/native/academie-nginx.conf:/etc/nginx/nginx.conf:ro,z"
+      ],
+      "network_mode": "host"
+    }
+  },
+  "networks": {
+    "dw-native-supabase": {
+      "name": "dw-native-supabase",
+      "external": true
+    }
+  }
+}

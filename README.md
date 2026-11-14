@@ -10,7 +10,7 @@ Ce dépôt rassemble les sources retrouvées sur le Dell, les sources serveur co
 | --- | --- | --- |
 | Application de bureau | 0.12.7 ; React, TypeScript, Rust/Tauri 2 | Copie de l’espace de travail Dell, sans nouvelle compilation |
 | PWA | `pwa/`, avec modèles et bibliothèques partagés de `src/` | Sources présentes ; instantané public distinct dans le dossier local ignoré |
-| API | `server/api/app/` : 33 modules Python | Correspondance exacte avec la preuve de livraison du 16 octobre ; code actuellement exécuté non vérifié |
+| API | `server/api/app/` : 33 modules Python | 33 modules comparés à l’API active sur Epic‑01 ; scellement et validateur récupérés |
 | Site public | `server/public-site/` | Fichiers récupérés sur Epic‑01 le 14 novembre |
 | Refonte Notes | `work-in-progress/notes/` : 53 fichiers de delta, cible de 619 fichiers | Travail non livré ; métadonnées préparatoires 0.12.8 |
 | API suivante | `work-in-progress/server-api37/` : 37 modules | Travail non activé |
@@ -34,7 +34,7 @@ docs/                    Architecture, audit, développement, exploitation et li
 local/                   Instantané PWA et inventaire privé ; ignoré par Git
 ```
 
-Les historiques Git précédents sont conservés. Les dépendances, exécutables distribués, bases de données et secrets ne font pas partie du code publié.
+Les historiques Git précédents sont conservés. Les dépendances, exécutables distribués, bases de données et secrets ne font pas partie du code publié. Les images API/web et le binaire Node du validateur sont conservés dans `local/`, hors Git, avec leurs empreintes. Voir [la reprise du serveur](docs/SERVER-RECOVERY.md).
 
 ## Commencer
 

@@ -3,11 +3,11 @@
   "scope": "source-consolidation-only",
   "status": "pass",
   "applicationVersion": "0.12.7",
-  "filesInspected": 1325,
+  "filesInspected": 1374,
   "checks": {
-    "json": 21,
-    "python": 87,
-    "sourcePins": 138,
+    "json": 26,
+    "python": 116,
+    "sourcePins": 183,
     "shell": 1
   },
   "errors": [],
@@ -15,17 +15,23 @@
     "application builds",
     "functional suites",
     "desktop GUI",
-    "production database inspection",
+    "database restore test",
     "physical Pencil/tablet tests"
   ],
   "notesReconstruction": {
     "status": "pass",
-    "sourceFiles": 619,
+    "files": 619,
+    "activated": false
+  },
+  "liveApiReconstruction": {
+    "status": "pass",
+    "files": 42,
+    "pythonModules": 33,
+    "sealVerified": true,
     "activated": false
   },
   "publicationScreen": {
     "blockingCredentialPatterns": 0,
-    "literalCandidatesReviewed": "synthetic tests and browser test adapters; no production credential identified",
     "privateDataPublished": false
   }
 }

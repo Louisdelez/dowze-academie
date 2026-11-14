@@ -1,0 +1,13 @@
+[Unit]
+Description=Encrypted migrated Dowze workloads backup to bak-01
+After=network-online.target epic-supabase.service dw-native-mailcow.service dw-native-listmonk.service
+Wants=network-online.target
+RequiresMountsFor=/srv/epicube
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/restbackup/backup_client.py /srv/epicube/migrations/dowze-20261104/native/backup-config.prepared.json
+TimeoutStartSec=4h
+Nice=15
+IOSchedulingClass=idle
+MemoryMax=2G

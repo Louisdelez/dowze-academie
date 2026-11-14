@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-14",
+  "archive": "local/distribution/images/dowze-production-20261114.tar.gz",
+  "bytes": 142466807,
+  "sha256": "853748f5378c8125aba52cee7ca1c37376953802c2c3ff69ec13cc23b5af9b71",
+  "images": 3,
+  "containsUserVolumes": false,
+  "publishedOnGitHub": false,
+  "purpose": "API active, proxy web et base de construction scellée ; export Docker récupéré sans arrêt des services"
+}

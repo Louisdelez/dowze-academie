@@ -1,0 +1,16 @@
+[Unit]
+Description=Dowze native academie on Epicube
+Requires=epic-supabase.service docker.service dw-native-networks.service
+After=epic-supabase.service network-online.target docker.service wg-quick@wg0.service dw-native-networks.service
+RequiresMountsFor=/srv/epicube
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+UMask=0077
+WorkingDirectory=/srv/epicube/migrations/dowze-20261104/native
+ExecStart=/usr/bin/docker compose -f /srv/epicube/migrations/dowze-20261104/native/academie.compose.json up -d --pull never
+ExecStop=/usr/bin/docker compose -f /srv/epicube/migrations/dowze-20261104/native/academie.compose.json stop --timeout 120
+TimeoutStartSec=15min
+TimeoutStopSec=5min
+[Install]
+WantedBy=multi-user.target

@@ -10,8 +10,8 @@
     },
     {
       "component": "api33",
-      "origin": "preuve de livraison conservée du 2026-10-16",
-      "qualification": "historique ; serveur actif non inspecté"
+      "origin": "image active Epic-01 extraite le 2026-11-14",
+      "qualification": "33 modules SHA-256 identiques ; sceau et runtime récupérés"
     },
     {
       "component": "public-site",
